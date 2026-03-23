@@ -1,12 +1,12 @@
-## Phase 4 Verification
+## Phase 5 Verification
 
 ### Must-Haves
-- [x] Employees can log time against tasks via interactive timer. — VERIFIED (`time-logger.tsx` start/stop timer with `useRef` for interval, `createTimeEntry` server action)
-- [x] Manual time entry with notes works. — VERIFIED (manual entry form with durationMins + notes in `time-logger.tsx`)
-- [x] Time entries display in dense brutalist table. — VERIFIED (monospace table with date, user, mins, notes columns)
-- [x] Director dashboard renders KPI stats via parallel server queries. — VERIFIED (`overview/page.tsx` uses `Promise.all` for 7 concurrent DB queries)
-- [x] Task distribution bar chart renders CSS-only visualization. — VERIFIED (`agency-overview.tsx` with percentage-width colored bars)
-- [x] Bottleneck alerts flag tasks stuck > 48 hours. — VERIFIED (query filters `updatedAt < cutoff48h` for IN_REVIEW/REVISION/CLIENT_APPROVAL statuses)
-- [x] Activity feed shows last 20 agency-wide actions with content-visibility. — VERIFIED (`bottleneck-alerts.tsx` with `contentVisibility: "auto"` and dot-colored timeline)
+- [x] Users can add comments to tasks. — VERIFIED (`addComment` server action with RBAC + notification creation)
+- [x] Threaded replies display with indentation. — VERIFIED (`CommentThread` renders parentId-null comments + nested replies with left border)
+- [x] Realtime subscription merges new comments live. — VERIFIED (`subscribeToTaskComments` in useEffect with refetch on change)
+- [x] Notification server actions compile with auth enforcement. — VERIFIED (5 actions: getNotifications, getUnreadCount, markAsRead, markAllAsRead, createNotification)
+- [x] Bell icon shows realtime unread count. — VERIFIED (`NotificationBell` subscribes via `subscribeToNotifications`, increments count)
+- [x] Panel lists notifications with mark-as-read functionality. — VERIFIED (`NotificationPanel` with mark-as-read, mark-all, content-visibility)
+- [x] Comments create notifications for task assignees. — VERIFIED (`addComment` creates Notification when assignee ≠ commenter)
 
 ### Verdict: PASS

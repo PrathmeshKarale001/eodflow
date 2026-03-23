@@ -1,0 +1,69 @@
+"use client";
+
+import { useState, useEffect, startTransition } from "react";
+import { getUnreadCount } from "@/app/actions/notifications";
+import { subscribeToNotifications } from "@/lib/realtime";
+import { NotificationPanel } from "./notification-panel";
+
+interface NotificationBellProps {
+  userId: string;
+  initialCount: number;
+}
+
+export function NotificationBell({ userId, initialCount }: NotificationBellProps) {
+  const [unreadCount, setUnreadCount] = useState(initialCount);
+  const [showPanel, setShowPanel] = useState(false);
+
+  // Subscribe to realtime notifications
+  useEffect(() => {
+    const channel = subscribeToNotifications(userId, () => {
+      // On new notification, increment count and refetch
+      setUnreadCount((prev) => prev + 1);
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [userId]);
+
+  const handleToggle = () => {
+    setShowPanel(!showPanel);
+  };
+
+  const handleMarkAllRead = () => {
+    setUnreadCount(0);
+  };
+
+  const handleCountRefresh = () => {
+    startTransition(async () => {
+      const count = await getUnreadCount(userId);
+      setUnreadCount(count);
+    });
+  };
+
+  return (
+    <>
+      <button
+        onClick={handleToggle}
+        className="relative p-2 hover:bg-neutral-100 transition-colors brutalist-border"
+        aria-label={`Notifications (${unreadCount} unread)`}
+      >
+        <span className="material-symbols-outlined text-xl text-[#180065]">notifications</span>
+        {unreadCount > 0 ? (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-600 text-white font-mono text-[9px] font-bold px-1">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        ) : null}
+      </button>
+
+      {showPanel ? (
+        <NotificationPanel
+          userId={userId}
+          onClose={() => setShowPanel(false)}
+          onMarkAllRead={handleMarkAllRead}
+          onCountRefresh={handleCountRefresh}
+        />
+      ) : null}
+    </>
+  );
+}
