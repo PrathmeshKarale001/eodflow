@@ -54,6 +54,34 @@ export async function createTask(data: {
 }
 
 // ---------------------------------------------------------------------------
+// Valid Status Transitions (from Brief §7)
+// ---------------------------------------------------------------------------
+
+const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  [TaskStatus.BACKLOG]: [TaskStatus.TODO],
+  [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS],
+  [TaskStatus.IN_PROGRESS]: [TaskStatus.IN_REVIEW],
+  [TaskStatus.IN_REVIEW]: [TaskStatus.REVISION, TaskStatus.CLIENT_APPROVAL],
+  [TaskStatus.REVISION]: [TaskStatus.IN_PROGRESS],
+  [TaskStatus.CLIENT_APPROVAL]: [TaskStatus.APPROVED, TaskStatus.CLIENT_REVISION],
+  [TaskStatus.CLIENT_REVISION]: [TaskStatus.IN_PROGRESS],
+  [TaskStatus.APPROVED]: [TaskStatus.DONE],
+  [TaskStatus.DONE]: [],
+};
+
+// Roles allowed to transition INTO certain statuses
+const STATUS_ROLE_RESTRICTIONS: Partial<Record<TaskStatus, Role[]>> = {
+  [TaskStatus.CLIENT_APPROVAL]: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER],
+  [TaskStatus.APPROVED]: [Role.SUPER_ADMIN, Role.ADMIN],
+  [TaskStatus.REVISION]: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER],
+  [TaskStatus.CLIENT_REVISION]: [Role.SUPER_ADMIN, Role.ADMIN],
+};
+
+function isValidTransition(from: TaskStatus, to: TaskStatus): boolean {
+  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+// ---------------------------------------------------------------------------
 // Update Task Status
 // ---------------------------------------------------------------------------
 
@@ -66,7 +94,7 @@ export async function updateTaskStatus(data: {
 
   const task = await db.task.findUnique({
     where: { id: data.taskId },
-    select: { id: true, status: true, projectId: true, assignedToId: true },
+    select: { id: true, status: true, projectId: true, assignedToId: true, revisionCount: true },
   });
 
   if (!task) throw new Error("Task not found");
@@ -83,11 +111,28 @@ export async function updateTaskStatus(data: {
     throw new Error("FORBIDDEN: Insufficient permissions.");
   }
 
+  // Validate transition
+  if (!isValidTransition(task.status, data.status)) {
+    throw new Error(`INVALID_TRANSITION: Cannot move from ${task.status} to ${data.status}.`);
+  }
+
+  // Validate role restrictions for target status
+  const roleRestriction = STATUS_ROLE_RESTRICTIONS[data.status];
+  if (roleRestriction && !roleRestriction.includes(userRole)) {
+    throw new Error(`FORBIDDEN: Only ${roleRestriction.join("/")} can move tasks to ${data.status}.`);
+  }
+
   const oldStatus = task.status;
+
+  // Increment revision count on revision transitions
+  const isRevision = data.status === TaskStatus.REVISION || data.status === TaskStatus.CLIENT_REVISION;
 
   const updatedTask = await db.task.update({
     where: { id: data.taskId },
-    data: { status: data.status },
+    data: {
+      status: data.status,
+      ...(isRevision ? { revisionCount: { increment: 1 } } : {}),
+    },
   });
 
   await db.activityLog.create({

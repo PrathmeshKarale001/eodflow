@@ -60,6 +60,7 @@ export const PERMISSIONS = {
 
   // System admin
   manageUsers: [Role.SUPER_ADMIN],
+  inviteUsers: [Role.SUPER_ADMIN],
   manageRoles: [Role.SUPER_ADMIN],
   manageSettings: [Role.SUPER_ADMIN],
   viewAuditLog: [Role.SUPER_ADMIN],

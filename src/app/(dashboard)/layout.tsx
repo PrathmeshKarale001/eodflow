@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getNavForRole } from "@/lib/permissions";
 import { Sidebar } from "@/components/sidebar/sidebar";
+import { SearchDialog } from "@/components/search/search-dialog";
 import type { Role } from "@prisma/client";
 
 export default async function DashboardLayout({
@@ -22,6 +23,7 @@ export default async function DashboardLayout({
       {/* Sidebar */}
       <Sidebar
         user={{
+          id: session.user.id ?? "",
           name: session.user.name ?? "",
           email: session.user.email ?? "",
           image: session.user.image ?? undefined,
@@ -36,6 +38,9 @@ export default async function DashboardLayout({
           {children}
         </div>
       </main>
+
+      {/* Global Search */}
+      <SearchDialog />
     </div>
   );
 }

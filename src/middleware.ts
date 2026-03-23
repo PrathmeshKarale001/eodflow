@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { ROUTE_ACCESS } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/invite", "/onboarding", "/api/auth"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/invite", "/api/auth"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
