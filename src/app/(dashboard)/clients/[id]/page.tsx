@@ -32,7 +32,7 @@ export default async function ClientDetailsPage({
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Container */}
-      <div className="brutalist-border bg-white p-6 relative overflow-hidden">
+      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
         {/* Decorative scanline */}
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
 
@@ -57,7 +57,7 @@ export default async function ClientDetailsPage({
       <div className="data-grid gap-6">
         {/* Left Column: Brand Assets */}
         <div className="col-span-12 lg:col-span-8">
-          <div className="brutalist-border bg-white h-full p-6">
+          <div className="brutalist-border bg-card h-full p-6">
             <h2 className="text-xl font-headline uppercase tracking-tight mb-6 flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">palette</span>
               BRAND_ASSETS
@@ -73,24 +73,24 @@ export default async function ClientDetailsPage({
 
         {/* Right Column: Meta Info / Identity */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="brutalist-border bg-[#F4F4F5] p-6 h-full border-l-8" style={{ borderLeftColor: client.brandColor || "#6C5CE7" }}>
-             <h3 className="font-headline uppercase text-sm mb-4 tracking-widest text-[#180065]">
+          <div className="brutalist-border bg-card-muted p-6 h-full border-l-8" style={{ borderLeftColor: client.brandColor || "#6C5CE7" }}>
+             <h3 className="font-headline uppercase text-sm mb-4 tracking-widest text-card-text">
                BRAND_IDENTITY
              </h3>
              <ul className="space-y-4 font-mono text-xs uppercase text-muted-foreground">
                <li>
-                 <span className="block text-[#180065] font-bold mb-1">INDUSTRY</span>
+                 <span className="block text-card-text font-bold mb-1">INDUSTRY</span>
                  {client.industry || "N/A"}
                </li>
                <li>
-                 <span className="block text-[#180065] font-bold mb-1">BRAND_COLOR</span>
+                 <span className="block text-card-text font-bold mb-1">BRAND_COLOR</span>
                  <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full border border-black" style={{ backgroundColor: client.brandColor || "#6C5CE7" }}></div>
                     {client.brandColor || "#6C5CE7"}
                  </div>
                </li>
                <li>
-                 <span className="block text-[#180065] font-bold mb-1">WEBSITE</span>
+                 <span className="block text-card-text font-bold mb-1">WEBSITE</span>
                  {client.website ? (
                    <a href={client.website} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline underline-offset-4 decoration-primary decoration-2">
                      {client.website}

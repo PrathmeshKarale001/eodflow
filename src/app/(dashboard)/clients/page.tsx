@@ -99,7 +99,7 @@ export default async function ClientsPage() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between border-t border-white/10 pt-3">
+              <div className="flex items-center justify-between border-t border-on-surface/10 pt-3">
                 <span className="font-label text-[9px] text-outline uppercase tracking-widest">
                   POC: {client.pocAdmin?.name ?? "UNASSIGNED"}
                 </span>

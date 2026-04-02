@@ -61,7 +61,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   return (
     <div
       onClick={() => onClick?.(task.id)}
-      className="brutalist-border bg-white p-4 cursor-pointer hover:bg-neutral-50 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all group"
+      className="brutalist-border bg-card p-4 cursor-pointer hover:bg-surface-container-high hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all group"
     >
       {/* Priority + Revision */}
       <div className="flex items-center justify-between mb-3">
@@ -69,7 +69,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
           {task.priority}
         </span>
         {task.revisionCount > 0 ? (
-          <span className="text-[9px] font-mono uppercase tracking-widest text-red-600 bg-red-50 px-2 py-0.5 brutalist-border border-red-200">
+          <span className="text-[9px] font-mono uppercase tracking-widest text-red-600 bg-red-500/10 px-2 py-0.5 brutalist-border border-red-200">
             REV:{task.revisionCount}
           </span>
         ) : null}

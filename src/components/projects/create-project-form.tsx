@@ -119,7 +119,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
             {...register("title")}
             autoFocus
             autoComplete="off"
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base placeholder:text-muted focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors uppercase"
+            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base placeholder:text-muted focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase"
             placeholder="E.G. Q3 CAMPAIGN ROLLOUT"
           />
           {errors.title && <p className="text-error text-xs font-mono uppercase mt-1">{errors.title.message}</p>}
@@ -131,7 +131,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           </label>
           <select
             {...register("clientId")}
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors uppercase appearance-none rounded-none"
+            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase appearance-none rounded-none"
           >
             <option value="">-- SELECT CLIENT --</option>
             {clients.map(c => (
@@ -147,7 +147,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           </label>
           <select
             {...register("assignedManagerId")}
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors uppercase appearance-none rounded-none"
+            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase appearance-none rounded-none"
           >
             <option value="">-- UNASSIGNED --</option>
             {managers.map(m => (
@@ -162,7 +162,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           </label>
           <select
             {...register("priority")}
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors uppercase appearance-none rounded-none"
+            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase appearance-none rounded-none"
           >
             {Object.values(Priority).map(p => (
               <option key={p} value={p}>{p}</option>
@@ -177,7 +177,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           <input
             type="date"
             {...register("deadline")}
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors uppercase"
+            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase"
           />
         </div>
 
@@ -188,7 +188,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           <textarea
             {...register("briefObjective")}
             rows={4}
-            className="w-full bg-transparent brutalist-border px-4 py-3 font-body text-base placeholder:text-muted focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors resize-none"
+            className="w-full bg-transparent brutalist-border px-4 py-3 font-body text-base placeholder:text-muted focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors resize-none"
             placeholder="WHAT IS THE PRIMARY GOAL?"
           />
           {errors.briefObjective && <p className="text-error text-xs font-mono uppercase mt-1">{errors.briefObjective.message}</p>}
@@ -201,7 +201,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           <textarea
             {...register("briefDeliverables")}
             rows={3}
-            className="w-full bg-transparent brutalist-border px-4 py-3 font-body text-base placeholder:text-muted focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors resize-none"
+            className="w-full bg-transparent brutalist-border px-4 py-3 font-body text-base placeholder:text-muted focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors resize-none"
             placeholder="WHAT EXACTLY IS BEING DELIVERED?"
           />
         </div>
@@ -215,7 +215,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             className={`brutalist-border border-dashed p-8 flex flex-col items-center justify-center text-center transition-colors relative cursor-pointer
-              ${isDragging ? "bg-primary/10 border-primary" : "bg-[#F4F4F5] hover:bg-neutral-200"}
+              ${isDragging ? "bg-primary/10 border-primary" : "bg-card-muted hover:bg-neutral-200"}
             `}
           >
             <input 
@@ -227,7 +227,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
             <span className="material-symbols-outlined text-3xl mb-2 text-muted-foreground">
               attach_file
             </span>
-            <span className="font-mono text-xs uppercase tracking-widest text-[#180065]">
+            <span className="font-mono text-xs uppercase tracking-widest text-card-text">
               DROP FILES OR CLICK TO UPLOAD
             </span>
           </div>
@@ -235,7 +235,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           {attachments.length > 0 && (
             <div className="mt-4 space-y-2">
               {attachments.map((file, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 brutalist-border bg-white text-xs font-mono uppercase">
+                <div key={idx} className="flex items-center justify-between p-3 brutalist-border bg-card text-xs font-mono uppercase">
                   <div className="flex items-center gap-2 truncate">
                     <span className="material-symbols-outlined text-base">draft</span>
                     <span className="truncate max-w-[200px] md:max-w-md">{file.name}</span>

@@ -85,17 +85,17 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-white brutalist-border border-l-2 border-black shadow-[-8px_0_0_rgba(0,0,0,0.1)] animate-in slide-in-from-right duration-300">
+      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-card brutalist-border border-l-2 border-black shadow-[-8px_0_0_rgba(0,0,0,0.1)] animate-in slide-in-from-right duration-300">
         {/* Header */}
-        <div className="px-5 py-4 border-b-2 border-black bg-[#F4F4F5] flex items-center justify-between">
-          <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-[#180065] flex items-center gap-2">
+        <div className="px-5 py-4 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between">
+          <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text flex items-center gap-2">
             <span className="material-symbols-outlined text-base">notifications</span>
             NOTIFICATIONS
           </h2>
           <div className="flex items-center gap-2">
             <button
               onClick={handleMarkAllRead}
-              className="font-mono text-[9px] uppercase tracking-widest text-[#180065] hover:underline"
+              className="font-mono text-[9px] uppercase tracking-widest text-card-text hover:underline"
             >
               MARK_ALL_READ
             </button>
@@ -122,7 +122,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
               <p className="font-mono text-[9px] text-muted-foreground mt-1">No new notifications</p>
             </div>
           ) : (
-            <div className="divide-y divide-neutral-100">
+            <div className="divide-y divide-outline-variant/30">
               {notifications.map((notif) => {
                 const icon = TYPE_ICONS[notif.type] || "circle_notifications";
 
@@ -130,15 +130,15 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
                   <button
                     key={notif.id}
                     onClick={() => handleMarkRead(notif.id)}
-                    className={`w-full text-left px-4 py-3 hover:bg-neutral-50 transition-colors flex items-start gap-3 ${
+                    className={`w-full text-left px-4 py-3 hover:bg-surface-container-high transition-colors flex items-start gap-3 ${
                       !notif.isRead ? "border-l-3 border-l-[#5847d2] bg-purple-50/50" : ""
                     }`}
                   >
-                    <span className={`material-symbols-outlined text-lg flex-shrink-0 mt-0.5 ${!notif.isRead ? "text-[#180065]" : "text-neutral-400"}`}>
+                    <span className={`material-symbols-outlined text-lg flex-shrink-0 mt-0.5 ${!notif.isRead ? "text-card-text" : "text-neutral-400"}`}>
                       {icon}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className={`font-headline text-[10px] uppercase tracking-wide leading-tight ${!notif.isRead ? "text-[#180065]" : "text-neutral-600"}`}>
+                      <p className={`font-headline text-[10px] uppercase tracking-wide leading-tight ${!notif.isRead ? "text-card-text" : "text-neutral-600"}`}>
                         {notif.title}
                       </p>
                       {notif.body ? (

@@ -147,7 +147,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
 
       {/* Manual Entry Form */}
       {showManual ? (
-        <div className="brutalist-border bg-white p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
+        <div className="brutalist-border bg-card p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="font-label text-[10px] uppercase text-primary tracking-widest">MINUTES</label>
@@ -186,16 +186,16 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
         <div className="brutalist-border overflow-hidden">
           <table className="w-full text-[10px] font-mono uppercase">
             <thead>
-              <tr className="bg-[#F4F4F5] border-b-2 border-black">
-                <th className="px-3 py-2 text-left tracking-widest text-[#180065]">DATE</th>
-                <th className="px-3 py-2 text-left tracking-widest text-[#180065]">USER</th>
-                <th className="px-3 py-2 text-right tracking-widest text-[#180065]">MINS</th>
-                <th className="px-3 py-2 text-left tracking-widest text-[#180065]">NOTES</th>
+              <tr className="bg-card-muted brutalist-border border-t-0 border-x-0">
+                <th className="px-3 py-2 text-left tracking-widest text-card-text">DATE</th>
+                <th className="px-3 py-2 text-left tracking-widest text-card-text">USER</th>
+                <th className="px-3 py-2 text-right tracking-widest text-card-text">MINS</th>
+                <th className="px-3 py-2 text-left tracking-widest text-card-text">NOTES</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
               {entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-neutral-50 transition-colors">
+                <tr key={entry.id} className="hover:bg-surface-container-high transition-colors">
                   <td className="px-3 py-1.5 text-muted-foreground">
                     {new Date(entry.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </td>

@@ -110,7 +110,7 @@ export function SearchDialog() {
       {/* Dialog */}
       <div className="relative w-full max-w-lg mx-4 brutalist-border bg-background animate-in fade-in slide-in-from-top-4 duration-200">
         {/* Input */}
-        <div className="flex items-center gap-3 p-4 border-b border-white/10">
+        <div className="flex items-center gap-3 p-4 border-b border-on-surface/10">
           <span className="material-symbols-outlined text-primary text-lg">search</span>
           <input
             ref={inputRef}
@@ -144,7 +144,7 @@ export function SearchDialog() {
               key={result.id}
               onClick={() => handleSelect(result)}
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                i === selectedIndex ? "bg-primary/10" : "hover:bg-white/5"
+                i === selectedIndex ? "bg-primary/10" : "hover:bg-card/5"
               }`}
             >
               <span className="material-symbols-outlined text-sm text-primary">
@@ -166,7 +166,7 @@ export function SearchDialog() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-2 border-t border-white/10">
+        <div className="flex items-center justify-between px-4 py-2 border-t border-on-surface/10">
           <div className="flex items-center gap-4">
             <span className="font-label text-[8px] text-outline uppercase tracking-widest">
               ↑↓ NAVIGATE

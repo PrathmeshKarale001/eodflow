@@ -91,7 +91,7 @@ export default async function OverviewPage() {
               AGENCY_OVERVIEW // REAL-TIME OPERATIONAL STATUS
             </p>
           </div>
-          <span className="material-symbols-outlined text-[40px] text-white/30">monitoring</span>
+          <span className="material-symbols-outlined text-[40px] text-on-surface/30">monitoring</span>
         </div>
       </div>
 

@@ -23,7 +23,7 @@ export default async function NewProjectPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
-      <div className="brutalist-border bg-white p-6 relative overflow-hidden">
+      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
         <div className="relative z-10 flex items-center justify-between">
           <div>
@@ -38,7 +38,7 @@ export default async function NewProjectPage() {
         </div>
       </div>
 
-      <div className="brutalist-border bg-white p-6 md:p-8">
+      <div className="brutalist-border bg-card p-6 md:p-8">
         <CreateProjectForm 
           clients={clients} 
           managers={managers} 

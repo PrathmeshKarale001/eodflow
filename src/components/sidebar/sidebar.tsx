@@ -46,7 +46,7 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+      <div className="flex items-center justify-between p-4 border-b border-on-surface/10">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center bg-primary-container text-xs font-headline font-bold text-white">
@@ -59,7 +59,7 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-white/5 hover:text-foreground transition-colors"
+          className="flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-card/5 hover:text-foreground transition-colors"
         >
           <span className={cn("material-symbols-outlined text-sm transition-transform", collapsed && "rotate-180")}>
             chevron_left
@@ -69,7 +69,7 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
 
       {/* Quick actions */}
       {!collapsed && (
-        <div className="flex gap-1.5 px-3 py-3 border-b border-white/10">
+        <div className="flex gap-1.5 px-3 py-3 border-b border-on-surface/10">
           <Link
             href="/projects/new"
             className="flex h-8 flex-1 items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
@@ -96,7 +96,7 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
                   "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors font-label uppercase text-[11px] tracking-widest",
                   isActive
                     ? "bg-primary-container/20 text-primary border-l-2 border-l-primary"
-                    : "text-outline hover:bg-white/5 hover:text-foreground border-l-2 border-l-transparent"
+                    : "text-outline hover:bg-card/5 hover:text-foreground border-l-2 border-l-transparent"
                 )}
               >
                 <span className="material-symbols-outlined text-base flex-shrink-0">{iconName}</span>
@@ -108,7 +108,7 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
       </nav>
 
       {/* User profile */}
-      <div className="border-t border-white/10 p-3">
+      <div className="border-t border-on-surface/10 p-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center bg-primary-container/30 text-xs font-headline font-bold text-primary uppercase">
             {user.name.charAt(0)}

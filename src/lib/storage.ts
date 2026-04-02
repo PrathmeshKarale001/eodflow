@@ -43,3 +43,17 @@ export function getFileUrl(path: string, bucket: string = DEFAULT_BUCKET): strin
   const { data } = supabaseStorage.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
+
+export async function deleteStorageFile(
+  filePath: string,
+  bucket: string = DEFAULT_BUCKET
+): Promise<void> {
+  const { error } = await supabaseStorage.storage
+    .from(bucket)
+    .remove([filePath]);
+
+  if (error) {
+    console.warn(`Storage delete warning: ${error.message}`);
+  }
+}
+

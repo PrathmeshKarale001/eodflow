@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
@@ -23,13 +22,12 @@ declare module "next-auth" {
   }
 }
 
-// JWT typing intentionally omitted due to next-auth beta 25 missing exact module resolution
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db) as any,
+  // NOTE: PrismaAdapter removed — incompatible with Credentials provider.
+  // With JWT strategy we don't need a DB adapter; sessions live in the cookie.
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours — stays logged in for a full day
+    maxAge: 24 * 60 * 60,
   },
   pages: {
     signIn: "/login",
@@ -68,7 +66,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!isValid) return null;
 
-        // Update last login
         await db.user.update({
           where: { id: user.id },
           data: { lastLoginAt: new Date() },
@@ -109,3 +106,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+

@@ -53,19 +53,19 @@ export function MyTasksList({ tasks, userId }: MyTasksListProps) {
   return (
     <div className="space-y-6">
       {grouped.length === 0 ? (
-        <div className="brutalist-border bg-white p-12 text-center">
+        <div className="brutalist-border bg-card p-12 text-center">
           <span className="material-symbols-outlined text-4xl text-neutral-300 mb-3 block">task_alt</span>
-          <h3 className="font-headline text-lg uppercase tracking-tight text-[#180065] mb-1">NO_TASKS_ASSIGNED</h3>
+          <h3 className="font-headline text-lg uppercase tracking-tight text-card-text mb-1">NO_TASKS_ASSIGNED</h3>
           <p className="font-mono text-xs uppercase text-muted-foreground tracking-widest">
             ALL QUEUES ARE CLEAR
           </p>
         </div>
       ) : (
         grouped.map((section) => (
-          <div key={section.status} className={`brutalist-border bg-white border-l-4 ${section.accent}`}>
+          <div key={section.status} className={`brutalist-border bg-card border-l-4 ${section.accent}`}>
             {/* Section Header */}
             <div className="px-5 py-3 border-b border-neutral-200 flex items-center justify-between">
-              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-[#180065]">
+              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">
                 {section.label}
               </h3>
               <span className="bg-[#180065] text-white px-2 py-0.5 text-[10px] font-mono min-w-[24px] text-center">
@@ -74,7 +74,7 @@ export function MyTasksList({ tasks, userId }: MyTasksListProps) {
             </div>
 
             {/* Task Rows */}
-            <div className="divide-y divide-neutral-100">
+            <div className="divide-y divide-outline-variant/30">
               {section.tasks.map((task) => {
                 const dueLabel = task.dueDate
                   ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -87,7 +87,7 @@ export function MyTasksList({ tasks, userId }: MyTasksListProps) {
                   <div
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
-                    className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors group"
+                    className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className={`inline-block px-1.5 py-0.5 text-[8px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0`}>
@@ -97,7 +97,7 @@ export function MyTasksList({ tasks, userId }: MyTasksListProps) {
                         {task.title}
                       </span>
                       {task.revisionCount > 0 ? (
-                        <span className="text-[8px] font-mono text-red-600 bg-red-50 px-1.5 py-0.5 brutalist-border border-red-200 flex-shrink-0">
+                        <span className="text-[8px] font-mono text-red-600 bg-red-500/10 px-1.5 py-0.5 brutalist-border border-red-200 flex-shrink-0">
                           R{task.revisionCount}
                         </span>
                       ) : null}

@@ -36,8 +36,8 @@ export function TaskColumn({ status, tasks, onTaskClick }: TaskColumnProps) {
   return (
     <div className={`brutalist-border bg-[#FAFAFA] min-w-[280px] max-w-[320px] flex flex-col border-t-4 ${style.accent}`}>
       {/* Column Header */}
-      <div className="p-4 border-b-2 border-black flex items-center justify-between">
-        <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-[#180065]">
+      <div className="p-4 brutalist-border border-t-0 border-x-0 flex items-center justify-between">
+        <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">
           {style.label}
         </h3>
         <span className="bg-[#180065] text-white px-2 py-0.5 text-[10px] font-mono min-w-[24px] text-center">

@@ -206,7 +206,7 @@ export function UserManagementPanel({
       <div className="brutalist-border overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="bg-surface-container-low border-b border-white/10">
+            <tr className="bg-surface-container-low border-b border-on-surface/10">
               <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">USER</th>
               <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">ROLE</th>
               <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">DEPT</th>
@@ -217,7 +217,7 @@ export function UserManagementPanel({
           </thead>
           <tbody className="divide-y divide-white/5">
             {users.map((user) => (
-              <tr key={user.id} className={`hover:bg-white/5 transition-colors ${!user.isActive ? "opacity-50" : ""}`}>
+              <tr key={user.id} className={`hover:bg-card/5 transition-colors ${!user.isActive ? "opacity-50" : ""}`}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 flex items-center justify-center bg-primary-container/30 text-xs font-headline font-bold text-primary uppercase">

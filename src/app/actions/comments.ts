@@ -7,7 +7,21 @@ import { hasPermission } from "@/lib/permissions";
 import { Role } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
-// Add Comment
+// Parse @mentions from content
+// ---------------------------------------------------------------------------
+
+function parseMentions(content: string): string[] {
+  const mentionRegex = /@(\w+(?:\s\w+)?)/g;
+  const mentions: string[] = [];
+  let match;
+  while ((match = mentionRegex.exec(content)) !== null) {
+    mentions.push(match[1]);
+  }
+  return mentions;
+}
+
+// ---------------------------------------------------------------------------
+// Add Comment (with @mention notifications)
 // ---------------------------------------------------------------------------
 
 export async function addComment(data: {
@@ -35,12 +49,13 @@ export async function addComment(data: {
     },
   });
 
-  // Create notification for the task assignee (if not self)
+  // Get task info for notifications
   const task = await db.task.findUnique({
     where: { id: data.taskId },
     select: { assignedToId: true, title: true, projectId: true },
   });
 
+  // Notify task assignee (if not self)
   if (task?.assignedToId && task.assignedToId !== session.user.id) {
     await db.notification.create({
       data: {
@@ -53,6 +68,39 @@ export async function addComment(data: {
     });
   }
 
+  // Parse @mentions and create MENTION notifications
+  const mentionedNames = parseMentions(data.content);
+  if (mentionedNames.length > 0) {
+    // Look up mentioned users by name (case-insensitive)
+    for (const name of mentionedNames) {
+      const mentionedUsers = await db.user.findMany({
+        where: {
+          name: { contains: name, mode: "insensitive" },
+          isActive: true,
+          id: { not: session.user.id }, // don't notify self
+        },
+        select: { id: true },
+        take: 1,
+      });
+
+      for (const mentionedUser of mentionedUsers) {
+        // Don't duplicate if already notified as assignee
+        if (mentionedUser.id === task?.assignedToId) continue;
+
+        await db.notification.create({
+          data: {
+            userId: mentionedUser.id,
+            type: "MENTION",
+            title: `${session.user.name} mentioned you`,
+            body: `In "${task?.title || "a task"}": ${data.content.substring(0, 100)}`,
+            linkUrl: task?.projectId ? `/projects/${task.projectId}` : undefined,
+          },
+        });
+      }
+    }
+  }
+
+  // Activity log
   await db.activityLog.create({
     data: {
       userId: session.user.id,

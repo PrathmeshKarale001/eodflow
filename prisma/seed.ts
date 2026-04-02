@@ -12,7 +12,7 @@ async function main() {
   // 1. Create Users
   const superAdmin = await prisma.user.upsert({
     where: { email: 'superadmin@eodmedia.com' },
-    update: {},
+    update: { passwordHash, isActive: true },
     create: {
       name: 'Priya (Super Admin)',
       email: 'superadmin@eodmedia.com',
@@ -24,7 +24,7 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@eodmedia.com' },
-    update: {},
+    update: { passwordHash, isActive: true },
     create: {
       name: 'Rohan (Admin)',
       email: 'admin@eodmedia.com',
@@ -36,7 +36,7 @@ async function main() {
 
   const manager = await prisma.user.upsert({
     where: { email: 'manager@eodmedia.com' },
-    update: {},
+    update: { passwordHash, isActive: true },
     create: {
       name: 'Ayesha (Manager)',
       email: 'manager@eodmedia.com',
@@ -48,7 +48,7 @@ async function main() {
 
   const employee1 = await prisma.user.upsert({
     where: { email: 'designer@eodmedia.com' },
-    update: {},
+    update: { passwordHash, isActive: true },
     create: {
       name: 'Kabir (Designer)',
       email: 'designer@eodmedia.com',
@@ -60,7 +60,7 @@ async function main() {
 
   const employee2 = await prisma.user.upsert({
     where: { email: 'dev@eodmedia.com' },
-    update: {},
+    update: { passwordHash, isActive: true },
     create: {
       name: 'Sana (Developer)',
       email: 'dev@eodmedia.com',

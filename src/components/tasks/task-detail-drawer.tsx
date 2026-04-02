@@ -137,7 +137,7 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
       {/* Drawer */}
       <div className="relative w-full max-w-xl bg-background brutalist-border border-l-2 border-l-primary animate-in slide-in-from-right duration-300 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-6 bg-surface-container-lowest border-b border-white/10 relative overflow-hidden flex-shrink-0">
+        <div className="p-6 bg-surface-container-lowest border-b border-on-surface/10 relative overflow-hidden flex-shrink-0">
           <div className="absolute inset-0 scanline opacity-20 pointer-events-none"></div>
           <div className="relative z-10 flex items-start justify-between">
             <div>
@@ -145,7 +145,7 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
                 <span className={`px-2 py-0.5 text-[9px] font-headline uppercase ${PRIORITY_COLORS[task.priority]}`}>
                   {task.priority}
                 </span>
-                <span className="px-2 py-0.5 text-[9px] font-headline uppercase bg-white/10 text-foreground">
+                <span className="px-2 py-0.5 text-[9px] font-headline uppercase bg-card/10 text-foreground">
                   {task.status.replace(/_/g, " ")}
                 </span>
                 {task.revisionCount > 0 ? (
@@ -166,7 +166,7 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-white/10 flex-shrink-0">
+        <div className="flex border-b border-on-surface/10 flex-shrink-0">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -174,7 +174,7 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 font-label text-[10px] uppercase tracking-widest transition-colors ${
                 activeTab === tab.id
                   ? "text-primary border-b-2 border-b-primary bg-primary/5"
-                  : "text-outline hover:text-foreground hover:bg-white/5"
+                  : "text-outline hover:text-foreground hover:bg-card/5"
               }`}
             >
               <span className="material-symbols-outlined text-sm">{tab.icon}</span>
@@ -289,7 +289,7 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-white/10 bg-surface-container-lowest flex-shrink-0 space-y-2">
+        <div className="p-4 border-t border-on-surface/10 bg-surface-container-lowest flex-shrink-0 space-y-2">
           {canStartWork ? (
             <button
               onClick={handleStartWork}

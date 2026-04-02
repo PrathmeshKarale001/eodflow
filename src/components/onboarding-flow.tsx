@@ -125,7 +125,7 @@ function StepOne() {
               <User className="text-outline" size={16} />
               <div className="h-1.5 w-24 bg-surface-container-high rounded-full"></div>
             </div>
-            <div className="h-px w-full bg-white/5 my-2"></div>
+            <div className="h-px w-full bg-card/5 my-2"></div>
             <div className="flex items-center gap-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
               <Sparkles className="text-primary" size={16} />
               <div className="h-1.5 w-48 bg-primary/20 rounded-full"></div>
@@ -223,12 +223,12 @@ function StepThree() {
     <div className="w-full max-w-4xl flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-700">
       <div className="relative mb-16 px-4">
         {/* Glowing Deliverable Component */}
-        <div className="w-64 h-80 rounded-2xl bg-surface-container-highest border border-white/10 shadow-2xl flex flex-col p-6 transform rotate-2">
-          <div className="h-1.5 w-16 bg-white/20 rounded-full mb-8"></div>
+        <div className="w-64 h-80 rounded-2xl bg-surface-container-highest border border-on-surface/10 shadow-2xl flex flex-col p-6 transform rotate-2">
+          <div className="h-1.5 w-16 bg-card/20 rounded-full mb-8"></div>
           <div className="space-y-4 mb-12">
-            <div className="h-1 w-full bg-white/10 rounded-full"></div>
-            <div className="h-1 w-5/6 bg-white/10 rounded-full"></div>
-            <div className="h-1 w-4/6 bg-white/10 rounded-full"></div>
+            <div className="h-1 w-full bg-card/10 rounded-full"></div>
+            <div className="h-1 w-5/6 bg-card/10 rounded-full"></div>
+            <div className="h-1 w-4/6 bg-card/10 rounded-full"></div>
           </div>
           
           <div className="mt-auto bg-primary-container/20 rounded-xl p-4 border border-primary-container/40 flex items-center gap-3">
@@ -242,7 +242,7 @@ function StepThree() {
           </div>
         </div>
         
-        <div className="absolute -top-6 -left-8 w-64 h-80 rounded-2xl bg-white/[0.02] border border-white/5 -z-10 transform -rotate-3"></div>
+        <div className="absolute -top-6 -left-8 w-64 h-80 rounded-2xl bg-card/[0.02] border border-white/5 -z-10 transform -rotate-3"></div>
       </div>
 
       <div className="text-center space-y-6 max-w-2xl px-4">

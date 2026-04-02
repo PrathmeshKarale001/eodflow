@@ -23,7 +23,7 @@ export default async function ProjectDetailPage({
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Project Header */}
-      <div className="brutalist-border bg-white p-6 relative overflow-hidden">
+      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -45,7 +45,7 @@ export default async function ProjectDetailPage({
               PROJECT_ID // {project.id.slice(-8)}
             </span>
             {project.deadline ? (
-              <span className="font-mono text-[9px] uppercase tracking-widest text-[#180065]">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-card-text">
                 DEADLINE // {new Date(project.deadline).toLocaleDateString()}
               </span>
             ) : null}

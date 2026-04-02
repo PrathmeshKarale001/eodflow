@@ -102,7 +102,7 @@ export function BrandAssetsManager({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={`brutalist-border p-12 flex flex-col items-center justify-center text-center transition-colors relative cursor-pointer
-          ${isDragging ? "bg-primary/10 border-primary" : "bg-[#F4F4F5] hover:bg-neutral-200"}
+          ${isDragging ? "bg-primary/10 border-primary" : "bg-card-muted hover:bg-neutral-200"}
         `}
       >
         <input 
@@ -112,10 +112,10 @@ export function BrandAssetsManager({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         
-        <span className="material-symbols-outlined text-4xl mb-4 text-[#180065]">
+        <span className="material-symbols-outlined text-4xl mb-4 text-card-text">
           {isUploading ? "cloud_upload" : "upload_file"}
         </span>
-        <h3 className="font-headline tracking-widest uppercase text-[#180065] text-lg">
+        <h3 className="font-headline tracking-widest uppercase text-card-text text-lg">
           {isUploading ? "UPLOADING_ASSETS..." : "DROP_ASSETS_HERE"}
         </h3>
         <p className="font-mono text-xs uppercase text-muted-foreground mt-2">
@@ -133,7 +133,7 @@ export function BrandAssetsManager({
           </div>
         ) : (
           files.map((file) => (
-            <div key={file.id} className="brutalist-border p-4 bg-white hover:bg-neutral-50 flex flex-col justify-between group">
+            <div key={file.id} className="brutalist-border p-4 bg-card hover:bg-surface-container-high flex flex-col justify-between group">
               <div className="flex items-start justify-between mb-4">
                 <span className="material-symbols-outlined text-3xl text-primary">
                   {file.mimeType.includes("image") ? "image" : file.mimeType.includes("pdf") ? "picture_as_pdf" : "description"}
@@ -142,7 +142,7 @@ export function BrandAssetsManager({
                   href={file.fileUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="mono-clip bg-[#F4F4F5] p-2 hover:bg-primary hover:text-white transition-colors flex"
+                  className="mono-clip bg-card-muted p-2 hover:bg-primary hover:text-white transition-colors flex"
                 >
                   <span className="material-symbols-outlined text-lg">download</span>
                 </a>

@@ -91,10 +91,10 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
   if (!canManagerReview && !canClientReview && !isWaitingOnEmployee) return null;
 
   return (
-    <div className="brutalist-border bg-white">
+    <div className="brutalist-border bg-card">
       {/* Header */}
-      <div className="p-4 border-b-2 border-black bg-[#F4F4F5] flex items-center justify-between">
-        <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-[#180065] flex items-center gap-2">
+      <div className="p-4 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between">
+        <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text flex items-center gap-2">
           <span className="material-symbols-outlined text-base">gavel</span>
           REVIEW_PANEL
         </h3>
@@ -141,7 +141,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
       <div className="p-4 space-y-3">
         {/* Waiting on Employee */}
         {isWaitingOnEmployee ? (
-          <div className="flex items-center gap-3 p-3 bg-amber-50 brutalist-border border-amber-300">
+          <div className="flex items-center gap-3 p-3 bg-amber-500/10 brutalist-border border-amber-300">
             <span className="material-symbols-outlined text-amber-600">pending</span>
             <span className="font-mono text-xs uppercase tracking-widest text-amber-800">
               {task.status === TaskStatus.REVISION ? "AWAITING_EMPLOYEE_REVISION" : "AWAITING_CLIENT_REVISION_FIX"}
@@ -152,7 +152,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
         {/* Manager Gate Actions */}
         {canManagerReview ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-[10px] font-headline uppercase tracking-widest text-[#180065] mb-2">
+            <div className="flex items-center gap-2 text-[10px] font-headline uppercase tracking-widest text-card-text mb-2">
               <span className="w-2 h-2 bg-purple-500"></span>
               GATE_1: MANAGER_REVIEW
             </div>
@@ -180,7 +180,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
         {/* Client Gate Actions */}
         {canClientReview ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-[10px] font-headline uppercase tracking-widest text-[#180065] mb-2">
+            <div className="flex items-center gap-2 text-[10px] font-headline uppercase tracking-widest text-card-text mb-2">
               <span className="w-2 h-2 bg-indigo-500"></span>
               GATE_2: CLIENT_APPROVAL
             </div>
@@ -214,7 +214,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
               onChange={(e) => setRevisionNotes(e.target.value)}
               rows={3}
               autoFocus
-              className="w-full brutalist-border border-red-300 px-4 py-3 font-mono text-sm focus:border-red-600 focus:outline-none resize-none bg-red-50"
+              className="w-full brutalist-border border-red-300 px-4 py-3 font-mono text-sm focus:border-red-600 focus:outline-none resize-none bg-red-500/10"
               placeholder="Describe what needs to change..."
             />
             <div className="flex gap-2">

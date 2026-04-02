@@ -57,9 +57,9 @@ export function CreateTaskModal({ projectId, teamMembers, isOpen, onClose }: Cre
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="brutalist-border bg-white w-full max-w-lg mx-4 shadow-[8px_8px_0px_#180065] animate-in zoom-in-95 duration-300">
+      <div className="brutalist-border bg-card w-full max-w-lg mx-4 shadow-[8px_8px_0px_#180065] animate-in zoom-in-95 duration-300">
         {/* Modal Header */}
-        <div className="p-6 border-b-2 border-black flex items-center justify-between bg-[#180065] text-white relative overflow-hidden">
+        <div className="p-6 brutalist-border border-t-0 border-x-0 flex items-center justify-between bg-[#180065] text-white relative overflow-hidden">
           <div className="absolute inset-0 scanline opacity-20 pointer-events-none"></div>
           <h2 className="font-headline text-lg uppercase tracking-widest relative z-10">CREATE_TASK</h2>
           <button onClick={onClose} className="relative z-10 hover:text-red-400 transition-colors">
@@ -74,7 +74,7 @@ export function CreateTaskModal({ projectId, teamMembers, isOpen, onClose }: Cre
             <input
               {...register("title")}
               autoFocus
-              className="w-full h-12 bg-transparent brutalist-border px-4 py-3 font-body text-sm focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors uppercase"
+              className="w-full h-12 bg-transparent brutalist-border px-4 py-3 font-body text-sm focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase"
               placeholder="E.G. DESIGN SOCIAL MEDIA CAROUSEL"
             />
             {errors.title ? <p className="text-red-600 text-[10px] font-mono uppercase">{errors.title.message}</p> : null}
@@ -85,7 +85,7 @@ export function CreateTaskModal({ projectId, teamMembers, isOpen, onClose }: Cre
             <textarea
               {...register("description")}
               rows={3}
-              className="w-full bg-transparent brutalist-border px-4 py-3 font-body text-sm focus:border-primary-container focus:outline-none focus:bg-white/5 transition-colors resize-none"
+              className="w-full bg-transparent brutalist-border px-4 py-3 font-body text-sm focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors resize-none"
               placeholder="Task details..."
             />
           </div>
