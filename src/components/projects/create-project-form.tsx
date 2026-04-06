@@ -24,10 +24,9 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 interface CreateProjectFormProps {
   clients: { id: string; companyName: string }[];
   managers: { id: string; name: string; email: string }[];
-  creatorId: string;
 }
 
-export function CreateProjectForm({ clients, managers, creatorId }: CreateProjectFormProps) {
+export function CreateProjectForm({ clients, managers }: CreateProjectFormProps) {
   const router = useRouter();
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -75,10 +74,9 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
   const onSubmit = async (data: ProjectFormValues) => {
     setIsSubmitting(true);
     try {
-      // 1. Create DB Project Record
+      // 1. Create DB Project Record (createdById pulled from server session)
       const project = await createProjectRecord({
         ...data,
-        createdById: creatorId,
         deadline: data.deadline ? new Date(data.deadline) : undefined,
       });
 
@@ -88,7 +86,7 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           const { url } = await uploadFile(file, `projects/${project.id}`);
           await createProjectFileRecord({
             projectId: project.id,
-            uploadedById: creatorId,
+            uploadedById: project.createdById,
             filename: file.name,
             originalName: file.name,
             fileUrl: url,
@@ -129,15 +127,18 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           <label className="font-label text-[10px] uppercase text-primary tracking-widest">
             CLIENT_BINDING
           </label>
-          <select
-            {...register("clientId")}
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase appearance-none rounded-none"
-          >
-            <option value="">-- SELECT CLIENT --</option>
-            {clients.map(c => (
-              <option key={c.id} value={c.id}>{c.companyName}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              {...register("clientId")}
+              className="w-full h-14 bg-card text-card-text brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none transition-colors uppercase appearance-none cursor-pointer"
+            >
+              <option value="" className="bg-card text-on-surface/50">-- SELECT CLIENT --</option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id} className="bg-card text-card-text">{c.companyName}</option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-primary">expand_more</span>
+          </div>
           {errors.clientId && <p className="text-error text-xs font-mono uppercase mt-1">{errors.clientId.message}</p>}
         </div>
 
@@ -145,29 +146,35 @@ export function CreateProjectForm({ clients, managers, creatorId }: CreateProjec
           <label className="font-label text-[10px] uppercase text-primary tracking-widest">
             ASSIGNED_MANAGER
           </label>
-          <select
-            {...register("assignedManagerId")}
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase appearance-none rounded-none"
-          >
-            <option value="">-- UNASSIGNED --</option>
-            {managers.map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              {...register("assignedManagerId")}
+              className="w-full h-14 bg-card text-card-text brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none transition-colors uppercase appearance-none cursor-pointer"
+            >
+              <option value="" className="bg-card text-on-surface/50">-- UNASSIGNED --</option>
+              {managers.map(m => (
+                <option key={m.id} value={m.id} className="bg-card text-card-text">{m.name}</option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-primary">expand_more</span>
+          </div>
         </div>
 
         <div className="space-y-2">
           <label className="font-label text-[10px] uppercase text-primary tracking-widest">
             PRIORITY_LEVEL
           </label>
-          <select
-            {...register("priority")}
-            className="w-full h-14 bg-transparent brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase appearance-none rounded-none"
-          >
-            {Object.values(Priority).map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              {...register("priority")}
+              className="w-full h-14 bg-card text-card-text brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none transition-colors uppercase appearance-none cursor-pointer"
+            >
+              {Object.values(Priority).map(p => (
+                <option key={p} value={p} className="bg-card text-card-text">{p}</option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-primary">expand_more</span>
+          </div>
         </div>
 
         <div className="space-y-2">

@@ -69,15 +69,40 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
 
       {/* Quick actions */}
       {!collapsed && (
-        <div className="flex gap-1.5 px-3 py-3 border-b border-on-surface/10">
+        <div className="px-3 py-3 border-b border-on-surface/10 space-y-1.5">
+          {/* Row 1: New Project (full width) */}
           <Link
             href="/projects/new"
-            className="flex h-8 flex-1 items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
+            className="flex h-8 w-full items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             New Project
           </Link>
-          <NotificationBell userId={user.id} initialCount={unreadCount} />
+
+          {/* Row 2: Admin-only quick actions + notification bell */}
+          <div className="flex gap-1.5">
+            {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+              <>
+                <Link
+                  href="/chat?action=new-channel"
+                  title="New Channel"
+                  className="flex h-8 flex-1 items-center justify-center gap-1 brutalist-border text-xs font-headline font-bold text-outline hover:text-foreground hover:bg-card/10 transition-colors uppercase"
+                >
+                  <span className="material-symbols-outlined text-sm">tag</span>
+                  <span className="text-[10px]">Channel</span>
+                </Link>
+                <Link
+                  href="/settings?tab=users&action=invite"
+                  title="Invite User"
+                  className="flex h-8 flex-1 items-center justify-center gap-1 brutalist-border text-xs font-headline font-bold text-outline hover:text-foreground hover:bg-card/10 transition-colors uppercase"
+                >
+                  <span className="material-symbols-outlined text-sm">person_add</span>
+                  <span className="text-[10px]">Invite</span>
+                </Link>
+              </>
+            )}
+            <NotificationBell userId={user.id} initialCount={unreadCount} />
+          </div>
         </div>
       )}
 

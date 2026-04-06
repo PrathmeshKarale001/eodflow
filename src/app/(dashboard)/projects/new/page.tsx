@@ -41,8 +41,7 @@ export default async function NewProjectPage() {
       <div className="brutalist-border bg-card p-6 md:p-8">
         <CreateProjectForm 
           clients={clients} 
-          managers={managers} 
-          creatorId={session.user.id} 
+          managers={managers}
         />
       </div>
     </div>
