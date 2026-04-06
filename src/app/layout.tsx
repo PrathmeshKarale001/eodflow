@@ -4,6 +4,8 @@ import { SessionProvider } from "next-auth/react";
 import { auth } from "@/lib/auth";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
+import { PushNotificationManager } from "@/components/push/push-notification-manager";
 import "@/styles/globals.css";
 
 const inter = Inter({
@@ -66,6 +68,8 @@ export default async function RootLayout({
               </main>
             </div>
           </SessionProvider>
+          <PWAInstallPrompt />
+          <PushNotificationManager />
         </ThemeProvider>
       </body>
     </html>

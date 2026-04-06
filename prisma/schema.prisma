@@ -85,6 +85,7 @@ enum NotificationType {
   APPROVAL_REQUESTED
   REVISION_REQUESTED
   PROJECT_CREATED
+  SYSTEM
 }
 
 // =============================================================================
@@ -121,6 +122,8 @@ model User {
   notifications     Notification[]
   accounts          Account[]
   sessions          Session[]
+  chatMembers       ChatChannelMember[]
+  chatMessages      ChatMessage[]
 
   @@map("users")
 }
@@ -219,6 +222,7 @@ model Project {
   tasks           Task[]
   files           File[]           @relation("ProjectFiles")
   activities      ActivityLog[]
+  chatChannels    ChatChannel[]
 
   @@index([clientId])
   @@index([assignedManagerId])
@@ -441,4 +445,55 @@ model ProjectTemplate {
   projects Project[]
 
   @@map("project_templates")
+}
+
+// =============================================================================
+// CHAT & MESSAGING
+// =============================================================================
+
+enum ChannelType {
+  PROJECT
+  DIRECT
+  GROUP
+}
+
+model ChatChannel {
+  id        String      @id @default(cuid())
+  name      String?
+  type      ChannelType @default(PROJECT)
+  projectId String?
+  project   Project?    @relation(fields: [projectId], references: [id])
+  createdAt DateTime    @default(now())
+  messages  ChatMessage[]
+  members   ChatChannelMember[]
+
+  @@index([projectId])
+  @@map("chat_channels")
+}
+
+model ChatChannelMember {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  joinedAt  DateTime    @default(now())
+
+  @@unique([channelId, userId])
+  @@map("chat_channel_members")
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  content   String
+  fileUrl   String?
+  createdAt DateTime    @default(now())
+
+  @@index([channelId])
+  @@index([createdAt])
+  @@map("chat_messages")
 }

@@ -43,3 +43,30 @@
 ## Phase 5: Communication layer & Realtime Sync
 **Status**: ✅ Complete
 **Goal:** The system feels alive. Zero reloading necessary. All context stays in-app.
+
+---
+
+## Phase 6: Advanced Communication & PWA
+**Status**: 🔄 In Progress
+**Goal:** The system replaces WhatsApp for work coordination. Team can annotate creatives, chat in-context, receive push notifications, and use the app offline.
+
+- **Plan 6.1: Image/PDF Annotation System**
+  - Canvas overlay on images/PDFs for pinning review feedback
+  - Annotation data stored as JSON coordinates on Comment model
+- **Plan 6.2: Team Chat (Project Channels + DMs)**
+  - Project-specific chat channels (auto-created per project)
+  - Direct messages between team members
+  - Supabase Realtime broadcast for live chat
+- **Plan 6.3: PWA Setup (Manifest + Service Worker + Offline)**
+  - manifest.json, service worker via next-pwa
+  - Install prompt, offline caching, app shell
+- **Plan 6.4: Email Notifications (Resend Integration)**
+  - Transactional emails for assignments, mentions, approvals
+  - Configurable digest (realtime / daily / weekly)
+- **Plan 6.5: Voice Notes on Comments**
+  - MediaRecorder API for audio recording
+  - Audio playback in comment thread
+- **Plan 6.6: PWA Push Notifications**
+  - Web Push API via service worker
+  - Permission request on first interaction
+  - Push channels: assignments, deadlines, mentions

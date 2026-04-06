@@ -8,12 +8,13 @@ import { Role } from "@prisma/client";
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) return notFound();
 
-  const { project, tasks, teamMembers } = await getProjectWithTasks(params.id);
+  const { project, tasks, teamMembers } = await getProjectWithTasks(id);
 
   if (!project) return notFound();
 

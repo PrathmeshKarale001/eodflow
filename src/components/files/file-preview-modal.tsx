@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getFileVersions } from "@/app/actions/files";
+import { ImageAnnotator } from "@/components/annotations/image-annotator";
 
 interface FileData {
   id: string;
@@ -17,6 +18,7 @@ interface FileData {
   client?: { companyName: string; brandColor: string } | null;
   project?: { title: string } | null;
   task?: { title: string } | null;
+  taskId?: string | null;
   versions?: { id: string; version: number }[];
 }
 
@@ -24,9 +26,10 @@ interface FilePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   file: FileData | null;
+  taskId?: string;
 }
 
-export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProps) {
+export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewModalProps) {
   const [versions, setVersions] = useState<FileData[]>([]);
   const [activeFile, setActiveFile] = useState<FileData | null>(file);
   const [loadingVersions, setLoadingVersions] = useState(false);
@@ -49,6 +52,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
   const isImage = activeFile.mimeType.startsWith("image/");
   const isVideo = activeFile.mimeType.startsWith("video/");
   const isPdf = activeFile.mimeType.includes("pdf");
+  const resolvedTaskId = taskId || (activeFile as FileData & { taskId?: string }).taskId || undefined;
 
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -83,10 +87,10 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           {/* Preview Area */}
           <div className="flex-1 flex items-center justify-center p-6 bg-surface-container-lowest overflow-auto">
             {isImage ? (
-              <img
+              <ImageAnnotator
                 src={activeFile.fileUrl}
-                alt={activeFile.originalName}
-                className="max-w-full max-h-[60vh] object-contain"
+                fileId={activeFile.id}
+                taskId={resolvedTaskId}
               />
             ) : isVideo ? (
               <video
