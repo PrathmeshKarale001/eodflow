@@ -10,7 +10,7 @@ export default async function ChatPage() {
   const channels = await getUserChannels();
 
   return (
-    <div className="flex h-[calc(100vh-0px)] overflow-hidden">
+    <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-6 flex h-[calc(100vh)] overflow-hidden">
       <ChatSidebar
         channels={channels as any}
         currentUserId={session.user.id}

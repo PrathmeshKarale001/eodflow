@@ -5,103 +5,103 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('Starting seed...');
-  
-  // Create a default password hash for all seed users
-  const passwordHash = await bcrypt.hash('password123', 10);
 
-  // 1. Create Users
+  // ============================================================
+  // STEP 1: Real Super Admin (Bootstrap Account)
+  // ============================================================
+  // Change password before going live — this is for initial setup only
+  const superAdminPassword = await bcrypt.hash('EODFlow@2024!', 12);
+
   const superAdmin = await prisma.user.upsert({
-    where: { email: 'superadmin@eodmedia.com' },
-    update: { passwordHash, isActive: true },
+    where: { email: 'pkarale002@gmail.com' },
+    update: { isActive: true },
     create: {
-      name: 'Priya (Super Admin)',
-      email: 'superadmin@eodmedia.com',
-      passwordHash,
+      name: 'Prathmesh Karale',
+      email: 'pkarale002@gmail.com',
+      passwordHash: superAdminPassword,
       role: Role.SUPER_ADMIN,
       department: Department.MANAGEMENT,
+      isActive: true,
     },
   });
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@eodmedia.com' },
-    update: { passwordHash, isActive: true },
+  console.log(`✅ Super Admin: ${superAdmin.email}`);
+
+  // ============================================================
+  // STEP 2: Real Clients (Arome World + Solitario — real accounts)
+  // ============================================================
+  const aromeWorld = await prisma.client.upsert({
+    where: { id: 'seed-arome-world' },
+    update: {},
     create: {
-      name: 'Rohan (Admin)',
-      email: 'admin@eodmedia.com',
-      passwordHash,
-      role: Role.ADMIN,
-      department: Department.MANAGEMENT,
-    },
-  });
-
-  const manager = await prisma.user.upsert({
-    where: { email: 'manager@eodmedia.com' },
-    update: { passwordHash, isActive: true },
-    create: {
-      name: 'Ayesha (Manager)',
-      email: 'manager@eodmedia.com',
-      passwordHash,
-      role: Role.MANAGER,
-      department: Department.STRATEGY,
-    },
-  });
-
-  const employee1 = await prisma.user.upsert({
-    where: { email: 'designer@eodmedia.com' },
-    update: { passwordHash, isActive: true },
-    create: {
-      name: 'Kabir (Designer)',
-      email: 'designer@eodmedia.com',
-      passwordHash,
-      role: Role.EMPLOYEE,
-      department: Department.DESIGN,
-    },
-  });
-
-  const employee2 = await prisma.user.upsert({
-    where: { email: 'dev@eodmedia.com' },
-    update: { passwordHash, isActive: true },
-    create: {
-      name: 'Sana (Developer)',
-      email: 'dev@eodmedia.com',
-      passwordHash,
-      role: Role.EMPLOYEE,
-      department: Department.DEVELOPMENT,
-    },
-  });
-
-  console.log('Users created.');
-
-  // 2. Create Clients
-  const client1 = await prisma.client.create({
-    data: {
+      id: 'seed-arome-world',
       companyName: 'Arome World',
       brandColor: '#FF5733',
-      pocAdminId: admin.id,
+      pocAdminId: superAdmin.id,
       industry: 'Beverage',
     },
   });
 
-  const client2 = await prisma.client.create({
-    data: {
+  const solitario = await prisma.client.upsert({
+    where: { id: 'seed-solitario' },
+    update: {},
+    create: {
+      id: 'seed-solitario',
       companyName: 'Solitario Diamonds',
       brandColor: '#B9A16B',
-      pocAdminId: admin.id,
+      pocAdminId: superAdmin.id,
       industry: 'Jewelry',
     },
   });
 
-  const client3 = await prisma.client.create({
-    data: {
-      companyName: 'Goosebumps Arena',
-      brandColor: '#4A90E2',
-      pocAdminId: admin.id,
-      industry: 'Entertainment',
-    },
-  });
+  console.log(`✅ Clients: ${aromeWorld.companyName}, ${solitario.companyName}`);
 
-  console.log('Clients created.');
-  console.log('Seed completed successfully.');
+  // ============================================================
+  // STEP 3: Default GROUP Channels (seeded once, managed via UI after)
+  // ============================================================
+  const defaultChannels = [
+    { name: 'General', description: 'Team-wide announcements and conversation' },
+    { name: 'Unofficial EOD', description: 'Casual team conversation' },
+    { name: 'Solitario', description: 'Solitario Diamonds project discussion' },
+    { name: 'Aeromall', description: 'Aeromall project discussion' },
+    { name: 'CS Jewels', description: 'CS Jewels project discussion' },
+    { name: 'Arome World', description: 'Arome World project discussion' },
+  ];
+
+  const createdChannels = [];
+  for (const ch of defaultChannels) {
+    const existing = await prisma.chatChannel.findFirst({
+      where: { name: ch.name, type: 'GROUP' },
+    });
+
+    if (!existing) {
+      const channel = await prisma.chatChannel.create({
+        data: {
+          name: ch.name,
+          type: 'GROUP',
+        },
+      });
+      createdChannels.push(channel);
+      console.log(`✅ Channel created: #${ch.name}`);
+    } else {
+      createdChannels.push(existing);
+      console.log(`⏭  Channel exists: #${ch.name}`);
+    }
+  }
+
+  // Add super admin to all channels
+  for (const channel of createdChannels) {
+    await prisma.chatChannelMember.upsert({
+      where: { channelId_userId: { channelId: channel.id, userId: superAdmin.id } },
+      update: {},
+      create: { channelId: channel.id, userId: superAdmin.id },
+    });
+  }
+
+  console.log('✅ Super admin added to all channels.');
+  console.log('\n🎉 Seed complete! Use Settings → User Management to invite your team.');
+  console.log(`\n📧 Login: pkarale002@gmail.com`);
+  console.log(`🔑 Password: EODFlow@2024! (change this immediately after first login)`);
 }
 
 main()

@@ -115,13 +115,13 @@ export function ChatWindow({
       <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-sm text-primary">
-            {channelType === "PROJECT" ? "tag" : "person"}
+            {channelType === "DIRECT" ? "person" : "tag"}
           </span>
           <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">
             {channelName}
           </h2>
           <span className="font-mono text-[8px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase">
-            {channelType === "PROJECT" ? "PROJECT" : "DM"}
+            {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "CHANNEL" : "PROJECT"}
           </span>
         </div>
         <span className="font-mono text-[9px] text-on-surface/40 uppercase">
