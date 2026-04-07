@@ -7,6 +7,10 @@ import { cache } from "react";
 export const authApi = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",
   secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
+  trustedOrigins: [
+    "http://localhost:3000",
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+  ],
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
