@@ -4,12 +4,20 @@ import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { cache } from "react";
 
+// Build the base URL from available env vars
+// Vercel auto-sets VERCEL_URL (without protocol) on every deployment
+const getBaseURL = () => {
+  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+};
+
 export const authApi = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",
-  secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
+  baseURL: getBaseURL(),
+  secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: [
     "http://localhost:3000",
-    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+    getBaseURL(),
   ],
   database: prismaAdapter(db, {
     provider: "postgresql",
@@ -43,9 +51,6 @@ export const authApi = betterAuth({
   },
 });
 
-// Backwards compatibility layer for legacy NextAuth "await auth()" usage
-// Wrapped with React cache() to deduplicate across components in the same render pass
-// (layout.tsx → navbar.tsx → dashboard/layout.tsx all call auth() — now only 1 DB hit)
 export const auth = cache(async () => {
   const reqHeaders = await headers();
   const sessionData = await authApi.api.getSession({
@@ -59,8 +64,8 @@ export const auth = cache(async () => {
       id: sessionData.user.id,
       name: sessionData.user.name,
       email: sessionData.user.email,
-      role: sessionData.user.role,
-      department: sessionData.user.department,
+      role: (sessionData.user as any).role,
+      department: (sessionData.user as any).department,
       image: sessionData.user.image,
     }
   };
