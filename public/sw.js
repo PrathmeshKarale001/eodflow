@@ -3,7 +3,7 @@
 // Strategy: Network-first with cache fallback for app shell
 // =============================================================================
 
-const CACHE_NAME = "eod-flow-v1";
+const CACHE_NAME = "eod-flow-v2";
 const OFFLINE_URL = "/offline";
 
 // App shell files to pre-cache
@@ -42,6 +42,9 @@ self.addEventListener("fetch", (event) => {
 
   // Skip non-GET requests
   if (request.method !== "GET") return;
+
+  // Skip external / cross-origin requests (Google Fonts, analytics, etc.)
+  if (url.origin !== self.location.origin) return;
 
   // Skip API, auth, and _next/data requests
   if (
