@@ -39,7 +39,8 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <UserManagementPanel initialUsers={users} currentUserId={session.user.id!} />
+      <UserManagementPanel initialUsers={users} currentUserId={session.user.id!} currentUserRole={role} />
+
     </div>
   );
 }

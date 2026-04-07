@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import {
   hasPermission,
   isAtLeast as checkIsAtLeast,
@@ -15,7 +15,7 @@ import type { Role } from "@prisma/client";
 
 export function usePermissions() {
   const { data: session } = useSession();
-  const role = (session?.user?.role ?? "EMPLOYEE") as Role;
+  const role = ((session?.user as any)?.role ?? "EMPLOYEE") as Role;
 
   return {
     role,

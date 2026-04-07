@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { uploadFile } from "@/lib/storage";
 import { uploadFileRecord } from "@/app/actions/files";
 
 interface FileUploadModalProps {
@@ -49,22 +48,37 @@ export function FileUploadModal({ isOpen, onClose, clients, projects }: FileUplo
         );
 
         try {
-          // 1. Upload to Supabase Storage
+          // Build storage path prefix
           const pathPrefix = selectedClientId
             ? `clients/${selectedClientId}`
             : selectedProjectId
               ? `projects/${selectedProjectId}`
               : "general";
 
-          const { url } = await uploadFile(file, pathPrefix);
+          // Upload via server-side API route — uses service role key, bypasses RLS.
+          // Direct client-side Supabase uploads fail because the app uses NextAuth
+          // (not Supabase Auth), so the anon client has no authenticated session.
+          const form = new FormData();
+          form.append("file", file);
+          form.append("pathPrefix", pathPrefix);
+
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: form,
+          });
+
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({ error: res.statusText }));
+            throw new Error(body.error ?? `HTTP ${res.status}`);
+          }
+
+          const { url } = await res.json();
 
           setUploadingFiles((prev) =>
-            prev.map((f, j) =>
-              j === idx ? { ...f, progress: 70 } : f
-            )
+            prev.map((f, j) => (j === idx ? { ...f, progress: 70 } : f))
           );
 
-          // 2. Create DB record via server action
+          // Save record to DB via server action
           await uploadFileRecord({
             filename: file.name,
             originalName: file.name,
@@ -104,7 +118,9 @@ export function FileUploadModal({ isOpen, onClose, clients, projects }: FileUplo
     [handleFiles]
   );
 
-  const allDone = uploadingFiles.length > 0 && uploadingFiles.every((f) => f.status === "done" || f.status === "error");
+  const allDone =
+    uploadingFiles.length > 0 &&
+    uploadingFiles.every((f) => f.status === "done" || f.status === "error");
 
   if (!isOpen) return null;
 
@@ -192,30 +208,36 @@ export function FileUploadModal({ isOpen, onClose, clients, projects }: FileUplo
           {uploadingFiles.length > 0 && (
             <div className="space-y-2">
               {uploadingFiles.map((uf, idx) => (
-                <div key={idx} className="brutalist-border p-3 bg-card flex items-center gap-3">
-                  <span className="material-symbols-outlined text-sm text-primary">
-                    {uf.status === "done" ? "check_circle" : uf.status === "error" ? "error" : "cloud_upload"}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-mono text-[10px] uppercase truncate text-on-surface">{uf.file.name}</p>
-                    <div className="h-1 bg-card-muted mt-1 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${
-                          uf.status === "error" ? "bg-red-500" : uf.status === "done" ? "bg-green-500" : "bg-primary"
-                        }`}
-                        style={{ width: `${uf.progress}%` }}
-                      />
+                <div key={idx} className="brutalist-border p-3 bg-card space-y-1">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-sm text-primary">
+                      {uf.status === "done" ? "check_circle" : uf.status === "error" ? "error" : "cloud_upload"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-[10px] uppercase truncate text-on-surface">{uf.file.name}</p>
+                      <div className="h-1 bg-card-muted mt-1 overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ${
+                            uf.status === "error" ? "bg-red-500" : uf.status === "done" ? "bg-green-500" : "bg-primary"
+                          }`}
+                          style={{ width: `${uf.progress}%` }}
+                        />
+                      </div>
                     </div>
+                    <span className="font-mono text-[8px] uppercase text-on-surface/50">
+                      {uf.status === "done" ? "DONE" : uf.status === "error" ? "FAIL" : `${uf.progress}%`}
+                    </span>
                   </div>
-                  <span className="font-mono text-[8px] uppercase text-on-surface/50">
-                    {uf.status === "done" ? "DONE" : uf.status === "error" ? "FAIL" : `${uf.progress}%`}
-                  </span>
+                  {/* Show exact Supabase error for debugging */}
+                  {uf.status === "error" && uf.error && (
+                    <p className="font-mono text-[9px] text-red-400 pl-7 break-all">{uf.error}</p>
+                  )}
                 </div>
               ))}
             </div>
           )}
 
-          {/* Actions */}
+          {/* Close button after all done */}
           {allDone && (
             <button
               onClick={() => { setUploadingFiles([]); onClose(); }}

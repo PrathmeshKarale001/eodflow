@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
@@ -12,6 +12,8 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 const ICON_MAP: Record<string, string> = {
   LayoutDashboard: "space_dashboard",
   CheckSquare: "task_alt",
+  CalendarDays: "calendar_month",
+  Timer: "timer",
   FolderKanban: "folder_open",
   Building2: "domain",
   FileStack: "folder_copy",
@@ -150,7 +152,7 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
           )}
           {!collapsed && (
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login" } } })}
               className="flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-error/10 hover:text-error transition-colors"
             >
               <span className="material-symbols-outlined text-sm">logout</span>

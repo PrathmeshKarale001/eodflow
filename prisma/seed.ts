@@ -18,10 +18,17 @@ async function main() {
     create: {
       name: 'Prathmesh Karale',
       email: 'pkarale002@gmail.com',
-      passwordHash: superAdminPassword,
+      emailVerified: true,
       role: Role.SUPER_ADMIN,
       department: Department.MANAGEMENT,
       isActive: true,
+      accounts: {
+        create: {
+          accountId: 'pkarale002@gmail.com',
+          providerId: 'credential',
+          password: superAdminPassword,
+        }
+      }
     },
   });
 

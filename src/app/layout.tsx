@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
-import { auth } from "@/lib/auth";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
@@ -50,24 +48,26 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+        {/* Material Symbols — loaded non-blocking (not render-blocking @import) */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+        />
       </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased font-body text-on-surface selection:bg-primary-container selection:text-white min-h-screen overflow-x-hidden bg-background`}>
         <ThemeProvider>
-          <SessionProvider session={session}>
-            <div className="fixed inset-0 scanline z-[100] opacity-50 pointer-events-none"></div>
-            <div className="p-4 md:p-6 lg:p-8 flex flex-col gap-4 min-h-screen relative z-0">
-              <Navbar />
-              <main className="flex-1 flex flex-col relative z-10 w-full">
-                {children}
-              </main>
-            </div>
-          </SessionProvider>
+          <div className="p-4 md:p-6 lg:p-8 flex flex-col gap-4 min-h-screen relative z-0">
+            <Navbar />
+            <main className="flex-1 flex flex-col relative z-10 w-full">
+              {children}
+            </main>
+          </div>
           <PWAInstallPrompt />
           <PushNotificationManager />
         </ThemeProvider>

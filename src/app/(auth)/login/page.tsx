@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
@@ -18,14 +18,13 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
+    const result = await signIn.email({
       email,
       password,
-      redirect: false,
     });
 
-    if (result?.error) {
-      setError("INVALID_SYS_CREDENTIALS");
+    if (result.error) {
+      setError(result.error.message || "INVALID_SYS_CREDENTIALS");
       setLoading(false);
     } else {
       router.push(callbackUrl);

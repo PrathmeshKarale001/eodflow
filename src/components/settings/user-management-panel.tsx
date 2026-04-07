@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, startTransition } from "react";
-import { inviteUser, deactivateUser } from "@/app/actions/users";
+import { inviteUser, deactivateUser, reactivateUser, deleteUser } from "@/app/actions/users";
 import type { Role, Department } from "@prisma/client";
 
 interface UserData {
@@ -29,21 +29,22 @@ const ROLE_COLORS: Record<Role, string> = {
   EMPLOYEE: "bg-outline/20 text-outline",
 };
 
-const DEPARTMENTS: Department[] = ["DESIGN", "COPY", "DEVELOPMENT", "ADS", "STRATEGY", "MANAGEMENT"];
+const DEPARTMENTS: Department[] = ["DESIGN", "DEVELOPMENT", "STRATEGY", "MANAGEMENT"];
 const ROLES: Role[] = ["SUPER_ADMIN", "ADMIN", "MANAGER", "EMPLOYEE"];
 
 export function UserManagementPanel({
   initialUsers,
   currentUserId,
+  currentUserRole,
 }: {
   initialUsers: UserData[];
   currentUserId: string;
+  currentUserRole: Role;
 }) {
   const [users, setUsers] = useState(initialUsers);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // Invite form state
   const [inviteName, setInviteName] = useState("");
@@ -51,24 +52,33 @@ export function UserManagementPanel({
   const [inviteRole, setInviteRole] = useState<Role>("EMPLOYEE");
   const [inviteDept, setInviteDept] = useState<Department>("DESIGN");
 
+  // Credentials modal state (shown after invite OR reactivate)
+  const [credentials, setCredentials] = useState<{
+    name: string;
+    email: string;
+    password: string;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // ── Invite ──────────────────────────────────────────────────────────────────
   const handleInvite = () => {
     if (!inviteName.trim() || !inviteEmail.trim()) return;
-
     setIsSubmitting(true);
     setError(null);
+    const nameSnap = inviteName.trim();
+    const emailSnap = inviteEmail.trim();
     startTransition(async () => {
       try {
-        await inviteUser({
-          name: inviteName,
-          email: inviteEmail,
+        const result = await inviteUser({
+          name: nameSnap,
+          email: emailSnap,
           role: inviteRole,
           department: inviteDept,
         });
-        setSuccess(`Invited ${inviteName} (${inviteEmail})`);
+        setCredentials({ name: nameSnap, email: emailSnap, password: result.tempPassword });
         setShowInviteForm(false);
         setInviteName("");
         setInviteEmail("");
-        // Refresh users list
         window.location.reload();
       } catch (err: any) {
         setError(err.message || "Failed to invite user");
@@ -78,34 +88,66 @@ export function UserManagementPanel({
     });
   };
 
+  // ── Deactivate ───────────────────────────────────────────────────────────────
   const handleDeactivate = (userId: string, userName: string) => {
     if (!confirm(`Deactivate ${userName}? They will no longer be able to log in.`)) return;
-
     startTransition(async () => {
       try {
         await deactivateUser(userId);
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, isActive: false } : u))
         );
-        setSuccess(`Deactivated ${userName}`);
       } catch (err: any) {
         setError(err.message || "Failed to deactivate user");
       }
     });
   };
 
+  // ── Reactivate — generates new temp password ──────────────────────────────
   const handleReactivate = (userId: string) => {
-    // Directly update via server action (reuse invite logic for reactivation would require a separate action)
-    // For now, just flip the UI state and show a message
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, isActive: true } : u))
-    );
-    setSuccess("User reactivated (UI only — add reactivateUser action for persistence)");
+    startTransition(async () => {
+      try {
+        const result = await reactivateUser(userId);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, isActive: true } : u))
+        );
+        // Show credentials modal so admin can share new password
+        setCredentials({
+          name: result.name,
+          email: result.email,
+          password: result.tempPassword,
+        });
+      } catch (err: any) {
+        setError(err.message || "Failed to reactivate user");
+      }
+    });
   };
+
+  // ── Delete ───────────────────────────────────────────────────────────────────
+  const handleDelete = (userId: string, userName: string) => {
+    if (
+      !confirm(
+        `⚠ PERMANENTLY DELETE ${userName}?\n\nThis cannot be undone. All their data will be removed.`
+      )
+    )
+      return;
+    startTransition(async () => {
+      try {
+        await deleteUser(userId);
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+      } catch (err: any) {
+        setError(err.message || "Failed to delete user");
+      }
+    });
+  };
+
+  // ── Copy credentials message ─────────────────────────────────────────────
+  const buildShareMessage = (c: typeof credentials) =>
+    `Hi ${c!.name}! You've been invited to EOD Flow.\n\nLogin: ${window.location.origin}/login\nEmail: ${c!.email}\nTemp Password: ${c!.password}\n\nPlease change your password after first login.`;
 
   return (
     <div className="space-y-6">
-      {/* Messages */}
+      {/* Error */}
       {error && (
         <div className="brutalist-border bg-error/10 p-3 flex items-center gap-2">
           <span className="material-symbols-outlined text-error text-sm">error</span>
@@ -115,39 +157,109 @@ export function UserManagementPanel({
           </button>
         </div>
       )}
-      {success && (
-        <div className="brutalist-border bg-primary/10 p-3 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
-          <span className="font-label text-[10px] text-primary uppercase tracking-widest">{success}</span>
-          <button onClick={() => setSuccess(null)} className="ml-auto text-primary">
-            <span className="material-symbols-outlined text-sm">close</span>
-          </button>
+
+      {/* ── Credentials Modal ──────────────────────────────────────────────── */}
+      {credentials && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="brutalist-border bg-background w-full max-w-md mx-4 p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-2xl text-primary">key</span>
+              <div>
+                <h2 className="font-headline text-sm uppercase tracking-widest text-foreground">
+                  USER_CREDENTIALS_READY
+                </h2>
+                <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+                  Share these with the user directly
+                </p>
+              </div>
+            </div>
+
+            {/* Credentials box */}
+            <div className="brutalist-border bg-surface-container-lowest p-4 space-y-3 font-mono text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-outline text-[10px] uppercase tracking-widest">NAME</span>
+                <span className="text-foreground font-bold">{credentials.name}</span>
+              </div>
+              <div className="border-t border-white/10" />
+              <div className="flex justify-between items-center">
+                <span className="text-outline text-[10px] uppercase tracking-widest">EMAIL</span>
+                <span className="text-foreground">{credentials.email}</span>
+              </div>
+              <div className="border-t border-white/10" />
+              <div className="flex justify-between items-center">
+                <span className="text-outline text-[10px] uppercase tracking-widest">TEMP PASSWORD</span>
+                <span className="text-primary font-bold text-base tracking-widest">{credentials.password}</span>
+              </div>
+            </div>
+
+            <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+              ⚠ This password is shown ONCE. Copy and share it now.
+            </p>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(buildShareMessage(credentials));
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 brutalist-border py-2.5 font-headline text-xs uppercase text-foreground hover:bg-card/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {copied ? "check" : "content_copy"}
+                </span>
+                {copied ? "COPIED!" : "COPY_MESSAGE"}
+              </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(buildShareMessage(credentials))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-[#25D366]/20 text-[#25D366] brutalist-border px-4 py-2.5 font-headline text-xs uppercase hover:bg-[#25D366]/30 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">send</span>
+                WHATSAPP
+              </a>
+            </div>
+
+            <button
+              onClick={() => setCredentials(null)}
+              className="w-full brutalist-border py-2 font-label text-[10px] text-outline uppercase tracking-widest hover:bg-card/5 transition-colors"
+            >
+              DONE — CLOSE
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Actions Bar */}
+      {/* ── Actions Bar ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="font-label text-[10px] text-outline uppercase tracking-widest">
-            {users.filter((u) => u.isActive).length} ACTIVE / {users.length} TOTAL
-          </span>
-        </div>
+        <span className="font-label text-[10px] text-outline uppercase tracking-widest">
+          {users.filter((u) => u.isActive).length} ACTIVE / {users.length} TOTAL
+        </span>
         <button
           onClick={() => setShowInviteForm(!showInviteForm)}
           className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
         >
-          <span className="material-symbols-outlined text-sm">{showInviteForm ? "close" : "person_add"}</span>
+          <span className="material-symbols-outlined text-sm">
+            {showInviteForm ? "close" : "person_add"}
+          </span>
           {showInviteForm ? "CANCEL" : "INVITE_USER"}
         </button>
       </div>
 
-      {/* Invite Form */}
+      {/* ── Invite Form ────────────────────────────────────────────────────── */}
       {showInviteForm && (
         <div className="brutalist-border bg-surface-container-lowest p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
-          <h3 className="font-headline text-xs uppercase tracking-widest text-foreground">INVITE_NEW_USER</h3>
+          <h3 className="font-headline text-xs uppercase tracking-widest text-foreground">
+            INVITE_NEW_USER
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">FULL_NAME</label>
+              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+                FULL_NAME
+              </label>
               <input
                 type="text"
                 value={inviteName}
@@ -157,7 +269,9 @@ export function UserManagementPanel({
               />
             </div>
             <div className="space-y-1">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">EMAIL</label>
+              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+                EMAIL
+              </label>
               <input
                 type="email"
                 value={inviteEmail}
@@ -167,26 +281,34 @@ export function UserManagementPanel({
               />
             </div>
             <div className="space-y-1">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">ROLE</label>
+              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+                ROLE
+              </label>
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as Role)}
-                className="w-full h-10 brutalist-border bg-transparent px-3 font-label text-[10px] uppercase tracking-widest text-foreground focus:border-primary focus:outline-none"
+                className="w-full h-10 brutalist-border bg-card px-3 font-label text-[10px] uppercase tracking-widest text-foreground focus:border-primary focus:outline-none"
               >
                 {ROLES.map((r) => (
-                  <option key={r} value={r} className="bg-background">{ROLE_LABELS[r]}</option>
+                  <option key={r} value={r} className="bg-background">
+                    {ROLE_LABELS[r]}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">DEPARTMENT</label>
+              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+                DEPARTMENT
+              </label>
               <select
                 value={inviteDept}
                 onChange={(e) => setInviteDept(e.target.value as Department)}
-                className="w-full h-10 brutalist-border bg-transparent px-3 font-label text-[10px] uppercase tracking-widest text-foreground focus:border-primary focus:outline-none"
+                className="w-full h-10 brutalist-border bg-card px-3 font-label text-[10px] uppercase tracking-widest text-foreground focus:border-primary focus:outline-none"
               >
                 {DEPARTMENTS.map((d) => (
-                  <option key={d} value={d} className="bg-background">{d}</option>
+                  <option key={d} value={d} className="bg-background">
+                    {d}
+                  </option>
                 ))}
               </select>
             </div>
@@ -202,7 +324,7 @@ export function UserManagementPanel({
         </div>
       )}
 
-      {/* Users Table */}
+      {/* ── Users Table ────────────────────────────────────────────────────── */}
       <div className="brutalist-border overflow-hidden">
         <table className="w-full">
           <thead>
@@ -217,7 +339,11 @@ export function UserManagementPanel({
           </thead>
           <tbody className="divide-y divide-white/5">
             {users.map((user) => (
-              <tr key={user.id} className={`hover:bg-card/5 transition-colors ${!user.isActive ? "opacity-50" : ""}`}>
+              <tr
+                key={user.id}
+                className={`hover:bg-card/5 transition-colors ${!user.isActive ? "opacity-50" : ""}`}
+              >
+                {/* User */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 flex items-center justify-center bg-primary-container/30 text-xs font-headline font-bold text-primary uppercase">
@@ -234,31 +360,44 @@ export function UserManagementPanel({
                     </div>
                   </div>
                 </td>
+
+                {/* Role */}
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 text-[9px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
                     {ROLE_LABELS[user.role]}
                   </span>
                 </td>
+
+                {/* Dept */}
                 <td className="px-4 py-3">
                   <span className="font-label text-[10px] text-foreground uppercase">
                     {user.department ?? "—"}
                   </span>
                 </td>
+
+                {/* Status */}
                 <td className="px-4 py-3">
-                  <span className={`flex items-center gap-1.5 font-label text-[10px] uppercase tracking-widest ${
-                    user.isActive ? "text-primary" : "text-error"
-                  }`}>
+                  <span className={`flex items-center gap-1.5 font-label text-[10px] uppercase tracking-widest ${user.isActive ? "text-primary" : "text-error"}`}>
                     <span className={`w-2 h-2 ${user.isActive ? "bg-primary" : "bg-error"}`} />
                     {user.isActive ? "ACTIVE" : "INACTIVE"}
                   </span>
                 </td>
+
+                {/* Last Login */}
                 <td className="px-4 py-3">
                   <span className="font-label text-[10px] text-outline">
                     {user.lastLoginAt
-                      ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+                      ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                       : "NEVER"}
                   </span>
                 </td>
+
+                {/* Actions */}
                 <td className="px-4 py-3 text-right">
                   {user.id !== currentUserId && (
                     <div className="flex items-center justify-end gap-2">
@@ -275,6 +414,17 @@ export function UserManagementPanel({
                           className="brutalist-border px-3 py-1.5 font-label text-[9px] uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                         >
                           REACTIVATE
+                        </button>
+                      )}
+
+                      {/* Delete — SUPER_ADMIN only */}
+                      {currentUserRole === "SUPER_ADMIN" && (
+                        <button
+                          onClick={() => handleDelete(user.id, user.name)}
+                          title="Permanently delete user"
+                          className="w-7 h-7 flex items-center justify-center brutalist-border text-error/60 hover:text-error hover:bg-error/10 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
                         </button>
                       )}
                     </div>

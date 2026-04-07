@@ -19,17 +19,53 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   if (!query || query.length < 2) return [];
 
   const role = session.user.role as Role;
-  const results: SearchResult[] = [];
+  const canViewProjects = hasPermission(role, "editProject") || hasPermission(role, "viewAllProjects");
+  const canViewClients = hasPermission(role, "viewAllClients") || hasPermission(role, "viewOwnClients");
 
-  // Search tasks
-  const tasks = await db.task.findMany({
-    where: {
-      title: { contains: query, mode: "insensitive" },
-      ...(role === Role.EMPLOYEE ? { assignedToId: session.user.id } : {}),
-    },
-    include: { project: { select: { title: true } } },
-    take: 5,
-  });
+  // Run ALL queries in parallel — not sequentially
+  const [tasks, projects, clients, files] = await Promise.all([
+    // Search tasks
+    db.task.findMany({
+      where: {
+        title: { contains: query, mode: "insensitive" },
+        ...(role === Role.EMPLOYEE ? { assignedToId: session.user.id } : {}),
+      },
+      include: { project: { select: { title: true } } },
+      take: 5,
+    }),
+
+    // Search projects (if permitted)
+    canViewProjects
+      ? db.project.findMany({
+          where: { title: { contains: query, mode: "insensitive" } },
+          include: { client: { select: { companyName: true } } },
+          take: 5,
+        })
+      : Promise.resolve([]),
+
+    // Search clients (if permitted)
+    canViewClients
+      ? db.client.findMany({
+          where: {
+            companyName: { contains: query, mode: "insensitive" },
+            ...(role !== Role.SUPER_ADMIN ? { pocAdminId: session.user.id } : {}),
+          },
+          take: 5,
+        })
+      : Promise.resolve([]),
+
+    // Search files
+    db.file.findMany({
+      where: {
+        originalName: { contains: query, mode: "insensitive" },
+        ...(role === Role.EMPLOYEE ? { uploadedById: session.user.id } : {}),
+      },
+      take: 5,
+    }),
+  ]);
+
+  // Build results from parallel responses
+  const results: SearchResult[] = [];
 
   for (const task of tasks) {
     results.push({
@@ -41,54 +77,25 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     });
   }
 
-  // Search projects
-  if (hasPermission(role, "editProject") || hasPermission(role, "viewAllProjects")) {
-    const projects = await db.project.findMany({
-      where: { title: { contains: query, mode: "insensitive" } },
-      include: { client: { select: { companyName: true } } },
-      take: 5,
+  for (const project of projects) {
+    results.push({
+      id: project.id,
+      type: "project",
+      title: project.title,
+      subtitle: (project as any).client?.companyName ?? "",
+      href: `/projects/${project.id}`,
     });
-
-    for (const project of projects) {
-      results.push({
-        id: project.id,
-        type: "project",
-        title: project.title,
-        subtitle: project.client.companyName,
-        href: `/projects/${project.id}`,
-      });
-    }
   }
 
-  // Search clients
-  if (hasPermission(role, "viewAllClients") || hasPermission(role, "viewOwnClients")) {
-    const clients = await db.client.findMany({
-      where: {
-        companyName: { contains: query, mode: "insensitive" },
-        ...(role !== Role.SUPER_ADMIN ? { pocAdminId: session.user.id } : {}),
-      },
-      take: 5,
+  for (const client of clients) {
+    results.push({
+      id: client.id,
+      type: "client",
+      title: client.companyName,
+      subtitle: client.industry ?? "Client",
+      href: `/clients/${client.id}`,
     });
-
-    for (const client of clients) {
-      results.push({
-        id: client.id,
-        type: "client",
-        title: client.companyName,
-        subtitle: client.industry ?? "Client",
-        href: `/clients/${client.id}`,
-      });
-    }
   }
-
-  // Search files
-  const files = await db.file.findMany({
-    where: {
-      originalName: { contains: query, mode: "insensitive" },
-      ...(role === Role.EMPLOYEE ? { uploadedById: session.user.id } : {}),
-    },
-    take: 5,
-  });
 
   for (const file of files) {
     results.push({

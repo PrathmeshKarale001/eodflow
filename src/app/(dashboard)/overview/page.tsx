@@ -1,147 +1,238 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { hasPermission } from "@/lib/permissions";
 import { Role, TaskStatus, ProjectStatus } from "@prisma/client";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { AgencyOverview } from "@/components/dashboard/agency-overview";
-import { BottleneckAlerts } from "@/components/dashboard/bottleneck-alerts";
+import { SuperAdminDashboard } from "@/components/dashboard/super-admin-dashboard";
+import { ManagerDashboard } from "@/components/dashboard/manager-dashboard";
+import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
+
+export const dynamic = "force-dynamic";
 
 export default async function OverviewPage() {
   const session = await auth();
   if (!session?.user?.id) return notFound();
 
-  const userRole = session.user.role as Role;
+  const userId = session.user.id;
+  const role = session.user.role as Role;
 
-  // All roles see some version of the dashboard; directors see full KPIs
-  const isDirector = hasPermission(userRole, "viewAgencyDashboard") || hasPermission(userRole, "viewTeamWorkload");
-
-  const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
   const startOfWeek = new Date();
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
 
-  // Parallel data fetching — all queries fire simultaneously
-  const [
-    activeProjectCount,
-    allTasks,
-    overdueTasks,
-    bottleneckTasks,
-    teamMemberCount,
-    weeklyTimeTotal,
-    recentActivities,
-  ] = await Promise.all([
-    db.project.count({ where: { status: ProjectStatus.ACTIVE } }),
-    db.task.groupBy({ by: ["status"], _count: { id: true } }),
-    db.task.count({
-      where: {
-        dueDate: { lt: new Date() },
-        status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] },
-      },
-    }),
+  const lastWeekStart = new Date(startOfWeek);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const nextWeek = new Date(Date.now() + 7 * 86400000);
+
+  // ─── SUPER_ADMIN / ADMIN ────────────────────────────────────────────────────
+  if (role === "SUPER_ADMIN" || role === "ADMIN") {
+    const [
+      activeProjects,
+      totalClients,
+      overdueTasks,
+      totalTeam,
+      tasksInReview,
+      completedThisWeek,
+      weeklyTime,
+      lastWeekTime,
+      bottlenecks,
+      recentActivities,
+    ] = await Promise.all([
+      db.project.count({ where: { status: ProjectStatus.ACTIVE } }),
+      db.client.count({ where: { isActive: true } }),
+      db.task.count({
+        where: { dueDate: { lt: new Date() }, status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] } },
+      }),
+      db.user.count({ where: { isActive: true } }),
+      db.task.count({ where: { status: { in: [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL] } } }),
+      db.task.count({ where: { status: TaskStatus.DONE, updatedAt: { gte: startOfWeek } } }),
+      db.timeEntry.aggregate({ where: { createdAt: { gte: startOfWeek } }, _sum: { durationMins: true } }),
+      db.timeEntry.aggregate({
+        where: { createdAt: { gte: lastWeekStart, lt: startOfWeek } },
+        _sum: { durationMins: true },
+      }),
+      db.task.findMany({
+        where: {
+          status: { in: [TaskStatus.IN_REVIEW, TaskStatus.REVISION, TaskStatus.CLIENT_APPROVAL] },
+          updatedAt: { lt: cutoff48h },
+        },
+        include: {
+          assignedTo: { select: { name: true } },
+          project: { select: { title: true } },
+        },
+        orderBy: { updatedAt: "asc" },
+        take: 10,
+      }),
+      db.activityLog.findMany({
+        include: { user: { select: { name: true } }, task: { select: { title: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+    ]);
+
+    return (
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <DashboardHeader role="AGENCY_CONTROL" subtitle="FULL_AGENCY_OVERVIEW // KPI_DASHBOARD" />
+        <SuperAdminDashboard
+          activeProjects={activeProjects}
+          totalClients={totalClients}
+          overdueTasks={overdueTasks}
+          totalTeam={totalTeam}
+          weeklyHours={Math.round((weeklyTime._sum.durationMins ?? 0) / 60)}
+          lastWeekHours={Math.round((lastWeekTime._sum.durationMins ?? 0) / 60)}
+          tasksInReview={tasksInReview}
+          completedThisWeek={completedThisWeek}
+          bottlenecks={bottlenecks as any}
+          recentActivities={recentActivities as any}
+        />
+      </div>
+    );
+  }
+
+  // ─── MANAGER ────────────────────────────────────────────────────────────────
+  if (role === "MANAGER") {
+    // Stage 1: Fetch teamMembers first (needed for groupBy filters)
+    const [teamMembers, managedProjects, pendingReview, upcomingDeadlines, weeklyTime] = await Promise.all([
+      db.user.findMany({
+        where: { isActive: true, role: "EMPLOYEE" },
+        select: { id: true, name: true },
+      }),
+      db.project.findMany({
+        where: { assignedManagerId: userId },
+        include: { _count: { select: { tasks: true } } },
+        orderBy: { updatedAt: "desc" },
+        take: 10,
+      }),
+      db.task.findMany({
+        where: {
+          status: { in: [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL, TaskStatus.REVISION] },
+          project: { assignedManagerId: userId },
+        },
+        include: {
+          assignedTo: { select: { name: true } },
+          project: { select: { title: true } },
+        },
+        orderBy: { updatedAt: "asc" },
+        take: 20,
+      }),
+      db.task.findMany({
+        where: {
+          dueDate: { lte: nextWeek },
+          status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] },
+          project: { assignedManagerId: userId },
+        },
+        include: {
+          assignedTo: { select: { name: true } },
+          project: { select: { title: true } },
+        },
+        orderBy: { dueDate: "asc" },
+        take: 15,
+      }),
+      db.timeEntry.aggregate({ where: { createdAt: { gte: startOfWeek } }, _sum: { durationMins: true } }),
+    ]);
+
+    // Stage 2: GroupBy queries (depend on teamMembers IDs) — run in parallel
+    const memberIds = teamMembers.map((m) => m.id);
+    const [tasksByMember, inProgressByMember] = await Promise.all([
+      db.task.groupBy({
+        by: ["assignedToId"],
+        where: {
+          status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] },
+          assignedToId: { in: memberIds },
+        },
+        _count: { id: true },
+      }),
+      db.task.groupBy({
+        by: ["assignedToId"],
+        where: {
+          status: TaskStatus.IN_PROGRESS,
+          assignedToId: { in: memberIds },
+        },
+        _count: { id: true },
+      }),
+    ]);
+
+    const teamWorkload = teamMembers.map((m) => ({
+      userId: m.id,
+      userName: m.name,
+      taskCount: tasksByMember.find((g) => g.assignedToId === m.id)?._count.id ?? 0,
+      inProgressCount: inProgressByMember.find((g) => g.assignedToId === m.id)?._count.id ?? 0,
+    })).sort((a, b) => b.taskCount - a.taskCount);
+
+    return (
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <DashboardHeader role="MANAGER_VIEW" subtitle="TEAM_WORKLOAD // PROJECT_STATUS" />
+        <ManagerDashboard
+          managedProjects={managedProjects as any}
+          teamWorkload={teamWorkload}
+          pendingReview={pendingReview as any}
+          upcomingDeadlines={upcomingDeadlines as any}
+          weeklyHours={Math.round((weeklyTime._sum.durationMins ?? 0) / 60)}
+        />
+      </div>
+    );
+  }
+
+  // ─── EMPLOYEE (default) ─────────────────────────────────────────────────────
+  const [myTasks, todayTime, weeklyTime, recentComments] = await Promise.all([
     db.task.findMany({
-      where: {
-        status: { in: [TaskStatus.IN_REVIEW, TaskStatus.REVISION, TaskStatus.CLIENT_APPROVAL] },
-        updatedAt: { lt: cutoff48h },
-      },
-      include: {
-        assignedTo: { select: { name: true } },
-        project: { select: { title: true } },
-      },
-      orderBy: { updatedAt: "asc" },
-      take: 20,
+      where: { assignedToId: userId, status: { notIn: [TaskStatus.APPROVED] } },
+      include: { project: { select: { title: true } } },
+      orderBy: [{ dueDate: "asc" }, { priority: "asc" }],
+      take: 30,
     }),
-    db.user.count({ where: { isActive: true } }),
     db.timeEntry.aggregate({
-      where: { createdAt: { gte: startOfWeek } },
+      where: { userId, entryDate: { gte: startOfToday } },
       _sum: { durationMins: true },
     }),
-    db.activityLog.findMany({
+    db.timeEntry.aggregate({
+      where: { userId, createdAt: { gte: startOfWeek } },
+      _sum: { durationMins: true },
+    }),
+    db.comment.findMany({
+      where: {
+        task: { assignedToId: userId },
+        userId: { not: userId }, // others' comments
+      },
       include: {
         user: { select: { name: true } },
         task: { select: { title: true } },
       },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 10,
     }),
   ]);
 
-  // Transform groupBy results into a Record
-  const statusCounts: Record<string, number> = {};
-  let totalTasks = 0;
-  for (const group of allTasks) {
-    statusCounts[group.status] = group._count.id;
-    totalTasks += group._count.id;
-  }
-
-  const weeklyMinutes = weeklyTimeTotal._sum.durationMins || 0;
-  const weeklyHours = Math.round(weeklyMinutes / 60);
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Page Header */}
-      <div className="brutalist-border bg-[#180065] text-white p-6 relative overflow-hidden">
-        <div className="absolute inset-0 scanline opacity-20 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase">
-              MISSION_CONTROL
-            </h1>
-            <p className="font-mono text-xs uppercase tracking-widest text-neutral-400 mt-1">
-              AGENCY_OVERVIEW // REAL-TIME OPERATIONAL STATUS
-            </p>
-          </div>
-          <span className="material-symbols-outlined text-[40px] text-on-surface/30">monitoring</span>
+      <DashboardHeader role="MY_DASHBOARD" subtitle={`WELCOME_BACK // ${(session.user.name ?? "").toUpperCase().replace(" ", "_")}`} />
+      <EmployeeDashboard
+        myName={session.user.name ?? ""}
+        myTasks={myTasks as any}
+        todayHours={Math.round((todayTime._sum.durationMins ?? 0) / 60)}
+        weekHours={Math.round((weeklyTime._sum.durationMins ?? 0) / 60)}
+        weekTarget={40}
+        recentComments={recentComments as any}
+      />
+    </div>
+  );
+}
+
+function DashboardHeader({ role, subtitle }: { role: string; subtitle: string }) {
+  return (
+    <div className="brutalist-border bg-[#180065] text-white p-6 relative overflow-hidden">
+      <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
+      <div className="relative z-10 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase">{role}</h1>
+          <p className="font-mono text-xs uppercase tracking-widest text-neutral-400 mt-1">{subtitle}</p>
         </div>
+        <span className="material-symbols-outlined text-[40px] text-on-surface/30">monitoring</span>
       </div>
-
-      {/* KPI Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <StatCard
-          label="ACTIVE_PROJECTS"
-          value={activeProjectCount}
-          icon="folder_open"
-          accent="border-t-blue-500"
-        />
-        <StatCard
-          label="TOTAL_TASKS"
-          value={totalTasks}
-          icon="task"
-          accent="border-t-purple-500"
-        />
-        <StatCard
-          label="IN_PROGRESS"
-          value={statusCounts[TaskStatus.IN_PROGRESS] || 0}
-          icon="pending"
-          accent="border-t-amber-500"
-        />
-        <StatCard
-          label="OVERDUE"
-          value={overdueTasks}
-          icon="schedule"
-          accent="border-t-red-500"
-          subtitle="PAST_DEADLINE"
-        />
-        <StatCard
-          label="TEAM_SIZE"
-          value={teamMemberCount}
-          icon="group"
-          accent="border-t-green-500"
-        />
-        <StatCard
-          label="HOURS_THIS_WEEK"
-          value={weeklyHours}
-          icon="timer"
-          accent="border-t-cyan-500"
-          subtitle={`${weeklyMinutes}m TOTAL`}
-        />
-      </div>
-
-      {/* Task Distribution Chart */}
-      <AgencyOverview statusCounts={statusCounts} totalTasks={totalTasks} />
-
-      {/* Bottleneck Alerts & Activity Feed */}
-      <BottleneckAlerts bottleneckTasks={bottleneckTasks} activities={recentActivities} />
     </div>
   );
 }

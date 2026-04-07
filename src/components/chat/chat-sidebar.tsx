@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useUnread } from "./chat-provider";
 import {
   getOrCreateDMChannel,
   getAvailableDMUsers,
@@ -29,6 +30,7 @@ interface ChatSidebarProps {
 export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { unreadCounts } = useUnread();
   const [showNewDM, setShowNewDM] = useState(false);
   const [showNewChannel, setShowNewChannel] = useState(false);
   const [dmUsers, setDmUsers] = useState<{ id: string; name: string; role: string }[]>([]);
@@ -157,6 +159,7 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
           ) : (
             filteredChannels(groupChannels).map((ch) => {
               const isActive = pathname === `/chat/${ch.id}`;
+              const unread = unreadCounts[ch.id] ?? 0;
               return (
                 <Link
                   key={ch.id}
@@ -169,7 +172,9 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
                 >
                   <span className="text-primary/60 font-mono text-[11px] flex-shrink-0">#</span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">
+                    <p className={`font-headline text-[10px] uppercase tracking-wider truncate ${
+                      unread > 0 ? "text-on-surface" : "text-card-text"
+                    }`}>
                       {ch.name}
                     </p>
                     {ch.messages[0] && (
@@ -178,7 +183,12 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
                       </p>
                     )}
                   </div>
-                  {isAdmin && (
+                  {unread > 0 && (
+                    <span className="flex-shrink-0 min-w-[18px] h-[18px] bg-primary text-on-primary text-[8px] font-bold font-mono rounded-full flex items-center justify-center px-1">
+                      {unread > 99 ? "99+" : unread}
+                    </span>
+                  )}
+                  {isAdmin && unread === 0 && (
                     <button
                       onClick={(e) => handleDeleteChannel(ch.id, e)}
                       className="opacity-0 group-hover:opacity-100 text-on-surface/30 hover:text-red-400 transition-all flex-shrink-0"
@@ -210,6 +220,7 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
           {filteredChannels(directChannels).map((ch) => {
             const isActive = pathname === `/chat/${ch.id}`;
             const otherUser = getOtherUser(ch);
+            const unread = unreadCounts[ch.id] ?? 0;
             return (
               <Link
                 key={ch.id}
@@ -220,11 +231,20 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
                     : "hover:bg-card-muted border-l-2 border-l-transparent"
                 }`}
               >
-                <div className="flex h-5 w-5 items-center justify-center bg-surface-container-high text-[8px] font-headline font-bold text-on-surface/60 flex-shrink-0 uppercase">
-                  {otherUser?.name.charAt(0) || "?"}
+                <div className="relative flex-shrink-0">
+                  <div className="flex h-5 w-5 items-center justify-center bg-surface-container-high text-[8px] font-headline font-bold text-on-surface/60 uppercase">
+                    {otherUser?.name.charAt(0) || "?"}
+                  </div>
+                  {unread > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-primary text-on-primary text-[7px] font-bold font-mono rounded-full flex items-center justify-center px-0.5">
+                      {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">
+                  <p className={`font-headline text-[10px] uppercase tracking-wider truncate ${
+                    unread > 0 ? "text-on-surface" : "text-card-text"
+                  }`}>
                     {otherUser?.name || "Unknown"}
                   </p>
                 </div>

@@ -1,3 +1,4 @@
+/* Material Symbols loaded via non-blocking <link> in layout.tsx — not @import (render-blocking) */
 @import "tailwindcss";
 
 /* =============================================================================
@@ -178,8 +179,21 @@ body {
   color: white;
 }
 
-/* Smooth transitions for theme switching */
-*, *::before, *::after {
+/* Smooth transitions — scoped to interactive elements only (not every DOM node) */
+a,
+button,
+[role="button"],
+input,
+select,
+textarea,
+.brutalist-border {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+/* Theme-switch animation: apply globally only during active transition */
+[data-transitioning] *,
+[data-transitioning] *::before,
+[data-transitioning] *::after {
   transition-property: background-color, border-color, color;
   transition-duration: 200ms;
   transition-timing-function: ease;
@@ -190,4 +204,20 @@ body {
   outline: 2px solid var(--clr-primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none !important;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }

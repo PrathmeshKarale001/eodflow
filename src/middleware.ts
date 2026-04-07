@@ -1,11 +1,10 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { ROUTE_ACCESS } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/invite", "/api/auth"];
+const PUBLIC_PATHS = ["/", "/login", "/accept-invite", "/api/auth"];
 
-export default auth((req) => {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Allow public paths
@@ -22,15 +21,25 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
+  // Explicitly fetch the session from our Better-Auth endpoint.
+  // This bypasses Node.js Edge limitations since prisma isn't edge-compatible.
+  const response = await fetch(`${req.nextUrl.origin}/api/auth/get-session`, {
+    headers: {
+      cookie: req.headers.get("cookie") || "",
+    },
+  });
+  
+  const authSession = await response.json().catch(() => null);
+
   // Redirect unauthenticated users to login
-  if (!req.auth?.user) {
+  if (!authSession?.user) {
     const loginUrl = new URL("/login", req.nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Check route-level RBAC
-  const userRole = req.auth.user.role as Role;
+  const userRole = authSession.user.role as Role;
   const matchedRoute = Object.entries(ROUTE_ACCESS).find(([route]) =>
     pathname.startsWith(route)
   );
@@ -44,7 +53,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js).*)"],

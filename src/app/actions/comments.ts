@@ -68,35 +68,34 @@ export async function addComment(data: {
     });
   }
 
-  // Parse @mentions and create MENTION notifications
+  // Parse @mentions and create MENTION notifications — BATCHED (not N+1)
   const mentionedNames = parseMentions(data.content);
   if (mentionedNames.length > 0) {
-    // Look up mentioned users by name (case-insensitive)
-    for (const name of mentionedNames) {
-      const mentionedUsers = await db.user.findMany({
-        where: {
-          name: { contains: name, mode: "insensitive" },
-          isActive: true,
-          id: { not: session.user.id }, // don't notify self
-        },
-        select: { id: true },
-        take: 1,
-      });
+    // Single query for ALL mentioned users (instead of 1 query per mention)
+    const mentionedUsers = await db.user.findMany({
+      where: {
+        OR: mentionedNames.map((name) => ({
+          name: { contains: name, mode: "insensitive" as const },
+        })),
+        isActive: true,
+        id: { not: session.user.id }, // don't notify self
+      },
+      select: { id: true },
+    });
 
-      for (const mentionedUser of mentionedUsers) {
-        // Don't duplicate if already notified as assignee
-        if (mentionedUser.id === task?.assignedToId) continue;
+    // Filter out assignee (already notified above) and batch-create notifications
+    const notificationData = mentionedUsers
+      .filter((u) => u.id !== task?.assignedToId)
+      .map((u) => ({
+        userId: u.id,
+        type: "MENTION" as const,
+        title: `${session.user.name} mentioned you`,
+        body: `In "${task?.title || "a task"}": ${data.content.substring(0, 100)}`,
+        linkUrl: task?.projectId ? `/projects/${task.projectId}` : undefined,
+      }));
 
-        await db.notification.create({
-          data: {
-            userId: mentionedUser.id,
-            type: "MENTION",
-            title: `${session.user.name} mentioned you`,
-            body: `In "${task?.title || "a task"}": ${data.content.substring(0, 100)}`,
-            linkUrl: task?.projectId ? `/projects/${task.projectId}` : undefined,
-          },
-        });
-      }
+    if (notificationData.length > 0) {
+      await db.notification.createMany({ data: notificationData });
     }
   }
 

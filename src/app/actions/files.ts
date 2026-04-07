@@ -303,7 +303,7 @@ export async function getFilteredFiles(filters: {
       },
     },
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: 50,
   });
 
   return files;

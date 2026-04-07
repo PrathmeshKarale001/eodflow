@@ -1,109 +1,61 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "@/lib/db";
-import type { Role } from "@prisma/client";
+import { headers } from "next/headers";
+import { cache } from "react";
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      image?: string | null;
-      role: Role;
-      department?: string | null;
-    };
-  }
-
-  interface User {
-    role: Role;
-    department?: string | null;
-  }
-}
-
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  // NOTE: PrismaAdapter removed — incompatible with Credentials provider.
-  // With JWT strategy we don't need a DB adapter; sessions live in the cookie.
-  session: {
-    strategy: "jwt",
-    maxAge: 24 * 60 * 60,
-  },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  providers: [
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+export const authApi = betterAuth({
+  database: prismaAdapter(db, {
+    provider: "postgresql",
+  }),
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "EMPLOYEE",
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        const user = await db.user.findUnique({
-          where: { email: credentials.email as string },
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            passwordHash: true,
-            role: true,
-            department: true,
-            isActive: true,
-          },
-        });
-
-        if (!user || !user.passwordHash || !user.isActive) return null;
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        );
-
-        if (!isValid) return null;
-
-        await db.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        });
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          role: user.role,
-          department: user.department,
-        };
+      department: {
+        type: "string",
+        required: false,
       },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-        token.role = user.role;
-        token.department = user.department;
+      isActive: {
+        type: "boolean",
+        defaultValue: true,
+      },
+      invitedBy: {
+        type: "string",
+        required: false,
+      },
+      lastLoginAt: {
+        type: "date",
+        required: false,
       }
-      return token;
-    },
-    async session({ session, token }: any) {
-      if (session.user && token) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.department = token.department;
-      }
-      return session;
-    },
-    async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      if (new URL(url).origin === baseUrl) return url;
-      return `${baseUrl}/overview`;
-    },
+    }
+  },
+  emailAndPassword: {
+    enabled: true,
   },
 });
 
+// Backwards compatibility layer for legacy NextAuth "await auth()" usage
+// Wrapped with React cache() to deduplicate across components in the same render pass
+// (layout.tsx → navbar.tsx → dashboard/layout.tsx all call auth() — now only 1 DB hit)
+export const auth = cache(async () => {
+  const reqHeaders = await headers();
+  const sessionData = await authApi.api.getSession({
+    headers: reqHeaders,
+  });
+  
+  if (!sessionData) return null;
+  
+  return {
+    user: {
+      id: sessionData.user.id,
+      name: sessionData.user.name,
+      email: sessionData.user.email,
+      role: sessionData.user.role,
+      department: sessionData.user.department,
+      image: sessionData.user.image,
+    }
+  };
+});
