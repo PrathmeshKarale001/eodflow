@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ROUTE_ACCESS } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 
-const PUBLIC_PATHS = ["/", "/login", "/accept-invite", "/api/auth"];
+const PUBLIC_PATHS = ["/", "/login", "/accept-invite", "/api/auth", "/api/debug-auth"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
