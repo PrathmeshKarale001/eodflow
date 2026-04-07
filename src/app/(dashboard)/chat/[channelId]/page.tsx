@@ -15,19 +15,23 @@ export default async function ChatChannelPage({ params }: Props) {
 
   const { channelId } = await params;
 
-  // Get channel details
-  const channel = await db.chatChannel.findUnique({
-    where: { id: channelId },
-    include: {
-      project: { select: { title: true } },
-      members: { include: { user: { select: { id: true, name: true } } } },
-    },
-  });
+  // Run ALL queries in parallel (not sequentially)
+  const [channel, channels, messages] = await Promise.all([
+    // Channel details
+    db.chatChannel.findUnique({
+      where: { id: channelId },
+      include: {
+        project: { select: { title: true } },
+        members: { include: { user: { select: { id: true, name: true } } } },
+      },
+    }),
+    // Sidebar channels (needed for ChatSidebar prop)
+    getUserChannels(),
+    // Channel messages
+    getChannelMessages(channelId),
+  ]);
 
   if (!channel) redirect("/chat");
-
-  const channels = await getUserChannels();
-  const messages = await getChannelMessages(channelId);
 
   const channelName =
     channel.type === "DIRECT"

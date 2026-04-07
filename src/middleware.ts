@@ -1,10 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ROUTE_ACCESS } from "@/lib/permissions";
-import type { Role } from "@prisma/client";
+
+// ---------------------------------------------------------------------------
+// LIGHTWEIGHT MIDDLEWARE — No network calls, no cold starts
+//
+// Better-Auth uses opaque session tokens (not JWTs), so we CANNOT verify them
+// cryptographically in Edge middleware. Instead:
+//   1. Middleware: Check if session cookie EXISTS → redirect to /login if missing
+//   2. Page-level: auth() in dashboard/layout.tsx does the REAL DB verification
+//   3. Action-level: Every server action independently calls auth() + hasPermission()
+//
+// This eliminates the 2-4 second self-fetch cold start on Vercel.
+// ---------------------------------------------------------------------------
 
 const PUBLIC_PATHS = ["/", "/login", "/accept-invite", "/api/auth", "/api/debug-auth"];
 
-export async function middleware(req: NextRequest) {
+// Better-Auth default session cookie name
+const SESSION_COOKIE = "better-auth.session_token";
+
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Allow public paths
@@ -12,7 +25,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow static assets and API routes for auth
+  // Allow static assets
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
@@ -21,37 +34,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Explicitly fetch the session from our Better-Auth endpoint.
-  // This bypasses Node.js Edge limitations since prisma isn't edge-compatible.
-  const response = await fetch(`${req.nextUrl.origin}/api/auth/get-session`, {
-    headers: {
-      cookie: req.headers.get("cookie") || "",
-    },
-  });
-  
-  const authSession = await response.json().catch(() => null);
+  // Check if session cookie exists (no network call — just reads the cookie header)
+  const sessionCookie = req.cookies.get(SESSION_COOKIE);
 
-  // Redirect unauthenticated users to login
-  if (!authSession?.user) {
+  if (!sessionCookie?.value) {
     const loginUrl = new URL("/login", req.nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Check route-level RBAC
-  const userRole = authSession.user.role as Role;
-  const matchedRoute = Object.entries(ROUTE_ACCESS).find(([route]) =>
-    pathname.startsWith(route)
-  );
-
-  if (matchedRoute) {
-    const [, allowedRoles] = matchedRoute;
-    if (!allowedRoles.includes(userRole)) {
-      // Redirect unauthorized users to their default dashboard
-      return NextResponse.redirect(new URL("/overview", req.nextUrl.origin));
-    }
-  }
-
+  // RBAC is handled at page-level (dashboard/layout.tsx checks auth() + role)
+  // and action-level (every server action checks hasPermission())
   return NextResponse.next();
 }
 
