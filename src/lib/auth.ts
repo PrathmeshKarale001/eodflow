@@ -52,21 +52,26 @@ export const authApi = betterAuth({
 });
 
 export const auth = cache(async () => {
-  const reqHeaders = await headers();
-  const sessionData = await authApi.api.getSession({
-    headers: reqHeaders,
-  });
-  
-  if (!sessionData) return null;
-  
-  return {
-    user: {
-      id: sessionData.user.id,
-      name: sessionData.user.name,
-      email: sessionData.user.email,
-      role: (sessionData.user as any).role,
-      department: (sessionData.user as any).department,
-      image: sessionData.user.image,
-    }
-  };
+  try {
+    const reqHeaders = await headers();
+    const sessionData = await authApi.api.getSession({
+      headers: reqHeaders,
+    });
+    
+    if (!sessionData) return null;
+    
+    return {
+      user: {
+        id: sessionData.user.id,
+        name: sessionData.user.name,
+        email: sessionData.user.email,
+        role: (sessionData.user as any).role,
+        department: (sessionData.user as any).department,
+        image: sessionData.user.image,
+      }
+    };
+  } catch (error) {
+    console.error("# AUTH_ERROR:", error);
+    return null;
+  }
 });
