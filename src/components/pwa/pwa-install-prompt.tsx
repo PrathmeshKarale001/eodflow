@@ -22,13 +22,13 @@ export function PWAInstallPrompt() {
 
     // Listen for install prompt
     const handler = (e: Event) => {
+      // Only capture the prompt if user hasn't dismissed before
+      const dismissed = localStorage.getItem("pwa-install-dismissed");
+      if (dismissed) return; // Let browser handle silently — no warning
+
       e.preventDefault();
       setInstallPrompt(e as BeforeInstallPromptEvent);
-      // Only show if not dismissed before
-      const dismissed = localStorage.getItem("pwa-install-dismissed");
-      if (!dismissed) {
-        setShowBanner(true);
-      }
+      setShowBanner(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
