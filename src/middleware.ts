@@ -14,8 +14,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/", "/login", "/accept-invite", "/api/auth", "/api/debug-auth"];
 
-// Better-Auth default session cookie name
-const SESSION_COOKIE = "better-auth.session_token";
+// Must match the cookiePrefix set in auth.ts advanced config
+const SESSION_COOKIE = "eod-flow.session_token";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

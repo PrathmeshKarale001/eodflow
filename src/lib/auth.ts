@@ -51,6 +51,19 @@ export const authApi = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  advanced: {
+    // Use consistent cookie name regardless of HTTP/HTTPS
+    // Production HTTPS would prefix with __Secure- which breaks server reads
+    cookiePrefix: "eod-flow",
+    crossSubDomainCookies: {
+      enabled: false,
+    },
+    defaultCookieAttributes: {
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+    },
+  },
 });
 
 export const auth = cache(async () => {

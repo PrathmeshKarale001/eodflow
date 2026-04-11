@@ -1,14 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { ProjectStatus, TaskStatus } from "@prisma/client";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const checks: Record<string, string> = {};
 
   // 1. Env vars
   checks.BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET ? `SET (${process.env.BETTER_AUTH_SECRET.length} chars)` : "MISSING";
   checks.BETTER_AUTH_URL = process.env.BETTER_AUTH_URL || "NOT SET";
   checks.DATABASE_URL = process.env.DATABASE_URL ? "SET" : "MISSING";
+
+  // 1b. Cookie inspection — what does the browser actually send?
+  const allCookies = req.cookies.getAll().map(c => c.name);
+  checks.cookies = allCookies.length > 0 ? allCookies.join(", ") : "NONE";
+  checks.oldSessionCookie = req.cookies.get("better-auth.session_token")?.value ? "FOUND" : "MISSING";
+  checks.newSessionCookie = req.cookies.get("eod-flow.session_token")?.value ? "FOUND" : "MISSING";
 
   // 2. DB connection
   try {
