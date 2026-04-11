@@ -15,7 +15,6 @@ export async function GET() {
     const userCount = await db.user.count();
     checks.database = `OK (${userCount} users)`;
     
-    // Check if accounts exist
     const accountCount = await db.account.count();
     checks.accounts = `OK (${accountCount} accounts)`;
 
@@ -24,11 +23,42 @@ export async function GET() {
     if (superAdmin) {
       const adminAccounts = await db.account.findMany({ where: { userId: superAdmin.id } });
       checks.superAdmin = `Found (${adminAccounts.length} credential accounts)`;
+      
+      // Check the account details
+      if (adminAccounts.length > 0) {
+        const acc = adminAccounts[0];
+        checks.accountDetails = JSON.stringify({
+          provider: acc.providerId,
+          hasPassword: !!acc.password,
+          passwordLen: acc.password?.length ?? 0,
+          accountId: acc.id?.substring(0, 8) + "...",
+          userId: acc.userId?.substring(0, 8) + "...",
+        });
+      }
     } else {
       checks.superAdmin = "NOT FOUND";
     }
   } catch (e: any) {
     checks.database = `ERROR: ${e.message}`;
+  }
+
+  // 3. Try sign-in flow
+  try {
+    const baseUrl = process.env.BETTER_AUTH_URL || `https://${process.env.VERCEL_URL}`;
+    const signInRes = await fetch(`${baseUrl}/api/auth/sign-in/email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "pkarale002@gmail.com",
+        password: "admin123",
+      }),
+    });
+    
+    const signInText = await signInRes.text();
+    checks.signInTest = `Status: ${signInRes.status}`;
+    checks.signInResponse = signInText.substring(0, 300);
+  } catch (e: any) {
+    checks.signInTest = `ERROR: ${e.message}`;
   }
 
   return NextResponse.json(checks);
