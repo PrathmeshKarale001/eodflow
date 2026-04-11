@@ -289,7 +289,13 @@ export function UserManagementPanel({
                 onChange={(e) => setInviteRole(e.target.value as Role)}
                 className="w-full h-10 brutalist-border bg-card px-3 font-label text-[10px] uppercase tracking-widest text-foreground focus:border-primary focus:outline-none"
               >
-                {ROLES.map((r) => (
+                {ROLES
+                  .filter((r) => {
+                    // Admins can only invite EMPLOYEE/MANAGER
+                    if (currentUserRole === "ADMIN") return r === "EMPLOYEE" || r === "MANAGER";
+                    return true; // SUPER_ADMIN sees all
+                  })
+                  .map((r) => (
                   <option key={r} value={r} className="bg-background">
                     {ROLE_LABELS[r]}
                   </option>

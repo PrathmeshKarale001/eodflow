@@ -36,7 +36,12 @@ export async function inviteUser(data: {
 
   const userRole = session.user.role as Role;
   if (!hasPermission(userRole, "inviteUsers")) {
-    throw new Error("FORBIDDEN: Only Super Admins can invite users.");
+    throw new Error("FORBIDDEN: You do not have permission to invite users.");
+  }
+
+  // Admins can only invite EMPLOYEE/MANAGER — not other Admins or Super Admins
+  if (userRole === Role.ADMIN && (data.role === Role.ADMIN || data.role === Role.SUPER_ADMIN)) {
+    throw new Error("FORBIDDEN: Admins can only invite Employees and Managers.");
   }
 
   const existing = await db.user.findUnique({ where: { email: data.email } });

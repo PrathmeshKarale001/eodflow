@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, startTransition } from "react";
 import { TaskStatus, Priority } from "@prisma/client";
 import { TaskDetailDrawer } from "./task-detail-drawer";
+import { reassignTask } from "@/app/actions/tasks";
 
 const STATUS_SECTIONS: { status: TaskStatus; label: string; accent: string }[] = [
   { status: TaskStatus.TODO, label: "TODO", accent: "border-l-blue-500" },
@@ -21,6 +22,14 @@ const PRIORITY_CHIP: Record<string, string> = {
   LOW: "bg-neutral-300 text-neutral-700",
 };
 
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  department: string | null;
+  image: string | null;
+}
+
 interface TaskType {
   id: string;
   title: string;
@@ -31,6 +40,7 @@ interface TaskType {
   revisionCount: number;
   projectId: string;
   assignedTo: { id: string; name: string; image: string | null } | null;
+  project?: { id: string; title: string } | null;
   files: Array<{ id: string; filename: string; fileUrl: string; mimeType: string; fileSize: number; createdAt: Date }>;
   subtasks: Array<{ id: string; title: string; isDone: boolean }>;
 }
@@ -38,10 +48,14 @@ interface TaskType {
 interface MyTasksListProps {
   tasks: TaskType[];
   userId: string;
+  canAssign?: boolean;
+  teamMembers?: TeamMember[];
 }
 
-export function MyTasksList({ tasks, userId }: MyTasksListProps) {
+export function MyTasksList({ tasks, userId, canAssign = false, teamMembers = [] }: MyTasksListProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
+  const [reassigning, setReassigning] = useState(false);
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
 
@@ -49,6 +63,20 @@ export function MyTasksList({ tasks, userId }: MyTasksListProps) {
     ...section,
     tasks: tasks.filter((t) => t.status === section.status),
   })).filter((section) => section.tasks.length > 0);
+
+  const handleReassign = (taskId: string, newAssigneeId: string) => {
+    setReassigning(true);
+    startTransition(async () => {
+      try {
+        await reassignTask(taskId, newAssigneeId);
+        setAssigningTaskId(null);
+      } catch (err: any) {
+        alert(err.message || "Failed to reassign task");
+      } finally {
+        setReassigning(false);
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -84,38 +112,129 @@ export function MyTasksList({ tasks, userId }: MyTasksListProps) {
                   : false;
 
                 return (
-                  <div
-                    key={task.id}
-                    onClick={() => setSelectedTaskId(task.id)}
-                    className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className={`inline-block px-1.5 py-0.5 text-[8px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0`}>
-                        {task.priority[0]}
-                      </span>
-                      <span className="font-headline text-sm uppercase tracking-tight truncate group-hover:text-primary transition-colors">
-                        {task.title}
-                      </span>
-                      {task.revisionCount > 0 ? (
-                        <span className="text-[8px] font-mono text-red-600 bg-red-500/10 px-1.5 py-0.5 brutalist-border border-red-200 flex-shrink-0">
-                          R{task.revisionCount}
+                  <div key={task.id}>
+                    <div
+                      onClick={() => setSelectedTaskId(task.id)}
+                      className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={`inline-block px-1.5 py-0.5 text-[8px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0`}>
+                          {task.priority[0]}
                         </span>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-4 text-[9px] font-mono text-muted-foreground uppercase flex-shrink-0">
-                      {task.files.length > 0 ? (
-                        <span className="flex items-center gap-0.5">
-                          <span className="material-symbols-outlined text-xs">attach_file</span>
-                          {task.files.length}
+                        <div className="min-w-0">
+                          <span className="font-headline text-sm uppercase tracking-tight truncate group-hover:text-primary transition-colors block">
+                            {task.title}
+                          </span>
+                          {/* Show project name and assignee for Admin/Super Admin */}
+                          {canAssign && (
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {task.project && (
+                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                  {task.project.title}
+                                </span>
+                              )}
+                              {task.assignedTo && (
+                                <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                                  → {task.assignedTo.name}
+                                </span>
+                              )}
+                              {!task.assignedTo && (
+                                <span className="font-mono text-[8px] uppercase text-error/60 tracking-widest">
+                                  UNASSIGNED
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {task.revisionCount > 0 ? (
+                          <span className="text-[8px] font-mono text-red-600 bg-red-500/10 px-1.5 py-0.5 brutalist-border border-red-200 flex-shrink-0">
+                            R{task.revisionCount}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-3 text-[9px] font-mono text-muted-foreground uppercase flex-shrink-0">
+                        {task.files.length > 0 ? (
+                          <span className="flex items-center gap-0.5">
+                            <span className="material-symbols-outlined text-xs">attach_file</span>
+                            {task.files.length}
+                          </span>
+                        ) : null}
+                        {dueLabel ? (
+                          <span className={isOverdue ? "text-red-600 font-bold" : ""}>{dueLabel}</span>
+                        ) : null}
+                        {/* Assign button for Admin/Super Admin */}
+                        {canAssign && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAssigningTaskId(assigningTaskId === task.id ? null : task.id);
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 brutalist-border text-[8px] hover:bg-primary/10 hover:text-primary transition-colors"
+                            title="Assign task"
+                          >
+                            <span className="material-symbols-outlined text-xs">person_add</span>
+                            ASSIGN
+                          </button>
+                        )}
+                        <span className="material-symbols-outlined text-sm text-neutral-400 group-hover:text-primary transition-colors">
+                          chevron_right
                         </span>
-                      ) : null}
-                      {dueLabel ? (
-                        <span className={isOverdue ? "text-red-600 font-bold" : ""}>{dueLabel}</span>
-                      ) : null}
-                      <span className="material-symbols-outlined text-sm text-neutral-400 group-hover:text-primary transition-colors">
-                        chevron_right
-                      </span>
+                      </div>
                     </div>
+
+                    {/* Inline Assignment Dropdown */}
+                    {canAssign && assigningTaskId === task.id && (
+                      <div className="px-5 pb-3 animate-in slide-in-from-top-2 duration-200">
+                        <div className="brutalist-border bg-surface-container-lowest p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-headline text-[9px] uppercase tracking-widest text-on-surface/60">
+                              ASSIGN_TO →
+                            </span>
+                            <button
+                              onClick={() => setAssigningTaskId(null)}
+                              className="material-symbols-outlined text-xs text-on-surface/40 hover:text-error"
+                            >
+                              close
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                            {teamMembers.map((member) => (
+                              <button
+                                key={member.id}
+                                disabled={reassigning || member.id === task.assignedTo?.id}
+                                onClick={() => handleReassign(task.id, member.id)}
+                                className={`flex items-center gap-2 px-3 py-2 brutalist-border text-left transition-colors ${
+                                  member.id === task.assignedTo?.id
+                                    ? "bg-primary/10 border-primary/30 opacity-60 cursor-default"
+                                    : "hover:bg-primary/10 hover:border-primary/30"
+                                }`}
+                              >
+                                <div className="h-6 w-6 flex items-center justify-center bg-surface-container-high text-[9px] font-headline font-bold uppercase flex-shrink-0">
+                                  {member.name.charAt(0)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-headline text-[10px] uppercase tracking-wider truncate text-on-surface">
+                                    {member.name}
+                                  </p>
+                                  <p className="font-mono text-[7px] uppercase text-on-surface/40">
+                                    {member.role} · {member.department || "—"}
+                                  </p>
+                                </div>
+                                {member.id === task.assignedTo?.id && (
+                                  <span className="material-symbols-outlined text-xs text-primary ml-auto flex-shrink-0">check</span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                          {reassigning && (
+                            <div className="flex items-center gap-2 text-primary">
+                              <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                              <span className="font-mono text-[9px] uppercase tracking-widest">REASSIGNING...</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -2,15 +2,22 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { MyTasksList } from "@/components/tasks/my-tasks-list";
+import { hasPermission } from "@/lib/permissions";
+import type { Role } from "@prisma/client";
 
 export default async function TasksPage() {
   const session = await auth();
   if (!session?.user?.id) return notFound();
 
+  const userRole = session.user.role as Role;
+  const canAssign = hasPermission(userRole, "assignTask");
+
+  // Admin/Super Admin see ALL tasks; others see only their own
   const tasks = await db.task.findMany({
-    where: { assignedToId: session.user.id },
+    where: canAssign ? {} : { assignedToId: session.user.id },
     include: {
       assignedTo: { select: { id: true, name: true, image: true } },
+      project: { select: { id: true, title: true } },
       files: {
         select: { id: true, filename: true, fileUrl: true, mimeType: true, fileSize: true, createdAt: true },
         orderBy: { createdAt: "desc" },
@@ -23,6 +30,15 @@ export default async function TasksPage() {
     orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
   });
 
+  // Fetch team members for assignment dropdown (Admin/Super Admin only)
+  const teamMembers = canAssign
+    ? await db.user.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, role: true, department: true, image: true },
+        orderBy: { name: "asc" },
+      })
+    : [];
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
@@ -31,10 +47,10 @@ export default async function TasksPage() {
         <div className="relative z-10 flex items-center justify-between">
           <div>
             <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text">
-              MY_TASKS
+              {canAssign ? "ALL_TASKS" : "MY_TASKS"}
             </h1>
             <p className="font-mono text-xs uppercase tracking-widest text-on-surface/50">
-              ACTIVE ASSIGNMENTS // {tasks.length} ITEMS
+              {canAssign ? "MANAGE & ASSIGN" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
             </p>
           </div>
           <span className="material-symbols-outlined text-[36px] text-primary">checklist</span>
@@ -42,7 +58,12 @@ export default async function TasksPage() {
       </div>
 
       {/* Task List */}
-      <MyTasksList tasks={tasks} userId={session.user.id} />
+      <MyTasksList
+        tasks={tasks}
+        userId={session.user.id}
+        canAssign={canAssign}
+        teamMembers={teamMembers}
+      />
     </div>
   );
 }

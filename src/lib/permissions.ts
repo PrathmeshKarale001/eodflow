@@ -59,8 +59,8 @@ export const PERMISSIONS = {
   exportReports: [Role.SUPER_ADMIN],
 
   // System admin
-  manageUsers: [Role.SUPER_ADMIN],
-  inviteUsers: [Role.SUPER_ADMIN],
+  manageUsers: [Role.SUPER_ADMIN, Role.ADMIN],
+  inviteUsers: [Role.SUPER_ADMIN, Role.ADMIN],
   manageRoles: [Role.SUPER_ADMIN],
   manageSettings: [Role.SUPER_ADMIN],
   viewAuditLog: [Role.SUPER_ADMIN],
@@ -122,7 +122,7 @@ export const ROUTE_ACCESS: Record<string, Role[]> = {
   "/time": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
   "/calendar": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
   "/reports": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER],
-  "/settings": [Role.SUPER_ADMIN],
+  "/settings": [Role.SUPER_ADMIN, Role.ADMIN],
 };
 
 // ---------------------------------------------------------------------------
@@ -147,7 +147,7 @@ export const SIDEBAR_NAV: NavItem[] = [
   { label: "Files", href: "/files", icon: "FileStack", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { label: "Chat", href: "/chat", icon: "MessageSquare", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { label: "Reports", href: "/reports", icon: "BarChart3", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER] },
-  { label: "Team", href: "/settings", icon: "Users", roles: [Role.SUPER_ADMIN] },
+  { label: "Team", href: "/settings", icon: "Users", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   { label: "Settings", href: "/settings", icon: "Settings", roles: [Role.SUPER_ADMIN] },
 ];
 

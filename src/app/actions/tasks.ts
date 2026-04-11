@@ -180,3 +180,113 @@ export async function getProjectWithTasks(projectId: string) {
 
   return { project, tasks, teamMembers };
 }
+
+// ---------------------------------------------------------------------------
+// Reassign Task (Admin / Super Admin / Manager)
+// ---------------------------------------------------------------------------
+
+export async function reassignTask(taskId: string, newAssigneeId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const userRole = session.user.role as Role;
+  if (!hasPermission(userRole, "assignTask")) {
+    throw new Error("FORBIDDEN: You do not have permission to assign tasks.");
+  }
+
+  const task = await db.task.findUnique({
+    where: { id: taskId },
+    include: { assignedTo: { select: { name: true } } },
+  });
+  if (!task) throw new Error("NOT_FOUND: Task not found.");
+
+  const newAssignee = await db.user.findUnique({
+    where: { id: newAssigneeId },
+    select: { id: true, name: true },
+  });
+  if (!newAssignee) throw new Error("NOT_FOUND: Assignee not found.");
+
+  const updatedTask = await db.task.update({
+    where: { id: taskId },
+    data: { assignedToId: newAssigneeId, assignedById: session.user.id },
+    include: {
+      assignedTo: { select: { id: true, name: true, image: true } },
+    },
+  });
+
+  // Activity log
+  await db.activityLog.create({
+    data: {
+      userId: session.user.id,
+      taskId,
+      projectId: task.projectId,
+      action: "ASSIGNED",
+      metadata: {
+        previousAssignee: task.assignedTo?.name || "Unassigned",
+        newAssignee: newAssignee.name,
+      },
+    },
+  });
+
+  // Notify the new assignee
+  await db.notification.create({
+    data: {
+      userId: newAssigneeId,
+      type: "TASK_ASSIGNED",
+      title: `You've been assigned: ${task.title}`,
+      body: `Assigned by ${session.user.name || "a team member"}`,
+      linkUrl: `/tasks`,
+    },
+  });
+
+  revalidatePath(`/projects/${task.projectId}`);
+  revalidatePath("/tasks");
+  return updatedTask;
+}
+
+// ---------------------------------------------------------------------------
+// Get All Tasks (for Admin/Super Admin view)
+// ---------------------------------------------------------------------------
+
+export async function getAllTasks() {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const userRole = session.user.role as Role;
+  if (!hasPermission(userRole, "assignTask")) {
+    throw new Error("FORBIDDEN");
+  }
+
+  const tasks = await db.task.findMany({
+    include: {
+      assignedTo: { select: { id: true, name: true, image: true } },
+      project: { select: { id: true, title: true } },
+      files: {
+        select: { id: true, filename: true, fileUrl: true, mimeType: true, fileSize: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      },
+      subtasks: {
+        select: { id: true, title: true, isDone: true },
+        orderBy: { sortOrder: "asc" },
+      },
+    },
+    orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
+  });
+
+  return tasks;
+}
+
+// ---------------------------------------------------------------------------
+// Get team members (for assignment dropdowns)
+// ---------------------------------------------------------------------------
+
+export async function getTeamMembers() {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  return db.user.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, role: true, department: true, image: true },
+    orderBy: { name: "asc" },
+  });
+}

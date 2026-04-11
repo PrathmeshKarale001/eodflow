@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { broadcastChatMessage } from "@/lib/realtime-server";
 
 // ---------------------------------------------------------------------------
 // Create Group Channel (Admin / Super Admin only)
@@ -153,6 +154,15 @@ export async function sendMessage(data: {
     include: {
       user: { select: { id: true, name: true, image: true } },
     },
+  });
+
+  // Broadcast via server-side Supabase admin client (reliable, doesn't depend on browser state)
+  broadcastChatMessage(data.channelId, {
+    id: message.id,
+    content: message.content,
+    fileUrl: message.fileUrl,
+    createdAt: message.createdAt,
+    user: message.user,
   });
 
   revalidatePath("/chat");

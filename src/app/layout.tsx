@@ -2,9 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
-// TEMPORARILY DISABLED — re-enable after auth is stable
-// import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
-// import { PushNotificationManager } from "@/components/push/push-notification-manager";
+import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
+import { PushNotificationManager } from "@/components/push/push-notification-manager";
 import "@/styles/globals.css";
 
 // Navbar calls auth() which uses Next.js headers() — the entire app must be dynamic
@@ -73,9 +72,8 @@ export default async function RootLayout({
               {children}
             </main>
           </div>
-          {/* TEMPORARILY DISABLED — re-enable after auth is stable */}
-          {/* <PWAInstallPrompt /> */}
-          {/* <PushNotificationManager /> */}
+          <PWAInstallPrompt />
+          <PushNotificationManager />
         </ThemeProvider>
       </body>
     </html>
