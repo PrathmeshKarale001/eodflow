@@ -7,6 +7,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 // import { PushNotificationManager } from "@/components/push/push-notification-manager";
 import "@/styles/globals.css";
 
+// Navbar calls auth() which uses Next.js headers() — the entire app must be dynamic
+export const dynamic = "force-dynamic";
+
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
