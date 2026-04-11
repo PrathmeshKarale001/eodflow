@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { MyTasksList } from "@/components/tasks/my-tasks-list";
 import { hasPermission } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
@@ -53,7 +54,18 @@ export default async function TasksPage() {
               {canAssign ? "MANAGE & ASSIGN" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
             </p>
           </div>
-          <span className="material-symbols-outlined text-[36px] text-primary">checklist</span>
+          <div className="flex items-center gap-3">
+            {hasPermission(userRole, "createTask") && (
+              <Link
+                href="/projects"
+                className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">add</span>
+                NEW_TASK
+              </Link>
+            )}
+            <span className="material-symbols-outlined text-[36px] text-primary">checklist</span>
+          </div>
         </div>
       </div>
 

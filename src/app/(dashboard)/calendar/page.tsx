@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { TaskStatus } from "@prisma/client";
 import { CalendarView } from "@/components/calendar/calendar-view";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -75,25 +76,28 @@ export default async function CalendarPage() {
             }).length,
             color: "border-t-amber-500",
             icon: "event_upcoming",
+            href: "/calendar",
           },
           {
             label: "OVERDUE",
             value: tasks.filter((t) => new Date(t.dueDate!).getTime() < Date.now() && !["DONE", "APPROVED"].includes(t.status)).length,
             color: "border-t-red-500",
             icon: "warning",
+            href: "/tasks",
           },
           {
             label: "COMPLETED",
             value: tasks.filter((t) => t.status === "DONE").length,
             color: "border-t-green-500",
             icon: "check_circle",
+            href: "/tasks",
           },
         ].map((k) => (
-          <div key={k.label} className={`brutalist-border bg-card p-4 border-t-4 ${k.color}`}>
+          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} hover:bg-card/80 transition-colors group block`}>
             <span className="material-symbols-outlined text-lg text-on-surface/40">{k.icon}</span>
-            <p className="font-mono text-3xl font-bold text-on-surface mt-2">{k.value}</p>
+            <p className="font-mono text-3xl font-bold text-on-surface mt-2 group-hover:text-primary transition-colors">{k.value}</p>
             <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
-          </div>
+          </Link>
         ))}
       </div>
 

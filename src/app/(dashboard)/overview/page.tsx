@@ -240,7 +240,8 @@ export default async function OverviewPage() {
 function DashboardHeader({ role, subtitle }: { role: string; subtitle: string }) {
   return (
     <div className="brutalist-border bg-[#180065] text-white p-6 relative overflow-hidden">
-      <div className="flex items-center justify-between">
+      <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
+      <div className="relative z-10 flex items-center justify-between">
         <div>
           <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase">{role}</h1>
           <p className="font-mono text-xs uppercase tracking-widest text-neutral-400 mt-1">{subtitle}</p>

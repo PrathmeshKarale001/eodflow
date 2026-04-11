@@ -136,22 +136,28 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-headline text-2xl font-extrabold uppercase tracking-tight text-on-surface">
-            Media_Library
-          </h1>
-          <p className="font-label text-[10px] uppercase tracking-widest text-on-surface/50 mt-1">
-            {files.length} FILES — {formatBytes(totalSize)} TOTAL
-          </p>
+      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
+        <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text">
+              MEDIA_LIBRARY
+            </h1>
+            <p className="font-mono text-xs uppercase tracking-widest text-on-surface/50">
+              {files.length} FILES — {formatBytes(totalSize)} TOTAL
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowUpload(true)}
+              className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-sm">upload_file</span>
+              UPLOAD
+            </button>
+            <span className="material-symbols-outlined text-[36px] text-primary">folder_open</span>
+          </div>
         </div>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="mono-clip bg-primary text-on-primary px-5 py-2.5 font-headline text-[10px] uppercase tracking-widest shadow-[3px_3px_0px_var(--clr-shadow)] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_var(--clr-shadow)] transition-all flex items-center gap-2"
-        >
-          <span className="material-symbols-outlined text-sm">upload_file</span>
-          UPLOAD
-        </button>
       </div>
 
       {/* Type Filter Tabs */}

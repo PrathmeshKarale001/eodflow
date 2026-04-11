@@ -30,13 +30,19 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-headline text-2xl font-extrabold uppercase tracking-tight text-foreground">
-          System_Settings
-        </h1>
-        <p className="font-label text-[10px] uppercase tracking-widest text-outline mt-1">
-          USER_MANAGEMENT — {users.length} ACCOUNTS
-        </p>
+      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
+        <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text">
+              TEAM_SETTINGS
+            </h1>
+            <p className="font-mono text-xs uppercase tracking-widest text-on-surface/50">
+              USER_MANAGEMENT — {users.length} ACCOUNTS
+            </p>
+          </div>
+          <span className="material-symbols-outlined text-[36px] text-primary">admin_panel_settings</span>
+        </div>
       </div>
 
       <UserManagementPanel initialUsers={users} currentUserId={session.user.id!} currentUserRole={role} />

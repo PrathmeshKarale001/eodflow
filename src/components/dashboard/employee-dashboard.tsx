@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 function formatMins(mins: number) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -72,16 +74,16 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
       {/* Greeting + KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "MY_TASKS", value: myTasks.length, icon: "task_alt", color: "border-t-blue-500" },
-          { label: "IN_PROGRESS", value: inProgress.length, icon: "pending", color: "border-t-amber-500" },
-          { label: "OVERDUE", value: overdue.length, icon: "warning", color: "border-t-red-500" },
-          { label: "DUE_THIS_WEEK", value: upcomingThisWeek.length, icon: "event_upcoming", color: "border-t-purple-500" },
+          { label: "MY_TASKS", value: myTasks.length, icon: "task_alt", color: "border-t-blue-500", href: "/tasks" },
+          { label: "IN_PROGRESS", value: inProgress.length, icon: "pending", color: "border-t-amber-500", href: "/tasks" },
+          { label: "OVERDUE", value: overdue.length, icon: "warning", color: "border-t-red-500", href: "/tasks" },
+          { label: "DUE_THIS_WEEK", value: upcomingThisWeek.length, icon: "event_upcoming", color: "border-t-purple-500", href: "/calendar" },
         ].map((k) => (
-          <div key={k.label} className={`brutalist-border bg-card p-4 border-t-4 ${k.color}`}>
+          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} hover:bg-card/80 transition-colors group block`}>
             <span className="material-symbols-outlined text-lg text-on-surface/40">{k.icon}</span>
-            <p className="font-mono text-3xl font-bold text-on-surface mt-2">{k.value}</p>
+            <p className="font-mono text-3xl font-bold text-on-surface mt-2 group-hover:text-primary transition-colors">{k.value}</p>
             <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -127,10 +129,10 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
               myTasks.slice(0, 12).map((t) => {
                 const days = t.dueDate ? daysUntil(t.dueDate) : null;
                 return (
-                  <div key={t.id} className="px-4 py-3 flex items-center gap-3">
+                  <Link key={t.id} href="/tasks" className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority] ?? "bg-gray-400"}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate">{t.title}</p>
+                      <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
                       <p className="font-mono text-[8px] text-on-surface/40 truncate">{t.project.title}</p>
                     </div>
                     <span className={`font-mono text-[8px] px-1.5 py-0.5 ${STATUS_COLOR[t.status] ?? ""}`}>
@@ -141,7 +143,7 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
                         {days < 0 ? `+${Math.abs(days)}d` : days === 0 ? "today" : `${days}d`}
                       </span>
                     )}
-                  </div>
+                  </Link>
                 );
               })
             )}

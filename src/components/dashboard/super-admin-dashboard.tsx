@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 interface Props {
   activeProjects: number;
   totalClients: number;
@@ -66,12 +68,12 @@ export function SuperAdminDashboard({
   const change = hoursChange(weeklyHours, lastWeekHours);
 
   const kpis = [
-    { label: "ACTIVE_PROJECTS", value: activeProjects, icon: "folder_open", color: "text-blue-400", border: "border-t-blue-500" },
-    { label: "CLIENTS", value: totalClients, icon: "business", color: "text-purple-400", border: "border-t-purple-500" },
-    { label: "TEAM_SIZE", value: totalTeam, icon: "group", color: "text-green-400", border: "border-t-green-500" },
-    { label: "OVERDUE", value: overdueTasks, icon: "warning", color: "text-red-400", border: "border-t-red-500" },
-    { label: "IN_REVIEW", value: tasksInReview, icon: "rate_review", color: "text-amber-400", border: "border-t-amber-500" },
-    { label: "DONE_THIS_WEEK", value: completedThisWeek, icon: "check_circle", color: "text-emerald-400", border: "border-t-emerald-500" },
+    { label: "ACTIVE_PROJECTS", value: activeProjects, icon: "folder_open", color: "text-blue-400", border: "border-t-blue-500", href: "/projects" },
+    { label: "CLIENTS", value: totalClients, icon: "business", color: "text-purple-400", border: "border-t-purple-500", href: "/clients" },
+    { label: "TEAM_SIZE", value: totalTeam, icon: "group", color: "text-green-400", border: "border-t-green-500", href: "/settings" },
+    { label: "OVERDUE", value: overdueTasks, icon: "warning", color: "text-red-400", border: "border-t-red-500", href: "/tasks" },
+    { label: "IN_REVIEW", value: tasksInReview, icon: "rate_review", color: "text-amber-400", border: "border-t-amber-500", href: "/tasks" },
+    { label: "DONE_THIS_WEEK", value: completedThisWeek, icon: "check_circle", color: "text-emerald-400", border: "border-t-emerald-500", href: "/reports" },
   ];
 
   return (
@@ -79,13 +81,13 @@ export function SuperAdminDashboard({
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {kpis.map((k) => (
-          <div key={k.label} className={`brutalist-border bg-card p-4 border-t-4 ${k.border}`}>
+          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.border} hover:bg-card/80 transition-colors group block`}>
             <div className="flex items-start justify-between">
               <span className={`material-symbols-outlined text-lg ${k.color}`}>{k.icon}</span>
             </div>
-            <p className="font-mono text-3xl font-bold text-on-surface mt-2">{k.value}</p>
+            <p className="font-mono text-3xl font-bold text-on-surface mt-2 group-hover:text-primary transition-colors">{k.value}</p>
             <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
-          </div>
+          </Link>
         ))}
       </div>
 

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 function formatMins(mins: number) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -74,16 +76,16 @@ export function ManagerDashboard({
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "PROJECTS_MANAGED", value: managedProjects.length, icon: "folder_managed", color: "border-t-blue-500" },
-          { label: "PENDING_REVIEW", value: pendingReview.length, icon: "rate_review", color: "border-t-amber-500" },
-          { label: "DUE_THIS_WEEK", value: upcomingDeadlines.filter(t => daysUntil(t.dueDate) <= 7).length, icon: "event_upcoming", color: "border-t-red-500" },
-          { label: "HOURS_THIS_WEEK", value: weeklyHours, icon: "timer", color: "border-t-green-500" },
+          { label: "PROJECTS_MANAGED", value: managedProjects.length, icon: "folder_managed", color: "border-t-blue-500", href: "/projects" },
+          { label: "PENDING_REVIEW", value: pendingReview.length, icon: "rate_review", color: "border-t-amber-500", href: "/tasks" },
+          { label: "DUE_THIS_WEEK", value: upcomingDeadlines.filter(t => daysUntil(t.dueDate) <= 7).length, icon: "event_upcoming", color: "border-t-red-500", href: "/calendar" },
+          { label: "HOURS_THIS_WEEK", value: weeklyHours, icon: "timer", color: "border-t-green-500", href: "/reports" },
         ].map((k) => (
-          <div key={k.label} className={`brutalist-border bg-card p-4 border-t-4 ${k.color}`}>
+          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} hover:bg-card/80 transition-colors group block`}>
             <span className="material-symbols-outlined text-lg text-on-surface/40">{k.icon}</span>
-            <p className="font-mono text-3xl font-bold text-on-surface mt-2">{k.value}</p>
+            <p className="font-mono text-3xl font-bold text-on-surface mt-2 group-hover:text-primary transition-colors">{k.value}</p>
             <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -101,12 +103,12 @@ export function ManagerDashboard({
               managedProjects.map((p) => {
                 const days = p.deadline ? daysUntil(p.deadline) : null;
                 return (
-                  <div key={p.id} className="px-4 py-3 flex items-center gap-3">
+                  <Link key={p.id} href={`/projects/${p.id}`} className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
                     <span className={`font-mono text-[8px] px-2 py-0.5 flex-shrink-0 uppercase ${STATUS_COLOR[p.status] ?? ""}`}>
                       {p.status}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">{p.title}</p>
+                      <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{p.title}</p>
                       <p className="font-mono text-[8px] text-on-surface/40">{p._count.tasks} tasks</p>
                     </div>
                     {days !== null && (
@@ -114,7 +116,7 @@ export function ManagerDashboard({
                         {days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? "today" : `${days}d`}
                       </span>
                     )}
-                  </div>
+                  </Link>
                 );
               })
             )}
@@ -160,15 +162,15 @@ export function ManagerDashboard({
               <p className="px-4 py-6 font-mono text-[9px] text-on-surface/30 text-center uppercase">Nothing pending review ✓</p>
             ) : (
               pendingReview.map((t) => (
-                <div key={t.id} className="px-4 py-3 flex items-center gap-3">
+                <Link key={t.id} href="/tasks" className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
                   <span className="font-mono text-[8px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 flex-shrink-0 uppercase">
                     {t.status.replace(/_/g, " ")}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate">{t.title}</p>
+                    <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
                     <p className="font-mono text-[8px] text-on-surface/40">{t.project.title} · {t.assignedTo?.name}</p>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
@@ -187,15 +189,15 @@ export function ManagerDashboard({
               upcomingDeadlines.map((t) => {
                 const days = daysUntil(t.dueDate);
                 return (
-                  <div key={t.id} className="px-4 py-3 flex items-center gap-3">
+                  <Link key={t.id} href="/tasks" className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
                     <span className={`font-mono text-[8px] w-12 text-center flex-shrink-0 ${days < 0 ? "text-red-400" : days <= 2 ? "text-amber-400" : "text-on-surface/40"}`}>
                       {days < 0 ? "LATE" : days === 0 ? "TODAY" : `${days}d`}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className={`font-headline text-[9px] uppercase tracking-wider truncate ${PRIORITY_COLOR[t.priority]}`}>{t.title}</p>
+                      <p className={`font-headline text-[9px] uppercase tracking-wider truncate group-hover:text-primary transition-colors ${PRIORITY_COLOR[t.priority]}`}>{t.title}</p>
                       <p className="font-mono text-[8px] text-on-surface/40">{t.assignedTo?.name ?? "Unassigned"}</p>
                     </div>
-                  </div>
+                  </Link>
                 );
               })
             )}

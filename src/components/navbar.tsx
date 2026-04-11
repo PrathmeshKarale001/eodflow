@@ -18,8 +18,8 @@ export async function Navbar() {
       </div>
       <div className="col-span-12 lg:col-span-6 brutalist-border p-4 flex items-center justify-center gap-8 bg-surface-container-lowest">
         <Link className="font-label text-xs uppercase tracking-widest text-primary border-b border-primary" href="/">Home</Link>
-        <Link className="font-label text-xs uppercase tracking-widest text-on-surface/40 hover:text-on-surface transition-colors" href="#">Workflow</Link>
-        <Link className="font-label text-xs uppercase tracking-widest text-on-surface/40 hover:text-on-surface transition-colors" href="#">Roles</Link>
+        <Link className="font-label text-xs uppercase tracking-widest text-on-surface/40 hover:text-on-surface transition-colors" href="/#workflow">Workflow</Link>
+        <Link className="font-label text-xs uppercase tracking-widest text-on-surface/40 hover:text-on-surface transition-colors" href="/#roles">Roles</Link>
       </div>
       <div className="col-span-12 lg:col-span-3 brutalist-border p-2 bg-primary-container/20 flex items-center gap-2">
         <ThemeToggle />

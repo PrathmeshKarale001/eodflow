@@ -26,9 +26,9 @@ export function LandingPage() {
                 <Link href="/login" className="px-8 py-4 bg-primary-container text-white font-headline font-bold uppercase text-sm flex items-center gap-4 hover:invert transition-all">
                   Get started <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </Link>
-                <button className="px-8 py-4 border border-white/20 text-white font-headline font-bold uppercase text-sm flex items-center gap-4 hover:bg-card hover:text-black transition-all">
+                <Link href="/#workflow" className="px-8 py-4 border border-white/20 text-white font-headline font-bold uppercase text-sm flex items-center gap-4 hover:bg-card hover:text-black transition-all">
                   See how it works <span className="material-symbols-outlined text-sm">arrow_downward</span>
-                </button>
+                </Link>
               </div>
             </div>
             
@@ -214,7 +214,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="brutalist-border p-8 bg-black overflow-hidden relative">
+        <section id="workflow" className="brutalist-border p-8 bg-black overflow-hidden relative scroll-mt-20">
           <div className="absolute inset-0 opacity-5">
             <div className="w-full h-full border-[20px] border-white rotate-45 scale-150"></div>
           </div>
@@ -263,7 +263,7 @@ export function LandingPage() {
         </section>
 
         <section className="data-grid gap-4">
-          <div className="col-span-12 brutalist-border p-8 bg-surface-container-low">
+          <div id="roles" className="col-span-12 brutalist-border p-8 bg-surface-container-low scroll-mt-20">
             <div className="mb-12">
               <span className="text-primary font-label text-[10px] font-bold uppercase block mb-4">ACCESS_LEVELS</span>
               <h2 className="text-3xl font-headline font-extrabold uppercase">Custom views for your flow.</h2>
@@ -338,9 +338,9 @@ export function LandingPage() {
               <p className="text-[10px] font-label text-on-surface/40 uppercase tracking-widest">Built by End Of Day Media · Part of Lokshahi Group</p>
             </div>
             <div className="flex gap-8">
-              <Link className="font-label text-[10px] uppercase text-on-surface/40 hover:text-primary transition-colors" href="#">CONTACT US</Link>
-              <Link className="font-label text-[10px] uppercase text-on-surface/40 hover:text-primary transition-colors" href="#">FAQ</Link>
-              <Link className="font-label text-[10px] uppercase text-on-surface/40 hover:text-primary transition-colors" href="#">GUIDE</Link>
+              <Link className="font-label text-[10px] uppercase text-on-surface/40 hover:text-primary transition-colors" href="mailto:support@eodflow.com">CONTACT US</Link>
+              <Link className="font-label text-[10px] uppercase text-on-surface/40 hover:text-primary transition-colors" href="/#workflow">FAQ</Link>
+              <Link className="font-label text-[10px] uppercase text-on-surface/40 hover:text-primary transition-colors" href="/#roles">GUIDE</Link>
             </div>
             <div className="font-label text-[10px] border border-on-surface/10 px-3 py-1 bg-card/5">
               v1.0.RC_2026

@@ -115,7 +115,7 @@ export const ROUTE_ACCESS: Record<string, Role[]> = {
   "/onboarding": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
   "/overview": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
   "/clients": [Role.SUPER_ADMIN, Role.ADMIN],
-  "/projects": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER],
+  "/projects": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
   "/tasks": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
   "/files": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
   "/chat": [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE],
@@ -142,13 +142,12 @@ export const SIDEBAR_NAV: NavItem[] = [
   { label: "My tasks", href: "/tasks", icon: "CheckSquare", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { label: "Calendar", href: "/calendar", icon: "CalendarDays", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { label: "Time Tracker", href: "/time", icon: "Timer", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
-  { label: "Projects", href: "/projects", icon: "FolderKanban", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER] },
+  { label: "Projects", href: "/projects", icon: "FolderKanban", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { label: "Clients", href: "/clients", icon: "Building2", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   { label: "Files", href: "/files", icon: "FileStack", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { label: "Chat", href: "/chat", icon: "MessageSquare", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { label: "Reports", href: "/reports", icon: "BarChart3", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER] },
   { label: "Team", href: "/settings", icon: "Users", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
-  { label: "Settings", href: "/settings", icon: "Settings", roles: [Role.SUPER_ADMIN] },
 ];
 
 export function getNavForRole(role: Role): NavItem[] {

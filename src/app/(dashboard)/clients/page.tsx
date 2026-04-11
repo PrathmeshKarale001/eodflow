@@ -38,10 +38,13 @@ export default async function ClientsPage() {
           </p>
         </div>
         {hasPermission(role, "createClient") && (
-          <button className="mono-clip bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2">
+          <Link
+            href="/clients/new"
+            className="mono-clip bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+          >
             <span className="material-symbols-outlined text-sm">add</span>
             NEW_CLIENT
-          </button>
+          </Link>
         )}
       </div>
 
