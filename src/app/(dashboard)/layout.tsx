@@ -5,6 +5,9 @@ import { Sidebar } from "@/components/sidebar/sidebar";
 import { SearchDialog } from "@/components/search/search-dialog";
 import type { Role } from "@prisma/client";
 
+// auth() uses headers() — must be dynamic, cannot be statically rendered
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

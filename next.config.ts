@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Force all pages to be dynamic (prevents build-time auth() errors)
+  // auth() uses Next.js headers() which only works at request time, not build time
+  staticPageGenerationTimeout: 0,
   images: {
     remotePatterns: [
       {
