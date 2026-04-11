@@ -10,9 +10,17 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+    console.log("[DASHBOARD_LAYOUT] auth() result:", JSON.stringify(session?.user?.email ?? "NO_SESSION"));
+  } catch (error) {
+    console.error("[DASHBOARD_LAYOUT] auth() CRASHED:", error);
+    redirect("/login");
+  }
 
   if (!session?.user) {
+    console.log("[DASHBOARD_LAYOUT] No session user, redirecting to login");
     redirect("/login");
   }
 
