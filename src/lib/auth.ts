@@ -17,7 +17,9 @@ export const authApi = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: [
     "http://localhost:3000",
-    getBaseURL(),
+    "https://eod-flow.vercel.app",
+    // Allow ALL Vercel preview/deployment URLs (they change every deploy)
+    "https://*.vercel.app",
   ],
   database: prismaAdapter(db, {
     provider: "postgresql",
