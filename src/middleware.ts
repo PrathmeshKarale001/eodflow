@@ -15,7 +15,13 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_PATHS = ["/", "/login", "/accept-invite", "/api/auth", "/api/debug-auth"];
 
 // Must match the cookiePrefix set in auth.ts advanced config
-const SESSION_COOKIE = "eod-flow.session_token";
+// In production HTTPS, browser prefixes cookies with __Secure-
+const SESSION_COOKIES = [
+  "eod-flow.session_token",           // localhost (http)
+  "__Secure-eod-flow.session_token",  // production (https)
+  "better-auth.session_token",        // fallback (old deploys)
+  "__Secure-better-auth.session_token", // fallback secure
+];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -34,10 +40,10 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if session cookie exists (no network call — just reads the cookie header)
-  const sessionCookie = req.cookies.get(SESSION_COOKIE);
+  // Check if ANY session cookie exists (handles http + https variants)
+  const hasSession = SESSION_COOKIES.some(name => !!req.cookies.get(name)?.value);
 
-  if (!sessionCookie?.value) {
+  if (!hasSession) {
     const loginUrl = new URL("/login", req.nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
