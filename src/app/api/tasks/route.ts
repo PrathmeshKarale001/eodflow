@@ -5,6 +5,8 @@ import { hasPermission } from "@/lib/permissions";
 import type { Role, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 // ---------------------------------------------------------------------------
 // GET /api/tasks — Fetch tasks (role-filtered)
 // ---------------------------------------------------------------------------

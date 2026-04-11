@@ -5,8 +5,24 @@ import { Role, TaskStatus, ProjectStatus } from "@prisma/client";
 import { SuperAdminDashboard } from "@/components/dashboard/super-admin-dashboard";
 import { ManagerDashboard } from "@/components/dashboard/manager-dashboard";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
+import { unstable_cache } from "next/cache";
 
 export const dynamic = "force-dynamic";
+
+// Cache slow-changing counts (activeProjects, totalClients, totalTeam)
+// These change rarely but were being queried on EVERY dashboard load
+const getCachedCounts = unstable_cache(
+  async () => {
+    const [activeProjects, totalClients, totalTeam] = await Promise.all([
+      db.project.count({ where: { status: ProjectStatus.ACTIVE } }),
+      db.client.count({ where: { isActive: true } }),
+      db.user.count({ where: { isActive: true } }),
+    ]);
+    return { activeProjects, totalClients, totalTeam };
+  },
+  ["dashboard-counts"],
+  { revalidate: 60 } // Fresh every 60 seconds
+);
 
 export default async function OverviewPage() {
   const session = await auth();
@@ -30,11 +46,10 @@ export default async function OverviewPage() {
 
   // ─── SUPER_ADMIN / ADMIN ────────────────────────────────────────────────────
   if (role === "SUPER_ADMIN" || role === "ADMIN") {
+    // Cached counts (60s TTL) + real-time metrics in parallel
     const [
-      activeProjects,
-      totalClients,
+      cachedCounts,
       overdueTasks,
-      totalTeam,
       tasksInReview,
       completedThisWeek,
       weeklyTime,
@@ -42,12 +57,10 @@ export default async function OverviewPage() {
       bottlenecks,
       recentActivities,
     ] = await Promise.all([
-      db.project.count({ where: { status: ProjectStatus.ACTIVE } }),
-      db.client.count({ where: { isActive: true } }),
+      getCachedCounts(),
       db.task.count({
         where: { dueDate: { lt: new Date() }, status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] } },
       }),
-      db.user.count({ where: { isActive: true } }),
       db.task.count({ where: { status: { in: [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL] } } }),
       db.task.count({ where: { status: TaskStatus.DONE, updatedAt: { gte: startOfWeek } } }),
       db.timeEntry.aggregate({ where: { createdAt: { gte: startOfWeek } }, _sum: { durationMins: true } }),
@@ -73,6 +86,8 @@ export default async function OverviewPage() {
         take: 20,
       }),
     ]);
+
+    const { activeProjects, totalClients, totalTeam } = cachedCounts;
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -225,8 +240,7 @@ export default async function OverviewPage() {
 function DashboardHeader({ role, subtitle }: { role: string; subtitle: string }) {
   return (
     <div className="brutalist-border bg-[#180065] text-white p-6 relative overflow-hidden">
-      <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
-      <div className="relative z-10 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase">{role}</h1>
           <p className="font-mono text-xs uppercase tracking-widest text-neutral-400 mt-1">{subtitle}</p>

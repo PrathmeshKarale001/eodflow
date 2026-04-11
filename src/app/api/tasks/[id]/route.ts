@@ -5,6 +5,8 @@ import { hasPermission } from "@/lib/permissions";
 import type { Role, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 // ---------------------------------------------------------------------------
 // PATCH /api/tasks/[id] — Update a task (status, assignment, details)
 // ---------------------------------------------------------------------------
