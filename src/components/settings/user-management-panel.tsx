@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, startTransition } from "react";
+import { useState, startTransition, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { inviteUser, deactivateUser, reactivateUser, deleteUser } from "@/app/actions/users";
 import type { Role, Department } from "@prisma/client";
+import { AppSelect } from "@/components/ui/app-select";
 
 interface UserData {
   id: string;
@@ -17,20 +19,18 @@ interface UserData {
 
 const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: "DIRECTOR",
-  ADMIN: "ACCOUNT_MGR",
-  MANAGER: "TEAM_LEAD",
-  EMPLOYEE: "TEAM_MEMBER",
+  ADMIN: "POC",
+  EMPLOYEE: "EMPLOYEE",
 };
 
 const ROLE_COLORS: Record<Role, string> = {
   SUPER_ADMIN: "bg-error/20 text-error",
   ADMIN: "bg-primary/20 text-primary",
-  MANAGER: "bg-tertiary/20 text-tertiary",
   EMPLOYEE: "bg-outline/20 text-outline",
 };
 
-const DEPARTMENTS: Department[] = ["DESIGN", "DEVELOPMENT", "STRATEGY", "MANAGEMENT"];
-const ROLES: Role[] = ["SUPER_ADMIN", "ADMIN", "MANAGER", "EMPLOYEE"];
+const DEPARTMENTS: Department[] = ["STRATEGY", "DESIGN", "AI", "DEVELOPMENT", "MANAGEMENT"];
+const ROLES: Role[] = ["SUPER_ADMIN", "ADMIN", "EMPLOYEE"];
 
 export function UserManagementPanel({
   initialUsers,
@@ -41,10 +41,17 @@ export function UserManagementPanel({
   currentUserId: string;
   currentUserRole: Role;
 }) {
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState(initialUsers);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "invite") {
+      setShowInviteForm(true);
+    }
+  }, [searchParams]);
 
   // Invite form state
   const [inviteName, setInviteName] = useState("");
@@ -251,11 +258,11 @@ export function UserManagementPanel({
 
       {/* ── Invite Form ────────────────────────────────────────────────────── */}
       {showInviteForm && (
-        <div className="brutalist-border bg-surface-container-lowest p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
-          <h3 className="font-headline text-xs uppercase tracking-widest text-foreground">
+        <div className="brutalist-border bg-surface-container-lowest p-3 space-y-3 animate-in slide-in-from-top-2 duration-200">
+          <h3 className="font-headline text-[10px] uppercase tracking-widest text-foreground">
             INVITE_NEW_USER
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
                 FULL_NAME
@@ -284,39 +291,28 @@ export function UserManagementPanel({
               <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
                 ROLE
               </label>
-              <select
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as Role)}
-                className="w-full h-10 brutalist-border bg-card px-3 font-label text-[10px] uppercase tracking-widest text-foreground focus:border-primary focus:outline-none"
-              >
-                {ROLES
+              <AppSelect
+                options={ROLES
                   .filter((r) => {
-                    // Admins can only invite EMPLOYEE/MANAGER
-                    if (currentUserRole === "ADMIN") return r === "EMPLOYEE" || r === "MANAGER";
-                    return true; // SUPER_ADMIN sees all
+                    if (currentUserRole === "ADMIN") return r === "EMPLOYEE";
+                    return true;
                   })
-                  .map((r) => (
-                  <option key={r} value={r} className="bg-background">
-                    {ROLE_LABELS[r]}
-                  </option>
-                ))}
-              </select>
+                  .map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+                value={inviteRole}
+                onChange={(val) => setInviteRole(val as Role)}
+                placeholder=""
+              />
             </div>
             <div className="space-y-1">
               <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
                 DEPARTMENT
               </label>
-              <select
+              <AppSelect
+                options={DEPARTMENTS.map((d) => ({ value: d, label: d }))}
                 value={inviteDept}
-                onChange={(e) => setInviteDept(e.target.value as Department)}
-                className="w-full h-10 brutalist-border bg-card px-3 font-label text-[10px] uppercase tracking-widest text-foreground focus:border-primary focus:outline-none"
-              >
-                {DEPARTMENTS.map((d) => (
-                  <option key={d} value={d} className="bg-background">
-                    {d}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setInviteDept(val as Department)}
+                placeholder=""
+              />
             </div>
           </div>
           <button
@@ -335,12 +331,12 @@ export function UserManagementPanel({
         <table className="w-full">
           <thead>
             <tr className="bg-surface-container-low border-b border-on-surface/10">
-              <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">USER</th>
-              <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">ROLE</th>
-              <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">DEPT</th>
-              <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">STATUS</th>
-              <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">LAST_LOGIN</th>
-              <th className="px-4 py-3 text-right font-label text-[9px] uppercase tracking-widest text-outline">ACTIONS</th>
+              <th className="px-3 py-2 text-left font-label text-[9px] uppercase tracking-widest text-outline">USER</th>
+              <th className="px-3 py-2 text-left font-label text-[9px] uppercase tracking-widest text-outline">ROLE</th>
+              <th className="px-3 py-2 text-left font-label text-[9px] uppercase tracking-widest text-outline">DEPT</th>
+              <th className="px-3 py-2 text-left font-label text-[9px] uppercase tracking-widest text-outline">STATUS</th>
+              <th className="px-3 py-2 text-left font-label text-[9px] uppercase tracking-widest text-outline">LAST_LOGIN</th>
+              <th className="px-3 py-2 text-right font-label text-[9px] uppercase tracking-widest text-outline">ACTIONS</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -350,48 +346,48 @@ export function UserManagementPanel({
                 className={`hover:bg-card/5 transition-colors ${!user.isActive ? "opacity-50" : ""}`}
               >
                 {/* User */}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 flex items-center justify-center bg-primary-container/30 text-xs font-headline font-bold text-primary uppercase">
+                <td className="px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 flex items-center justify-center bg-primary-container/30 text-[10px] font-headline font-bold text-primary uppercase">
                       {user.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-headline text-xs uppercase tracking-tight text-foreground">
+                      <p className="font-headline text-[10px] uppercase tracking-tight text-foreground">
                         {user.name}
                         {user.id === currentUserId && (
-                          <span className="ml-2 text-[8px] text-primary">(YOU)</span>
+                          <span className="ml-2 text-[7px] text-primary">(YOU)</span>
                         )}
                       </p>
-                      <p className="font-label text-[9px] text-outline">{user.email}</p>
+                      <p className="font-label text-[8px] text-outline">{user.email}</p>
                     </div>
                   </div>
                 </td>
 
                 {/* Role */}
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 text-[9px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+                <td className="px-3 py-2">
+                  <span className={`px-1.5 py-0.5 text-[8px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
                     {ROLE_LABELS[user.role]}
                   </span>
                 </td>
 
                 {/* Dept */}
-                <td className="px-4 py-3">
-                  <span className="font-label text-[10px] text-foreground uppercase">
+                <td className="px-3 py-2">
+                  <span className="font-label text-[9px] text-foreground uppercase">
                     {user.department ?? "—"}
                   </span>
                 </td>
 
                 {/* Status */}
-                <td className="px-4 py-3">
-                  <span className={`flex items-center gap-1.5 font-label text-[10px] uppercase tracking-widest ${user.isActive ? "text-primary" : "text-error"}`}>
-                    <span className={`w-2 h-2 ${user.isActive ? "bg-primary" : "bg-error"}`} />
+                <td className="px-3 py-2">
+                  <span className={`flex items-center gap-1 font-label text-[9px] uppercase tracking-widest ${user.isActive ? "text-primary" : "text-error"}`}>
+                    <span className={`w-1.5 h-1.5 ${user.isActive ? "bg-primary" : "bg-error"}`} />
                     {user.isActive ? "ACTIVE" : "INACTIVE"}
                   </span>
                 </td>
 
                 {/* Last Login */}
-                <td className="px-4 py-3">
-                  <span className="font-label text-[10px] text-outline">
+                <td className="px-3 py-2">
+                  <span className="font-label text-[9px] text-outline">
                     {user.lastLoginAt
                       ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", {
                           day: "2-digit",
@@ -404,7 +400,7 @@ export function UserManagementPanel({
                 </td>
 
                 {/* Actions */}
-                <td className="px-4 py-3 text-right">
+                <td className="px-3 py-2 text-right">
                   {user.id !== currentUserId && (
                     <div className="flex items-center justify-end gap-2">
                       {user.isActive ? (

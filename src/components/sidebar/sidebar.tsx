@@ -35,15 +35,14 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
 
   const roleLabel: Record<Role, string> = {
     SUPER_ADMIN: "DIRECTOR",
-    ADMIN: "ACCOUNT_MGR",
-    MANAGER: "TEAM_LEAD",
-    EMPLOYEE: "TEAM_MEMBER",
+    ADMIN: "POC",
+    EMPLOYEE: "EMPLOYEE",
   };
 
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col brutalist-border border-r-2 border-r-white/20 bg-background transition-all duration-200",
+        "flex h-full flex-col brutalist-border border-r-2 border-r-white/20 bg-background transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >

@@ -19,7 +19,6 @@ export function CreateClientForm() {
   const [industry, setIndustry] = useState("");
   const [brandColor, setBrandColor] = useState("#6C5CE7");
   const [website, setWebsite] = useState("");
-  const [retainerValue, setRetainerValue] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +36,6 @@ export function CreateClientForm() {
           industry: industry.trim() || undefined,
           brandColor,
           website: website.trim() || undefined,
-          retainerValue: retainerValue ? parseFloat(retainerValue) : undefined,
         });
         router.push("/clients");
       } catch (err) {
@@ -129,21 +127,6 @@ export function CreateClientForm() {
         />
       </div>
 
-      {/* Retainer Value */}
-      <div>
-        <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-          RETAINER_VALUE (₹)
-        </label>
-        <input
-          type="number"
-          value={retainerValue}
-          onChange={(e) => setRetainerValue(e.target.value)}
-          placeholder="50000"
-          min="0"
-          step="0.01"
-          className="w-full brutalist-border bg-transparent px-4 py-3 font-mono text-sm text-on-surface focus:border-primary focus:outline-none placeholder:text-on-surface/20"
-        />
-      </div>
 
       {/* Submit */}
       <div className="flex items-center gap-3 pt-4">

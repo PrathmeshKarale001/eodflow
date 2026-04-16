@@ -34,7 +34,6 @@ export function usePermissions() {
     /** Quick role checks */
     isSuperAdmin: role === "SUPER_ADMIN",
     isAdmin: role === "ADMIN",
-    isManager: role === "MANAGER",
     isEmployee: role === "EMPLOYEE",
   };
 }

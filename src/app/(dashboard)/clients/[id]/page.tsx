@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { BrandAssetsManager } from "@/components/clients/brand-assets-manager";
+import { ClientActions } from "@/components/clients/client-actions";
 import { auth } from "@/lib/auth";
+import type { Role } from "@prisma/client";
 
 export default async function ClientDetailsPage({
   params,
@@ -15,6 +17,8 @@ export default async function ClientDetailsPage({
   if (!userId) {
     return notFound();
   }
+
+  const userRole = session.user.role as Role;
 
   const client = await db.client.findUnique({
     where: { id },
@@ -48,9 +52,23 @@ export default async function ClientDetailsPage({
               <span>POC_ADMIN // {client.pocAdmin.name}</span>
             </div>
           </div>
-          <div className="mono-clip bg-primary text-primary-foreground px-6 py-3 font-headline uppercase text-sm font-bold shadow-[4px_4px_0px_#180065] flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">folder_open</span>
-            WORKSPACE_ACTIVE
+
+          {/* Actions */}
+          <div className="flex flex-col items-end gap-2">
+            <div className="mono-clip bg-primary text-primary-foreground px-6 py-3 font-headline uppercase text-sm font-bold shadow-[4px_4px_0px_#180065] flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">folder_open</span>
+              WORKSPACE_ACTIVE
+            </div>
+            <ClientActions
+              client={{
+                id: client.id,
+                companyName: client.companyName,
+                industry: client.industry,
+                brandColor: client.brandColor,
+                website: client.website,
+              }}
+              userRole={userRole}
+            />
           </div>
         </div>
       </div>

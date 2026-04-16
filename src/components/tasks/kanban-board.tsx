@@ -4,6 +4,8 @@ import { useState } from "react";
 import { TaskStatus } from "@prisma/client";
 import { TaskColumn } from "@/components/tasks/task-column";
 import { CreateTaskModal } from "@/components/tasks/create-task-modal";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const KANBAN_COLUMNS: TaskStatus[] = [
   TaskStatus.BACKLOG,
@@ -11,6 +13,7 @@ const KANBAN_COLUMNS: TaskStatus[] = [
   TaskStatus.IN_PROGRESS,
   TaskStatus.IN_REVIEW,
   TaskStatus.REVISION,
+  TaskStatus.CLIENT_REVISION,
   TaskStatus.CLIENT_APPROVAL,
   TaskStatus.APPROVED,
   TaskStatus.DONE,
@@ -34,6 +37,27 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask }: KanbanBoardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+
+  const handleCreateSuccess = (taskId: string) => {
+    toast.success(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <span className="font-headline uppercase text-sm">Task Created</span>
+          <button
+            onClick={() => {
+              router.push(`/tasks?taskId=${taskId}`);
+              toast.dismiss(t.id);
+            }}
+            className="text-xs font-mono uppercase bg-on-surface text-surface px-3 py-1.5 hover:opacity-80 transition-opacity"
+          >
+            VIEW_TASK
+          </button>
+        </div>
+      ),
+      { duration: 5000 }
+    );
+  };
 
   const groupedTasks = KANBAN_COLUMNS.reduce(
     (acc, status) => {
@@ -50,15 +74,15 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask }: Ka
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-primary text-xl">view_kanban</span>
           <h2 className="font-headline text-lg uppercase tracking-tight">TASK_BOARD</h2>
-          <span className="bg-neutral-200 px-2 py-0.5 text-[10px] font-mono">{tasks.length} ITEMS</span>
+          <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest">{tasks.length} ITEMS</span>
         </div>
 
         {canCreateTask ? (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 mono-clip bg-[#180065] text-white px-5 py-3 font-headline text-xs uppercase shadow-[4px_4px_0px_#5847d2] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#5847d2] active:translate-y-[4px] active:shadow-none transition-all"
+            className="flex items-center gap-2 mono-clip bg-[#5847d2] text-white px-4 py-2 font-headline text-[10px] uppercase shadow-[4px_4px_0px_#180065] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_#180065] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
           >
-            <span className="material-symbols-outlined text-base">add</span>
+            <span className="material-symbols-outlined text-sm">add</span>
             CREATE_TASK
           </button>
         ) : null}
@@ -81,6 +105,7 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask }: Ka
         teamMembers={teamMembers}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSuccess={handleCreateSuccess}
       />
     </div>
   );

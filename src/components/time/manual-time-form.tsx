@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { logManualEntry } from "@/app/actions/time";
+import { AppSelect } from "@/components/ui/app-select";
 
 interface Task {
   id: string;
@@ -57,23 +58,20 @@ export function ManualTimeForm({ tasks, defaultTaskId, onLogged }: ManualTimeFor
         </h3>
       </div>
 
-      {/* Task picker */}
       <div>
         <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
           TASK
         </label>
-        <select
+        <AppSelect
+          options={tasks.map((t) => ({
+            value: t.id,
+            label: `${t.project ? `[${t.project.title}] ` : ""}${t.title}`,
+          }))}
           value={taskId}
-          onChange={(e) => setTaskId(e.target.value)}
-          className="w-full h-9 brutalist-border px-2 font-mono text-[10px] bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          <option value="">— Select task —</option>
-          {tasks.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.project ? `[${t.project.title}] ` : ""}{t.title}
-            </option>
-          ))}
-        </select>
+          onChange={setTaskId}
+          placeholder="— Select task —"
+          className="h-9"
+        />
       </div>
 
       {/* Duration */}

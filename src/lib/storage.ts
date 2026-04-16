@@ -1,59 +1,123 @@
-import { createClient } from "@supabase/supabase-js";
+// =============================================================================
+// EOD FLOW — Cloudflare R2 Storage (S3-compatible)
+// Replaces Supabase Storage for scalable 1TB+ asset management
+// =============================================================================
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Missing Supabase environment variables for storage.");
-}
+// ---------------------------------------------------------------------------
+// R2 Client (server-side only — uses secret credentials)
+// ---------------------------------------------------------------------------
 
-export const supabaseStorage = createClient(supabaseUrl, supabaseKey);
+const r2 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+  },
+});
 
-const DEFAULT_BUCKET = "eod-flow-files";
+const BUCKET = process.env.CLOUDFLARE_R2_BUCKET_NAME || "eod-flow-storage";
+const PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL!;
+
+// ---------------------------------------------------------------------------
+// Upload a file to R2
+// ---------------------------------------------------------------------------
 
 export async function uploadFile(
   file: File,
-  pathPrefix: string,
-  bucket: string = DEFAULT_BUCKET
+  pathPrefix: string
 ): Promise<{ path: string; url: string }> {
-  const filePath = `${pathPrefix}/${Date.now()}-${file.name}`;
+  const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const filePath = `${pathPrefix}/${Date.now()}_${safeFileName}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
 
-  const { data, error } = await supabaseStorage.storage
-    .from(bucket)
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (error) {
-    throw new Error(`Storage upload failed: ${error.message}`);
-  }
-
-  const { data: publicUrlData } = supabaseStorage.storage
-    .from(bucket)
-    .getPublicUrl(data.path);
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: filePath,
+      Body: buffer,
+      ContentType: file.type || "application/octet-stream",
+    })
+  );
 
   return {
-    path: data.path,
-    url: publicUrlData.publicUrl,
+    path: filePath,
+    url: `${PUBLIC_URL}/${filePath}`,
   };
 }
 
-export function getFileUrl(path: string, bucket: string = DEFAULT_BUCKET): string {
-  const { data } = supabaseStorage.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+// ---------------------------------------------------------------------------
+// Upload from a raw Buffer (used by API routes)
+// ---------------------------------------------------------------------------
+
+export async function uploadBuffer(
+  buffer: Buffer,
+  filePath: string,
+  contentType: string
+): Promise<{ path: string; url: string }> {
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: filePath,
+      Body: buffer,
+      ContentType: contentType,
+    })
+  );
+
+  return {
+    path: filePath,
+    url: `${PUBLIC_URL}/${filePath}`,
+  };
 }
 
-export async function deleteStorageFile(
-  filePath: string,
-  bucket: string = DEFAULT_BUCKET
-): Promise<void> {
-  const { error } = await supabaseStorage.storage
-    .from(bucket)
-    .remove([filePath]);
+// ---------------------------------------------------------------------------
+// Get public URL for a stored file
+// ---------------------------------------------------------------------------
 
-  if (error) {
-    console.warn(`Storage delete warning: ${error.message}`);
+export function getFileUrl(path: string): string {
+  return `${PUBLIC_URL}/${path}`;
+}
+
+// ---------------------------------------------------------------------------
+// Delete a file from R2
+// ---------------------------------------------------------------------------
+
+export async function deleteStorageFile(filePath: string): Promise<void> {
+  try {
+    await r2.send(
+      new DeleteObjectCommand({
+        Bucket: BUCKET,
+        Key: filePath,
+      })
+    );
+  } catch (e) {
+    console.warn("R2 delete warning:", e);
   }
 }
 
+// ---------------------------------------------------------------------------
+// Extract the R2 key (path) from a public URL
+// Used by deleteFile action to clean up storage
+// ---------------------------------------------------------------------------
+
+export function extractStoragePath(fileUrl: string): string | null {
+  if (!PUBLIC_URL) return null;
+  try {
+    if (fileUrl.startsWith(PUBLIC_URL)) {
+      return fileUrl.slice(PUBLIC_URL.length + 1); // +1 for the trailing /
+    }
+    // Fallback: try parsing the URL and extracting the pathname
+    const urlObj = new URL(fileUrl);
+    return urlObj.pathname.startsWith("/")
+      ? urlObj.pathname.slice(1)
+      : urlObj.pathname;
+  } catch {
+    return null;
+  }
+}

@@ -39,9 +39,9 @@ export async function inviteUser(data: {
     throw new Error("FORBIDDEN: You do not have permission to invite users.");
   }
 
-  // Admins can only invite EMPLOYEE/MANAGER — not other Admins or Super Admins
-  if (userRole === Role.ADMIN && (data.role === Role.ADMIN || data.role === Role.SUPER_ADMIN)) {
-    throw new Error("FORBIDDEN: Admins can only invite Employees and Managers.");
+  // POCs (ADMIN) can only invite EMPLOYEE — not other POCs or Directors
+  if (userRole === Role.ADMIN && data.role !== Role.EMPLOYEE) {
+    throw new Error("FORBIDDEN: POCs can only invite Employees.");
   }
 
   const existing = await db.user.findUnique({ where: { email: data.email } });
@@ -199,11 +199,30 @@ export async function deleteUser(userId: string) {
   if (role !== "SUPER_ADMIN") throw new Error("FORBIDDEN: Only Super Admins can delete users.");
   if (userId === session.user.id) throw new Error("CANNOT_DELETE_SELF");
 
-  // Reassign activity logs to the current super admin to preserve audit trail
-  await db.activityLog.updateMany({
-    where: { userId },
-    data: { userId: session.user.id },
-  });
+  // Manual cleanup of dependents to prevent FK violations
+  // This serves as a safety net if cascade delete is not active in the database
+  try {
+    await db.chatChannelMember.deleteMany({ where: { userId } });
+    await db.chatMessage.deleteMany({ where: { userId } });
+    await db.comment.deleteMany({ where: { userId } });
+    await db.timeEntry.deleteMany({ where: { userId } });
+    await db.notification.deleteMany({ where: { userId } });
+    await db.session.deleteMany({ where: { userId } });
+    await db.account.deleteMany({ where: { userId } });
+    
+    // For Files, we usually don't want to cascade delete physical storage files 
+    // without careful logic, but for "trash" cleanup we delete the DB records.
+    await db.file.deleteMany({ where: { uploadedById: userId } });
+
+    // Reassign activity logs to the current super admin to preserve audit trail
+    // instead of deleting them.
+    await db.activityLog.updateMany({
+      where: { userId },
+      data: { userId: session.user.id },
+    });
+  } catch (e) {
+    console.error("Cleanup before delete failed:", e);
+  }
 
   await db.user.delete({ where: { id: userId } });
 

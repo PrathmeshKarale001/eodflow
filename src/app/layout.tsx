@@ -4,6 +4,7 @@ import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
 import { PushNotificationManager } from "@/components/push/push-notification-manager";
+import { Toaster } from "react-hot-toast";
 import "@/styles/globals.css";
 
 // Navbar calls auth() which uses Next.js headers() — the entire app must be dynamic
@@ -64,16 +65,17 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
         />
       </head>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased font-body text-on-surface selection:bg-primary-container selection:text-white min-h-screen overflow-x-hidden bg-background`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased font-body text-on-surface selection:bg-primary-container selection:text-white h-screen overflow-hidden bg-background px-2`}>
         <ThemeProvider>
-          <div className="p-4 md:p-6 lg:p-8 flex flex-col gap-4 min-h-screen relative z-0">
+          <div className="p-2 py-3 md:p-3 md:py-4 flex flex-col gap-3 h-screen relative z-0 overflow-hidden">
             <Navbar />
-            <main className="flex-1 flex flex-col relative z-10 w-full">
+            <main className="flex-1 min-h-0 flex flex-col relative z-10 w-full">
               {children}
             </main>
           </div>
           <PWAInstallPrompt />
           <PushNotificationManager />
+          <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

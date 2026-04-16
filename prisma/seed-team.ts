@@ -7,7 +7,7 @@ async function main() {
   console.log('Initiating team account creation...');
 
   const team = [
-    { name: 'Kayo Daruwala', email: 'kayo@eodmedia.com', password: 'EOD@KD', role: Role.MANAGER, department: Department.STRATEGY },
+    { name: 'Kayo Daruwala', email: 'kayo@eodmedia.com', password: 'EOD@KD', role: Role.ADMIN, department: Department.STRATEGY },
     { name: 'Shripad Kale', email: 'shripad@eodmedia.com', password: 'EOD@SK', role: Role.EMPLOYEE, department: Department.STRATEGY },
     { name: 'Prem Khetre', email: 'prem@eodmedia.com', password: 'EOD@PK', role: Role.EMPLOYEE, department: Department.STRATEGY },
     { name: 'Dev Enmulwar', email: 'dev@eodmedia.com', password: 'EOD@DE', role: Role.EMPLOYEE, department: Department.STRATEGY },

@@ -28,6 +28,7 @@ export default async function OverviewPage() {
   const session = await auth();
   if (!session?.user?.id) return notFound();
 
+
   const userId = session.user.id;
   const role = session.user.role as Role;
 
@@ -44,8 +45,8 @@ export default async function OverviewPage() {
   const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
   const nextWeek = new Date(Date.now() + 7 * 86400000);
 
-  // ─── SUPER_ADMIN / ADMIN ────────────────────────────────────────────────────
-  if (role === "SUPER_ADMIN" || role === "ADMIN") {
+  // ─── SUPER_ADMIN ────────────────────────────────────────────────────────────
+  if (role === "SUPER_ADMIN") {
     // Cached counts (60s TTL) + real-time metrics in parallel
     const [
       cachedCounts,
@@ -108,8 +109,8 @@ export default async function OverviewPage() {
     );
   }
 
-  // ─── MANAGER ────────────────────────────────────────────────────────────────
-  if (role === "MANAGER") {
+  // ─── ADMIN (formerly MANAGER) ────────────────────────────────────────────────────────────────
+  if (role === "ADMIN") {
     // Stage 1: Fetch teamMembers first (needed for groupBy filters)
     const [teamMembers, managedProjects, pendingReview, upcomingDeadlines, weeklyTime] = await Promise.all([
       db.user.findMany({

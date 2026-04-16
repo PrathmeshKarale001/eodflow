@@ -20,16 +20,14 @@ datasource db {
 enum Role {
   SUPER_ADMIN
   ADMIN
-  MANAGER
   EMPLOYEE
 }
 
 enum Department {
-  DESIGN
-  COPY
-  DEVELOPMENT
-  ADS
   STRATEGY
+  DESIGN
+  AI
+  DEVELOPMENT
   MANAGEMENT
 }
 
@@ -329,7 +327,7 @@ model File {
   createdAt   DateTime @default(now())
 
   // Relations
-  uploadedBy User     @relation(fields: [uploadedById], references: [id])
+  uploadedBy User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
   client     Client?  @relation("ClientFiles", fields: [clientId], references: [id])
   project    Project? @relation("ProjectFiles", fields: [projectId], references: [id])
   task       Task?    @relation("TaskFiles", fields: [taskId], references: [id])
@@ -360,7 +358,7 @@ model Comment {
 
   // Relations
   task     Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user     User      @relation(fields: [userId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id])
   replies  Comment[] @relation("CommentThread")
 
@@ -386,7 +384,7 @@ model TimeEntry {
 
   // Relations
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([userId])
@@ -408,7 +406,7 @@ model ActivityLog {
   createdAt  DateTime       @default(now())
 
   // Relations
-  user    User     @relation(fields: [userId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   task    Task?    @relation(fields: [taskId], references: [id])
   project Project? @relation(fields: [projectId], references: [id])
 
@@ -486,7 +484,7 @@ model ChatChannelMember {
   channelId String
   channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   userId    String
-  user      User        @relation(fields: [userId], references: [id])
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   joinedAt  DateTime    @default(now())
 
   @@unique([channelId, userId])
@@ -499,7 +497,7 @@ model ChatMessage {
   channelId String
   channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   userId    String
-  user      User        @relation(fields: [userId], references: [id])
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   content   String
   fileUrl   String?
   createdAt DateTime    @default(now())

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { uploadFileRecord } from "@/app/actions/files";
+import { AppSelect } from "@/components/ui/app-select";
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -149,34 +150,28 @@ export function FileUploadModal({ isOpen, onClose, clients, projects }: FileUplo
               <label className="font-label text-[9px] uppercase tracking-widest text-on-surface/50 block mb-1">
                 CLIENT (OPTIONAL)
               </label>
-              <select
+              <AppSelect
+                options={clients.map((c) => ({ value: c.id, label: c.companyName }))}
                 value={selectedClientId}
-                onChange={(e) => {
-                  setSelectedClientId(e.target.value);
+                onChange={(val) => {
+                  setSelectedClientId(val);
                   setSelectedProjectId("");
                 }}
-                className="w-full h-9 brutalist-border px-2 font-mono text-xs bg-card text-on-surface"
-              >
-                <option value="">— NONE —</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.companyName}</option>
-                ))}
-              </select>
+                placeholder="— NONE —"
+                className="h-9"
+              />
             </div>
             <div>
               <label className="font-label text-[9px] uppercase tracking-widest text-on-surface/50 block mb-1">
                 PROJECT (OPTIONAL)
               </label>
-              <select
+              <AppSelect
+                options={filteredProjects.map((p) => ({ value: p.id, label: p.title }))}
                 value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full h-9 brutalist-border px-2 font-mono text-xs bg-card text-on-surface"
-              >
-                <option value="">— NONE —</option>
-                {filteredProjects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
-              </select>
+                onChange={setSelectedProjectId}
+                placeholder="— NONE —"
+                className="h-9"
+              />
             </div>
           </div>
 

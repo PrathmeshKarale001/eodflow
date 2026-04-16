@@ -34,24 +34,24 @@ export function TaskColumn({ status, tasks, onTaskClick }: TaskColumnProps) {
   const style = COLUMN_STYLES[status] || { label: status, accent: "border-t-neutral-400" };
 
   return (
-    <div className={`brutalist-border bg-[#FAFAFA] min-w-[280px] max-w-[320px] flex flex-col border-t-4 ${style.accent}`}>
+    <div className={`brutalist-border bg-surface-container-low min-w-[280px] max-w-[320px] flex flex-col border-t-2 ${style.accent}`}>
       {/* Column Header */}
-      <div className="p-4 brutalist-border border-t-0 border-x-0 flex items-center justify-between">
-        <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">
+      <div className="p-3 brutalist-border border-t-0 border-x-0 flex items-center justify-between bg-surface-container-high/50">
+        <h3 className="font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60">
           {style.label}
         </h3>
-        <span className="bg-[#180065] text-white px-2 py-0.5 text-[10px] font-mono min-w-[24px] text-center">
+        <span className="bg-primary/20 text-primary px-2 py-0.5 text-[9px] font-mono min-w-[20px] text-center border border-primary/30">
           {tasks.length}
         </span>
       </div>
 
       {/* Task List */}
-      <div className="p-3 space-y-3 flex-1 overflow-y-auto max-h-[calc(100vh-280px)]">
+      <div className="p-3 space-y-3 flex-1 overflow-y-auto min-h-0">
         {tasks.length === 0 ? (
-          <div className="py-8 text-center">
-            <span className="material-symbols-outlined text-2xl text-neutral-300 mb-2 block">inbox</span>
-            <p className="font-mono text-[9px] uppercase text-muted-foreground tracking-widest">
-              EMPTY_QUEUE
+          <div className="py-12 flex flex-col items-center justify-center opacity-20">
+            <span className="material-symbols-outlined text-3xl mb-2">dashboard_customize</span>
+            <p className="font-mono text-[8px] uppercase tracking-[0.2em]">
+              NO_TASKS_IN_QUEUE
             </p>
           </div>
         ) : (

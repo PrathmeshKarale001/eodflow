@@ -27,10 +27,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  URGENT: "bg-red-600 text-white",
-  HIGH: "bg-orange-500 text-white",
-  MEDIUM: "bg-amber-400 text-black",
-  LOW: "bg-neutral-300 text-neutral-700",
+  URGENT: "bg-red-500 text-white border-b-2 border-r-2 border-red-900",
+  HIGH: "bg-orange-500 text-white border-b-2 border-r-2 border-orange-900",
+  MEDIUM: "bg-amber-400 text-black border-b-2 border-r-2 border-amber-900",
+  LOW: "bg-surface-container-high text-on-surface border-b-2 border-r-2 border-black/20",
 };
 
 interface TaskCardProps {
@@ -61,7 +61,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   return (
     <div
       onClick={() => onClick?.(task.id)}
-      className="brutalist-border bg-card p-4 cursor-pointer hover:bg-surface-container-high hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all group"
+      className="brutalist-border bg-card p-3 cursor-pointer hover:bg-surface-container-high hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none shadow-[2px_2px_0px_rgba(0,0,0,0.1)] transition-all group border-black/10"
     >
       {/* Priority + Revision */}
       <div className="flex items-center justify-between mb-3">
@@ -84,7 +84,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Avatar */}
-          <div className="w-6 h-6 bg-[#180065] text-white flex items-center justify-center text-[9px] font-headline">
+          <div className="w-5 h-5 bg-primary/20 text-primary flex items-center justify-center text-[8px] font-headline border border-primary/30">
             {initials}
           </div>
           <span className="font-mono text-[9px] text-muted-foreground uppercase">

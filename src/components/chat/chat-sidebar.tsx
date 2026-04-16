@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useUnread } from "./chat-provider";
 import {
   getOrCreateDMChannel,
@@ -11,6 +11,8 @@ import {
   deleteGroupChannel,
   getCurrentUserRole,
 } from "@/app/actions/chat";
+import { ROLE_LABELS } from "@/lib/permissions";
+import type { Role } from "@prisma/client";
 
 interface Channel {
   id: string;
@@ -27,27 +29,48 @@ interface ChatSidebarProps {
   currentUserId: string;
 }
 
+interface AvailableUser {
+  id: string;
+  name: string;
+  role: string;
+  department: string | null;
+}
+
 export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { unreadCounts } = useUnread();
+  const searchParams = useSearchParams();
   const [showNewDM, setShowNewDM] = useState(false);
   const [showNewChannel, setShowNewChannel] = useState(false);
-  const [dmUsers, setDmUsers] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [dmUsers, setDmUsers] = useState<AvailableUser[]>([]);
   const [loadingDM, setLoadingDM] = useState(false);
   const [search, setSearch] = useState("");
   const [newChannelName, setNewChannelName] = useState("");
   const [creatingChannel, setCreatingChannel] = useState(false);
   const [channelError, setChannelError] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [canManageChannels, setCanManageChannels] = useState(false);
+
+  // Member picker state
+  const [channelStep, setChannelStep] = useState<1 | 2>(1);
+  const [availableMembers, setAvailableMembers] = useState<AvailableUser[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
+  const [memberSearch, setMemberSearch] = useState("");
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   useEffect(() => {
     getCurrentUserRole().then((role) => {
       if (role === "ADMIN" || role === "SUPER_ADMIN") {
-        setIsAdmin(true);
+        setCanManageChannels(true);
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new-channel") {
+      setShowNewChannel(true);
+    }
+  }, [searchParams]);
 
   const groupChannels = channels.filter((c) => c.type === "GROUP");
   const directChannels = channels.filter((c) => c.type === "DIRECT");
@@ -57,7 +80,7 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
     setLoadingDM(true);
     try {
       const users = await getAvailableDMUsers();
-      setDmUsers(users as { id: string; name: string; role: string }[]);
+      setDmUsers(users as AvailableUser[]);
     } catch {
       // silently fail
     }
@@ -74,20 +97,83 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
     }
   };
 
+  // Step 1 → Step 2: load available members
+  const handleNextStep = async () => {
+    if (!newChannelName.trim()) return;
+    setLoadingMembers(true);
+    try {
+      const users = await getAvailableDMUsers();
+      setAvailableMembers(users as AvailableUser[]);
+    } catch {
+      // silently fail
+    }
+    setLoadingMembers(false);
+    setChannelStep(2);
+  };
+
+  const toggleMember = (userId: string) => {
+    setSelectedMembers((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    const filtered = filteredAvailableMembers();
+    if (filtered.every((u) => selectedMembers.has(u.id))) {
+      // Deselect all filtered
+      setSelectedMembers((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((u) => next.delete(u.id));
+        return next;
+      });
+    } else {
+      // Select all filtered
+      setSelectedMembers((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((u) => next.add(u.id));
+        return next;
+      });
+    }
+  };
+
+  const filteredAvailableMembers = () => {
+    if (!memberSearch) return availableMembers;
+    return availableMembers.filter((u) =>
+      u.name.toLowerCase().includes(memberSearch.toLowerCase())
+    );
+  };
+
   const handleCreateChannel = async () => {
     if (!newChannelName.trim()) return;
     setCreatingChannel(true);
     setChannelError("");
     try {
-      const channel = await createGroupChannel(newChannelName.trim());
-      setShowNewChannel(false);
-      setNewChannelName("");
+      const channel = await createGroupChannel(
+        newChannelName.trim(),
+        Array.from(selectedMembers)
+      );
+      resetCreateModal();
       router.push(`/chat/${channel.id}`);
       router.refresh();
     } catch (err) {
       setChannelError(err instanceof Error ? err.message : "Failed to create channel");
     }
     setCreatingChannel(false);
+  };
+
+  const resetCreateModal = () => {
+    setShowNewChannel(false);
+    setNewChannelName("");
+    setChannelStep(1);
+    setSelectedMembers(new Set());
+    setMemberSearch("");
+    setChannelError("");
   };
 
   const handleDeleteChannel = async (channelId: string, e: React.MouseEvent) => {
@@ -144,7 +230,7 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
             <p className="font-headline text-[8px] uppercase tracking-widest text-on-surface/40">
               CHANNELS
             </p>
-            {isAdmin && (
+            {canManageChannels && (
               <button
                 onClick={() => setShowNewChannel(true)}
                 className="flex h-5 w-5 items-center justify-center text-on-surface/40 hover:text-primary transition-colors"
@@ -188,7 +274,7 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
                       {unread > 99 ? "99+" : unread}
                     </span>
                   )}
-                  {isAdmin && unread === 0 && (
+                  {canManageChannels && unread === 0 && (
                     <button
                       onClick={(e) => handleDeleteChannel(ch.id, e)}
                       className="opacity-0 group-hover:opacity-100 text-on-surface/30 hover:text-red-400 transition-all flex-shrink-0"
@@ -254,49 +340,151 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
         </div>
       </div>
 
-      {/* New Channel Modal */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* CREATE CHANNEL MODAL — Two-step: Name → Select Members                */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
       {showNewChannel && (
         <div className="absolute inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowNewChannel(false)} />
-          <div className="relative bg-card brutalist-border w-72 flex flex-col">
-            <div className="px-3 py-2 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between">
+          <div className="absolute inset-0 bg-black/50" onClick={resetCreateModal} />
+          <div className="relative bg-card brutalist-border w-80 max-h-[80vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="px-3 py-2 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between flex-shrink-0">
               <h4 className="font-headline text-[9px] uppercase tracking-widest text-card-text">
-                CREATE_CHANNEL
+                {channelStep === 1 ? "CREATE_CHANNEL" : "SELECT_MEMBERS"}
               </h4>
-              <button onClick={() => setShowNewChannel(false)} className="text-on-surface/40 hover:text-on-surface">
-                <span className="material-symbols-outlined text-sm">close</span>
-              </button>
-            </div>
-            <div className="p-3 space-y-3">
-              <div>
-                <label className="block font-headline text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
-                  Channel Name
-                </label>
-                <input
-                  value={newChannelName}
-                  onChange={(e) => setNewChannelName(e.target.value)}
-                  placeholder="e.g. General, Solitario, CS Jewels..."
-                  className="w-full bg-surface-container-lowest brutalist-border px-2 py-1.5 text-[10px] text-on-surface font-mono placeholder:text-on-surface/30 focus:outline-none focus:ring-1 focus:ring-primary"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateChannel();
-                  }}
-                  autoFocus
-                />
+              <div className="flex items-center gap-1">
+                {channelStep === 2 && (
+                  <button
+                    onClick={() => setChannelStep(1)}
+                    className="text-on-surface/40 hover:text-on-surface text-[9px] font-mono uppercase"
+                  >
+                    ← BACK
+                  </button>
+                )}
+                <button onClick={resetCreateModal} className="text-on-surface/40 hover:text-on-surface">
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
               </div>
-              {channelError && (
-                <p className="font-mono text-[9px] text-red-400">{channelError}</p>
-              )}
-              <button
-                onClick={handleCreateChannel}
-                disabled={creatingChannel || !newChannelName.trim()}
-                className="w-full brutalist-border bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[9px] uppercase tracking-widest py-2 transition-colors disabled:opacity-50"
-              >
-                {creatingChannel ? "Creating..." : "Create Channel"}
-              </button>
-              <p className="font-mono text-[8px] text-on-surface/30 leading-relaxed">
-                All team members will be added automatically.
-              </p>
             </div>
+
+            {/* Step 1: Channel Name */}
+            {channelStep === 1 && (
+              <div className="p-3 space-y-3">
+                <div>
+                  <label className="block font-headline text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
+                    Channel Name
+                  </label>
+                  <input
+                    value={newChannelName}
+                    onChange={(e) => setNewChannelName(e.target.value)}
+                    placeholder="e.g. General, Solitario, CS Jewels..."
+                    className="w-full bg-surface-container-lowest brutalist-border px-2 py-1.5 text-[10px] text-on-surface font-mono placeholder:text-on-surface/30 focus:outline-none focus:ring-1 focus:ring-primary"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleNextStep();
+                    }}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={handleNextStep}
+                  disabled={!newChannelName.trim() || loadingMembers}
+                  className="w-full brutalist-border bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[9px] uppercase tracking-widest py-2 transition-colors disabled:opacity-50"
+                >
+                  {loadingMembers ? "Loading..." : "NEXT → SELECT_MEMBERS"}
+                </button>
+              </div>
+            )}
+
+            {/* Step 2: Select Members */}
+            {channelStep === 2 && (
+              <div className="flex flex-col flex-1 min-h-0">
+                {/* Member search */}
+                <div className="px-3 pt-2 pb-1 flex-shrink-0">
+                  <input
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Search team members..."
+                    className="w-full bg-surface-container-lowest brutalist-border px-2 py-1.5 text-[10px] text-on-surface font-mono placeholder:text-on-surface/30 focus:outline-none focus:ring-1 focus:ring-primary"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Select all / count */}
+                <div className="px-3 py-1.5 flex items-center justify-between flex-shrink-0">
+                  <button
+                    onClick={selectAll}
+                    className="font-mono text-[8px] text-primary uppercase tracking-widest hover:underline"
+                  >
+                    {filteredAvailableMembers().every((u) => selectedMembers.has(u.id))
+                      ? "DESELECT_ALL"
+                      : "SELECT_ALL"}
+                  </button>
+                  <span className="font-mono text-[8px] text-on-surface/40 uppercase">
+                    {selectedMembers.size} SELECTED
+                  </span>
+                </div>
+
+                {/* Member list */}
+                <div className="flex-1 overflow-y-auto max-h-60 divide-y divide-outline-variant/10 px-1">
+                  {filteredAvailableMembers().map((u) => {
+                    const isSelected = selectedMembers.has(u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        onClick={() => toggleMember(u.id)}
+                        className={`w-full px-2 py-2 text-left flex items-center gap-2 transition-colors ${
+                          isSelected ? "bg-primary/10" : "hover:bg-card-muted"
+                        }`}
+                      >
+                        {/* Checkbox */}
+                        <div className={`w-4 h-4 brutalist-border flex items-center justify-center flex-shrink-0 ${
+                          isSelected ? "bg-primary" : ""
+                        }`}>
+                          {isSelected && (
+                            <span className="material-symbols-outlined text-[10px] text-on-primary">check</span>
+                          )}
+                        </div>
+                        {/* Avatar */}
+                        <div className="flex h-6 w-6 items-center justify-center bg-surface-container-high text-[9px] font-headline font-bold text-on-surface/60 uppercase flex-shrink-0">
+                          {u.name.charAt(0)}
+                        </div>
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">
+                            {u.name}
+                          </p>
+                          <p className="font-mono text-[8px] text-on-surface/40 uppercase">
+                            {ROLE_LABELS[u.role as Role] || u.role}
+                            {u.department ? ` · ${u.department}` : ""}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Error */}
+                {channelError && (
+                  <p className="px-3 font-mono text-[9px] text-red-400">{channelError}</p>
+                )}
+
+                {/* Create button */}
+                <div className="p-3 flex-shrink-0 border-t border-outline-variant/20">
+                  <button
+                    onClick={handleCreateChannel}
+                    disabled={creatingChannel || !newChannelName.trim()}
+                    className="w-full brutalist-border bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[9px] uppercase tracking-widest py-2 transition-colors disabled:opacity-50"
+                  >
+                    {creatingChannel
+                      ? "CREATING..."
+                      : `CREATE "${newChannelName.toUpperCase()}" → ${selectedMembers.size + 1} MEMBERS`}
+                  </button>
+                  <p className="font-mono text-[7px] text-on-surface/30 mt-1.5 text-center">
+                    You will be added automatically as channel creator
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -333,7 +521,9 @@ export function ChatSidebar({ channels, currentUserId }: ChatSidebarProps) {
                       <p className="font-headline text-[10px] uppercase tracking-wider text-card-text">
                         {u.name}
                       </p>
-                      <p className="font-mono text-[8px] text-on-surface/40 uppercase">{u.role}</p>
+                      <p className="font-mono text-[8px] text-on-surface/40 uppercase">
+                        {ROLE_LABELS[u.role as Role] || u.role}
+                      </p>
                     </div>
                   </button>
                 ))

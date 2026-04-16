@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { createProjectRecord, createProjectFileRecord } from "@/app/actions/create-project";
 import { uploadFile } from "@/lib/storage";
 import { Priority } from "@prisma/client";
+import { AppSelect } from "@/components/ui/app-select";
 
 const projectSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -35,6 +36,7 @@ export function CreateProjectForm({ clients, managers }: CreateProjectFormProps)
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -127,18 +129,19 @@ export function CreateProjectForm({ clients, managers }: CreateProjectFormProps)
           <label className="font-label text-[10px] uppercase text-primary tracking-widest">
             CLIENT_BINDING
           </label>
-          <div className="relative">
-            <select
-              {...register("clientId")}
-              className="w-full h-14 bg-card text-card-text brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none transition-colors uppercase appearance-none cursor-pointer"
-            >
-              <option value="" className="bg-card text-on-surface/50">-- SELECT CLIENT --</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id} className="bg-card text-card-text">{c.companyName}</option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-primary">expand_more</span>
-          </div>
+          <Controller
+            name="clientId"
+            control={control}
+            render={({ field }) => (
+              <AppSelect
+                options={clients.map(c => ({ value: c.id, label: c.companyName }))}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="-- SELECT CLIENT --"
+                className="h-14"
+              />
+            )}
+          />
           {errors.clientId && <p className="text-error text-xs font-mono uppercase mt-1">{errors.clientId.message}</p>}
         </div>
 
@@ -146,35 +149,38 @@ export function CreateProjectForm({ clients, managers }: CreateProjectFormProps)
           <label className="font-label text-[10px] uppercase text-primary tracking-widest">
             ASSIGNED_MANAGER
           </label>
-          <div className="relative">
-            <select
-              {...register("assignedManagerId")}
-              className="w-full h-14 bg-card text-card-text brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none transition-colors uppercase appearance-none cursor-pointer"
-            >
-              <option value="" className="bg-card text-on-surface/50">-- UNASSIGNED --</option>
-              {managers.map(m => (
-                <option key={m.id} value={m.id} className="bg-card text-card-text">{m.name}</option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-primary">expand_more</span>
-          </div>
+          <Controller
+            name="assignedManagerId"
+            control={control}
+            render={({ field }) => (
+              <AppSelect
+                options={managers.map(m => ({ value: m.id, label: m.name }))}
+                value={field.value || ""}
+                onChange={field.onChange}
+                placeholder="-- UNASSIGNED --"
+                className="h-14"
+              />
+            )}
+          />
         </div>
 
         <div className="space-y-2">
           <label className="font-label text-[10px] uppercase text-primary tracking-widest">
             PRIORITY_LEVEL
           </label>
-          <div className="relative">
-            <select
-              {...register("priority")}
-              className="w-full h-14 bg-card text-card-text brutalist-border px-4 py-3 font-body text-base focus:border-primary-container focus:outline-none transition-colors uppercase appearance-none cursor-pointer"
-            >
-              {Object.values(Priority).map(p => (
-                <option key={p} value={p} className="bg-card text-card-text">{p}</option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-primary">expand_more</span>
-          </div>
+          <Controller
+            name="priority"
+            control={control}
+            render={({ field }) => (
+              <AppSelect
+                options={Object.values(Priority).map(p => ({ value: p, label: p }))}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder=""
+                className="h-14"
+              />
+            )}
+          />
         </div>
 
         <div className="space-y-2">

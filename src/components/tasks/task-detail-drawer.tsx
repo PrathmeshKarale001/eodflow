@@ -3,10 +3,13 @@
 import { useState, useCallback, startTransition } from "react";
 import { TaskStatus, Priority } from "@prisma/client";
 import { submitForReview, createTaskFileRecord } from "@/app/actions/task-submissions";
-import { updateTaskStatus } from "@/app/actions/tasks";
+import { updateTaskStatus, deleteTask, markTaskDone } from "@/app/actions/tasks";
 import { uploadFile } from "@/lib/storage";
 import { CommentThread } from "@/components/comments/comment-thread";
 import { TimeLogger } from "@/components/time/time-logger";
+import { EditTaskModal } from "./edit-task-modal";
+import { hasPermission } from "@/lib/permissions";
+import { Role } from "@prisma/client";
 
 const PRIORITY_COLORS: Record<string, string> = {
   URGENT: "bg-error text-white",
@@ -30,15 +33,20 @@ interface TaskDetailDrawerProps {
     subtasks: Array<{ id: string; title: string; isDone: boolean }>;
   };
   userId: string;
+  userRole: Role;
   isOpen: boolean;
   onClose: () => void;
+  teamMembers?: Array<{ id: string; name: string; department: string | null }>;
 }
 
 type TabId = "details" | "comments" | "time";
 
-export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDrawerProps) {
+export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, teamMembers = [] }: TaskDetailDrawerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isMarkingDone, setIsMarkingDone] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("details");
 
@@ -121,6 +129,38 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
     });
   };
 
+  const handleMarkDone = async () => {
+    if (!confirm("Is this task finalized? This will notify management.")) return;
+    setIsMarkingDone(true);
+    try {
+      await markTaskDone(task.id);
+      onClose();
+    } catch (error) {
+      console.error("Failed to mark done:", error);
+      alert("Failed to mark done.");
+    } finally {
+      setIsMarkingDone(false);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) return;
+    setIsDeleting(true);
+    try {
+      await deleteTask(task.id);
+      onClose();
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      alert("Failed to delete task.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const canManage = hasPermission(userRole, "editAnyTask") || (isAssignee && hasPermission(userRole, "editOwnTask"));
+  const canDelete = hasPermission(userRole, "deleteTask");
+  const canMarkStatusDone = task.status !== TaskStatus.DONE;
+
   if (!isOpen) return null;
 
   const TABS: { id: TabId; label: string; icon: string }[] = [
@@ -159,9 +199,32 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
                 </p>
               )}
             </div>
-            <button onClick={onClose} className="hover:text-error transition-colors p-1 text-outline">
-              <span className="material-symbols-outlined">close</span>
-            </button>
+            <div className="flex items-center gap-1">
+              {canManage && (
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="hover:text-primary transition-colors p-1 text-outline"
+                  title="Edit Task"
+                >
+                  <span className="material-symbols-outlined text-base">edit</span>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={handleDeleteTask}
+                  disabled={isDeleting}
+                  className="hover:text-error transition-colors p-1 text-outline disabled:opacity-50"
+                  title="Delete Task"
+                >
+                  <span className="material-symbols-outlined text-base">
+                    {isDeleting ? "progress_activity" : "delete"}
+                  </span>
+                </button>
+              )}
+              <button onClick={onClose} className="hover:text-error transition-colors p-1 text-outline">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -310,7 +373,31 @@ export function TaskDetailDrawer({ task, userId, isOpen, onClose }: TaskDetailDr
               {isSubmitting ? "SUBMITTING..." : "SUBMIT_FOR_REVIEW"}
             </button>
           ) : null}
+
+          {canMarkStatusDone ? (
+            <button
+              onClick={handleMarkDone}
+              disabled={isMarkingDone}
+              className="w-full flex items-center justify-center gap-2 mono-clip bg-success text-white px-6 py-3 font-headline text-sm uppercase hover:brightness-110 transition-all disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-base">check_circle</span>
+              {isMarkingDone ? "MARKING..." : "MARK_AS_DONE"}
+            </button>
+          ) : null}
         </div>
+
+        {/* Edit Modal */}
+        {isEditModalOpen && (
+          <EditTaskModal
+            task={{ ...task, assignedToId: task.assignedTo?.id || null }}
+            teamMembers={teamMembers}
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              onClose(); // Close drawer after edit to refresh data reliably
+            }}
+          />
+        )}
       </div>
     </div>
   );

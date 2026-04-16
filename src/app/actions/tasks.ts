@@ -71,9 +71,9 @@ const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
 
 // Roles allowed to transition INTO certain statuses
 const STATUS_ROLE_RESTRICTIONS: Partial<Record<TaskStatus, Role[]>> = {
-  [TaskStatus.CLIENT_APPROVAL]: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER],
+  [TaskStatus.CLIENT_APPROVAL]: [Role.SUPER_ADMIN, Role.ADMIN],
   [TaskStatus.APPROVED]: [Role.SUPER_ADMIN, Role.ADMIN],
-  [TaskStatus.REVISION]: [Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER],
+  [TaskStatus.REVISION]: [Role.SUPER_ADMIN, Role.ADMIN],
   [TaskStatus.CLIENT_REVISION]: [Role.SUPER_ADMIN, Role.ADMIN],
 };
 
@@ -172,7 +172,7 @@ export async function getProjectWithTasks(projectId: string) {
       orderBy: { sortOrder: "asc" },
     }),
     db.user.findMany({
-      where: { isActive: true, role: { in: [Role.EMPLOYEE, Role.MANAGER] } },
+      where: { isActive: true },
       select: { id: true, name: true, email: true, image: true, role: true, department: true },
       orderBy: { name: "asc" },
     }),
@@ -182,7 +182,7 @@ export async function getProjectWithTasks(projectId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Reassign Task (Admin / Super Admin / Manager)
+// Reassign Task (Director / POC)
 // ---------------------------------------------------------------------------
 
 export async function reassignTask(taskId: string, newAssigneeId: string) {
@@ -274,6 +274,164 @@ export async function getAllTasks() {
   });
 
   return tasks;
+}
+
+// ---------------------------------------------------------------------------
+// Delete Task
+// ---------------------------------------------------------------------------
+
+export async function deleteTask(taskId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const task = await db.task.findUnique({
+    where: { id: taskId },
+    select: { id: true, assignedToId: true, projectId: true, title: true },
+  });
+
+  if (!task) throw new Error("Task not found");
+
+  const userRole = session.user.role as Role;
+  const isAssignee = task.assignedToId === session.user.id;
+
+  // Decision logic: Admins/Super Admins or the Assignee can delete
+  if (!isAssignee && !hasPermission(userRole, "editAnyTask")) {
+    throw new Error("FORBIDDEN: Insufficient permissions to delete this task.");
+  }
+
+  await db.task.delete({ where: { id: taskId } });
+
+  // Activity log
+  await db.activityLog.create({
+    data: {
+      userId: session.user.id,
+      projectId: task.projectId,
+      action: "DELETED",
+      metadata: { title: task.title },
+    },
+  });
+
+  revalidatePath(`/projects/${task.projectId}`);
+  revalidatePath("/tasks");
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Update Task (Full)
+// ---------------------------------------------------------------------------
+
+export async function updateTask(taskId: string, data: {
+  title?: string;
+  description?: string;
+  priority?: Priority;
+  assignedToId?: string;
+  dueDate?: Date;
+  status?: TaskStatus;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const task = await db.task.findUnique({
+    where: { id: taskId },
+    select: { id: true, assignedToId: true, projectId: true },
+  });
+
+  if (!task) throw new Error("Task not found");
+
+  const userRole = session.user.role as Role;
+  const isAssignee = task.assignedToId === session.user.id;
+
+  if (!isAssignee && !hasPermission(userRole, "editAnyTask")) {
+    throw new Error("FORBIDDEN: Insufficient permissions to edit this task.");
+  }
+
+  const updatedTask = await db.task.update({
+    where: { id: taskId },
+    data: {
+      ...data,
+      assignedToId: data.assignedToId === "" ? null : data.assignedToId,
+    },
+  });
+
+  // Activity log for basic fields
+  await db.activityLog.create({
+    data: {
+      userId: session.user.id,
+      taskId: taskId,
+      projectId: task.projectId,
+      action: "UPDATED",
+      metadata: { updatedFields: Object.keys(data) },
+    },
+  });
+
+  revalidatePath(`/projects/${task.projectId}`);
+  revalidatePath("/tasks");
+  return updatedTask;
+}
+
+// ---------------------------------------------------------------------------
+// Mark Task as Done (Action + Notify Managers)
+// ---------------------------------------------------------------------------
+
+export async function markTaskDone(taskId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const task = await db.task.findUnique({
+    where: { id: taskId },
+    include: { project: { select: { title: true } } },
+  });
+
+  if (!task) throw new Error("Task not found");
+
+  const userRole = session.user.role as Role;
+  const isAssignee = task.assignedToId === session.user.id;
+
+  if (!isAssignee && !hasPermission(userRole, "editAnyTask")) {
+    throw new Error("FORBIDDEN");
+  }
+
+  const updatedTask = await db.task.update({
+    where: { id: taskId },
+    data: { status: TaskStatus.DONE },
+  });
+
+  // If an employee marks it done, notify managers/admins
+  if (userRole === Role.EMPLOYEE) {
+    const managers = await db.user.findMany({
+      where: {
+        role: { in: [Role.SUPER_ADMIN, Role.ADMIN] },
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    // Create notifications for all managers
+    await db.notification.createMany({
+      data: managers.map((m) => ({
+        userId: m.id,
+        type: "TASK_STATUS_CHANGED",
+        title: `Task completed: ${task.title}`,
+        body: `${session.user.name || "An employee"} marked a task as DONE in ${task.project.title}`,
+        linkUrl: `/tasks`,
+      })),
+    });
+  }
+
+  // Activity log
+  await db.activityLog.create({
+    data: {
+      userId: session.user.id,
+      taskId: taskId,
+      projectId: task.projectId,
+      action: "STATUS_CHANGED",
+      metadata: { oldStatus: task.status, newStatus: TaskStatus.DONE },
+    },
+  });
+
+  revalidatePath(`/projects/${task.projectId}`);
+  revalidatePath("/tasks");
+  return updatedTask;
 }
 
 // ---------------------------------------------------------------------------

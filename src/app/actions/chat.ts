@@ -4,23 +4,33 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { broadcastChatMessage } from "@/lib/realtime-server";
+import { hasPermission } from "@/lib/permissions";
+import type { Role } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
-// Create Group Channel (Admin / Super Admin only)
+// Helper: get current user with role
 // ---------------------------------------------------------------------------
 
-export async function createGroupChannel(name: string) {
+async function getAuthenticatedUser() {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
-
-  // Only ADMIN and SUPER_ADMIN can create channels
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { role: true },
+    select: { id: true, role: true, name: true },
   });
+  if (!user) throw new Error("UNAUTHORIZED");
+  return { ...user, role: user.role as Role };
+}
 
-  if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
-    throw new Error("FORBIDDEN: Only admins can create channels");
+// ---------------------------------------------------------------------------
+// Create Group Channel (Director / Manager / POC — with selective members)
+// ---------------------------------------------------------------------------
+
+export async function createGroupChannel(name: string, memberIds: string[]) {
+  const user = await getAuthenticatedUser();
+
+  if (!hasPermission(user.role, "createChannel")) {
+    throw new Error("FORBIDDEN: Only Directors, Managers and POCs can create channels");
   }
 
   // Check if channel with same name already exists
@@ -30,13 +40,19 @@ export async function createGroupChannel(name: string) {
 
   if (existing) throw new Error("Channel with this name already exists");
 
-  // Create channel and add creator as first member
+  // Ensure creator is included in the member list
+  const uniqueMembers = Array.from(new Set([user.id, ...memberIds]));
+
+  // Create channel with selected members
   const channel = await db.chatChannel.create({
     data: {
       name,
       type: "GROUP",
       members: {
-        create: { userId: session.user.id },
+        createMany: {
+          data: uniqueMembers.map((id) => ({ userId: id })),
+          skipDuplicates: true,
+        },
       },
     },
     include: {
@@ -45,42 +61,122 @@ export async function createGroupChannel(name: string) {
     },
   });
 
-  // Add ALL active users as members so everyone can see it
-  const allUsers = await db.user.findMany({
-    where: { isActive: true, id: { not: session.user.id } },
-    select: { id: true },
-  });
-
-  if (allUsers.length > 0) {
-    await db.chatChannelMember.createMany({
-      data: allUsers.map((u) => ({ channelId: channel.id, userId: u.id })),
-      skipDuplicates: true,
-    });
-  }
-
   revalidatePath("/chat");
   return channel;
 }
 
 // ---------------------------------------------------------------------------
-// Delete Group Channel (Admin only)
+// Delete Group Channel (Director / Manager / POC)
 // ---------------------------------------------------------------------------
 
 export async function deleteGroupChannel(channelId: string) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+  const user = await getAuthenticatedUser();
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true },
-  });
-
-  if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+  if (!hasPermission(user.role, "deleteChannel")) {
     throw new Error("FORBIDDEN");
   }
 
   await db.chatChannel.delete({ where: { id: channelId } });
   revalidatePath("/chat");
+}
+
+// ---------------------------------------------------------------------------
+// Add member to channel (Director / Manager / POC)
+// ---------------------------------------------------------------------------
+
+export async function addChannelMember(channelId: string, userId: string) {
+  const user = await getAuthenticatedUser();
+
+  if (!hasPermission(user.role, "manageChannelMembers")) {
+    throw new Error("FORBIDDEN: Insufficient permissions");
+  }
+
+  // Check if already a member
+  const existing = await db.chatChannelMember.findFirst({
+    where: { channelId, userId },
+  });
+
+  if (existing) throw new Error("User is already a member of this channel");
+
+  await db.chatChannelMember.create({
+    data: { channelId, userId },
+  });
+
+  revalidatePath("/chat");
+  revalidatePath(`/chat/${channelId}`);
+}
+
+// ---------------------------------------------------------------------------
+// Remove member from channel (Director / Manager / POC)
+// ---------------------------------------------------------------------------
+
+export async function removeChannelMember(channelId: string, userId: string) {
+  const user = await getAuthenticatedUser();
+
+  if (!hasPermission(user.role, "manageChannelMembers")) {
+    throw new Error("FORBIDDEN: Insufficient permissions");
+  }
+
+  // Don't allow removing yourself if you're the last member
+  const memberCount = await db.chatChannelMember.count({ where: { channelId } });
+  if (memberCount <= 1) throw new Error("Cannot remove the last member from a channel");
+
+  await db.chatChannelMember.deleteMany({
+    where: { channelId, userId },
+  });
+
+  revalidatePath("/chat");
+  revalidatePath(`/chat/${channelId}`);
+}
+
+// ---------------------------------------------------------------------------
+// Get channel members (for management panel)
+// ---------------------------------------------------------------------------
+
+export async function getChannelMembers(channelId: string) {
+  const user = await getAuthenticatedUser();
+
+  const members = await db.chatChannelMember.findMany({
+    where: { channelId },
+    include: {
+      user: { select: { id: true, name: true, image: true, role: true, department: true } },
+    },
+    orderBy: { joinedAt: "asc" },
+  });
+
+  return members.map((m) => ({
+    id: m.user.id,
+    name: m.user.name,
+    image: m.user.image,
+    role: m.user.role as Role,
+    department: m.user.department,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Get non-members (for adding to channel)
+// ---------------------------------------------------------------------------
+
+export async function getNonMembers(channelId: string) {
+  const user = await getAuthenticatedUser();
+
+  const existingMemberIds = (
+    await db.chatChannelMember.findMany({
+      where: { channelId },
+      select: { userId: true },
+    })
+  ).map((m) => m.userId);
+
+  const nonMembers = await db.user.findMany({
+    where: {
+      isActive: true,
+      id: { notIn: existingMemberIds },
+    },
+    select: { id: true, name: true, image: true, role: true, department: true },
+    orderBy: { name: "asc" },
+  });
+
+  return nonMembers;
 }
 
 // ---------------------------------------------------------------------------

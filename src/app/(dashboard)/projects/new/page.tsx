@@ -15,7 +15,7 @@ export default async function NewProjectPage() {
       orderBy: { companyName: "asc" }
     }),
     db.user.findMany({
-      where: { role: Role.MANAGER, isActive: true },
+      where: { role: { in: [Role.SUPER_ADMIN, Role.ADMIN] }, isActive: true },
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" }
     })

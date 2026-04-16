@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, startTransition } from "react";
-import { TaskStatus, Priority } from "@prisma/client";
+import { useState, startTransition, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { TaskStatus, Priority, Role } from "@prisma/client";
 import { TaskDetailDrawer } from "./task-detail-drawer";
+import { CreateTaskModal } from "./create-task-modal";
 import { reassignTask } from "@/app/actions/tasks";
 
 const STATUS_SECTIONS: { status: TaskStatus; label: string; accent: string }[] = [
+  { status: TaskStatus.BACKLOG, label: "BACKLOG", accent: "border-l-neutral-400" },
   { status: TaskStatus.TODO, label: "TODO", accent: "border-l-blue-500" },
   { status: TaskStatus.IN_PROGRESS, label: "IN_PROGRESS", accent: "border-l-amber-500" },
   { status: TaskStatus.IN_REVIEW, label: "IN_REVIEW", accent: "border-l-purple-500" },
@@ -48,14 +52,65 @@ interface TaskType {
 interface MyTasksListProps {
   tasks: TaskType[];
   userId: string;
+  userRole: Role;
   canAssign?: boolean;
+  canCreateTask?: boolean;
   teamMembers?: TeamMember[];
+  projects?: Array<{ id: string; title: string }>;
 }
 
-export function MyTasksList({ tasks, userId, canAssign = false, teamMembers = [] }: MyTasksListProps) {
+export function MyTasksList({
+  tasks,
+  userId,
+  userRole,
+  canAssign = false,
+  teamMembers = [],
+  projects = [],
+}: MyTasksListProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
   const [reassigning, setReassigning] = useState(false);
+
+  const isCreateModalOpen = searchParams.get("action") === "new-task";
+  
+  useEffect(() => {
+    const urlTaskId = searchParams.get("taskId");
+    if (urlTaskId && !selectedTaskId) {
+      setSelectedTaskId(urlTaskId);
+      // clean up URL to avoid reopening on refresh
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("taskId");
+      router.replace(`/tasks?${params.toString()}`);
+    }
+  }, [searchParams, selectedTaskId, router]);
+
+  const closeCreateModal = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("action");
+    router.push(`/tasks?${params.toString()}`);
+  };
+
+  const handleCreateSuccess = (taskId: string) => {
+    toast.success(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <span className="font-headline uppercase text-sm">Task Created</span>
+          <button
+            onClick={() => {
+              setSelectedTaskId(taskId);
+              toast.dismiss(t.id);
+            }}
+            className="text-xs font-mono uppercase bg-on-surface text-surface px-3 py-1.5 hover:opacity-80 transition-opacity"
+          >
+            VIEW_TASK
+          </button>
+        </div>
+      ),
+      { duration: 5000 }
+    );
+  };
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
 
@@ -248,10 +303,24 @@ export function MyTasksList({ tasks, userId, canAssign = false, teamMembers = []
         <TaskDetailDrawer
           task={selectedTask}
           userId={userId}
+          userRole={userRole}
           isOpen={!!selectedTaskId}
           onClose={() => setSelectedTaskId(null)}
+          teamMembers={teamMembers}
         />
       ) : null}
+
+      {/* Global Create Task Modal */}
+      {isCreateModalOpen && (
+        <CreateTaskModal
+          projectId={projects[0]?.id}
+          projects={projects}
+          teamMembers={teamMembers}
+          isOpen={isCreateModalOpen}
+          onClose={closeCreateModal}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
     </div>
   );
 }

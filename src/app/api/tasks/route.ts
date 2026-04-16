@@ -37,14 +37,14 @@ export async function GET(req: NextRequest) {
     where.assignedToId = userId;
   }
 
-  // Managers see tasks of their team (within projects they manage)
-  if (role === "MANAGER") {
-    where.project = { assignedManagerId: userId };
-  }
-
-  // Admins see tasks within their client projects
+  // Admins see tasks within their client projects, or projects they are assigned to manage
   if (role === "ADMIN") {
-    where.project = { client: { pocAdminId: userId } };
+    where.project = {
+      OR: [
+        { client: { pocAdminId: userId } },
+        { assignedManagerId: userId }
+      ]
+    };
   }
 
   // Super Admins see everything (no additional filter)

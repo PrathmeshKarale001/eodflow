@@ -30,7 +30,7 @@ export default async function DashboardLayout({
   const navItems = getNavForRole(session.user.role as Role);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-full bg-background overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         user={{
@@ -45,7 +45,7 @@ export default async function DashboardLayout({
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="w-full px-2 py-3 md:px-4 md:py-4">
           {children}
         </div>
       </main>

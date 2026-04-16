@@ -143,7 +143,7 @@ export async function deleteAnnotation(commentId: string) {
   if (!comment) throw new Error("Annotation not found");
 
   const isOwner = comment.userId === session.user.id;
-  const isManager = userRole === "MANAGER" || userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  const isManager = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
 
   if (!isOwner && !isManager) {
     throw new Error("FORBIDDEN: Cannot delete this annotation.");

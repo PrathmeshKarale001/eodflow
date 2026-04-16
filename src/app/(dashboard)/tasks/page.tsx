@@ -40,6 +40,15 @@ export default async function TasksPage() {
       })
     : [];
 
+  // Fetch projects for Task Creation selector
+  const projects = hasPermission(userRole, "createTask")
+    ? await db.project.findMany({
+        where: { status: { not: "COMPLETED" } },
+        select: { id: true, title: true },
+        orderBy: { title: "asc" },
+      })
+    : [];
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
@@ -57,7 +66,7 @@ export default async function TasksPage() {
           <div className="flex items-center gap-3">
             {hasPermission(userRole, "createTask") && (
               <Link
-                href="/projects"
+                href="?action=new-task"
                 className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm">add</span>
@@ -73,8 +82,11 @@ export default async function TasksPage() {
       <MyTasksList
         tasks={tasks}
         userId={session.user.id}
+        userRole={userRole}
         canAssign={canAssign}
         teamMembers={teamMembers}
+        projects={projects}
+        canCreateTask={hasPermission(userRole, "createTask")}
       />
     </div>
   );

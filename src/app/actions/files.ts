@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { hasPermission } from "@/lib/permissions";
 import { Role } from "@prisma/client";
-import { deleteStorageFile } from "@/lib/storage";
+import { deleteStorageFile, extractStoragePath } from "@/lib/storage";
 
 // ---------------------------------------------------------------------------
 // Upload File Record (after client-side upload to Supabase Storage)
@@ -176,11 +176,9 @@ export async function deleteFile(fileId: string) {
 
   // Try to delete from storage (extract path from URL)
   try {
-    const urlObj = new URL(file.fileUrl);
-    const pathParts = urlObj.pathname.split("/storage/v1/object/public/");
-    if (pathParts[1]) {
-      const [bucket, ...rest] = pathParts[1].split("/");
-      await deleteStorageFile(rest.join("/"), bucket);
+    const storagePath = extractStoragePath(file.fileUrl);
+    if (storagePath) {
+      await deleteStorageFile(storagePath);
     }
   } catch (e) {
     console.warn("Storage delete failed (file may already be removed):", e);
