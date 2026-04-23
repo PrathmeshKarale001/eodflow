@@ -1,0 +1,239 @@
+/* Material Symbols loaded via non-blocking <link> in layout.tsx — not @import (render-blocking) */
+@import "tailwindcss";
+
+/* =============================================================================
+   EOD FLOW — Design System Tokens
+   Inspired by: ClickUp density, Slack warmth, Zoho clean, Linear polish
+   ============================================================================= */
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-headline: var(--font-jetbrains-mono), monospace;
+  --font-body: var(--font-inter), sans-serif;
+  --font-label: var(--font-jetbrains-mono), monospace;
+
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+
+  --color-primary: var(--clr-primary);
+  --color-on-primary: var(--clr-on-primary);
+  --color-primary-container: var(--clr-primary-container);
+  --color-on-primary-container: var(--clr-on-primary-container);
+
+  --color-secondary: var(--clr-secondary);
+  --color-on-secondary: var(--clr-on-secondary);
+  --color-secondary-container: var(--clr-secondary-container);
+  --color-on-secondary-container: var(--clr-on-secondary-container);
+
+  --color-tertiary: var(--clr-tertiary);
+  --color-on-tertiary: var(--clr-on-tertiary);
+  --color-tertiary-container: var(--clr-tertiary-container);
+  --color-on-tertiary-container: var(--clr-on-tertiary-container);
+
+  --color-surface: var(--clr-surface);
+  --color-on-surface: var(--clr-on-surface);
+  --color-surface-container-lowest: var(--clr-surface-lowest);
+  --color-surface-container-low: var(--clr-surface-low);
+  --color-surface-container: var(--clr-surface-container);
+  --color-surface-container-high: var(--clr-surface-high);
+  --color-surface-container-highest: var(--clr-surface-highest);
+
+  --color-outline: var(--clr-outline);
+  --color-outline-variant: var(--clr-outline-variant);
+
+  --color-error: var(--clr-error);
+  --color-on-error: var(--clr-on-error);
+
+  /* Semantic card token */
+  --color-card: var(--clr-card);
+  --color-card-muted: var(--clr-card-muted);
+  --color-card-text: var(--clr-card-text);
+  --color-card-border: var(--clr-card-border);
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+}
+
+/* ===== DARK MODE (default) ===== */
+:root {
+  --bg: #0A0A0A;
+  --fg: #e5e2e1;
+  --clr-primary: #c6bfff;
+  --clr-on-primary: #2900a0;
+  --clr-primary-container: #6c5ce7;
+  --clr-on-primary-container: #faf6ff;
+  --clr-secondary: #c7bfff;
+  --clr-on-secondary: #2c0d95;
+  --clr-secondary-container: #4330ab;
+  --clr-on-secondary-container: #b5abff;
+  --clr-tertiary: #ffb77d;
+  --clr-on-tertiary: #4d2600;
+  --clr-tertiary-container: #ac5d00;
+  --clr-on-tertiary-container: #fff5f1;
+  --clr-surface: #131313;
+  --clr-on-surface: #e5e2e1;
+  --clr-surface-lowest: #0e0e0e;
+  --clr-surface-low: #1c1b1b;
+  --clr-surface-container: #201f1f;
+  --clr-surface-high: #2a2a2a;
+  --clr-surface-highest: #353534;
+  --clr-outline: #928ea0;
+  --clr-outline-variant: #474554;
+  --clr-error: #ffb4ab;
+  --clr-on-error: #690005;
+  --clr-card: #181818;
+  --clr-card-muted: #1e1e1e;
+  --clr-card-text: #c6bfff;
+  --clr-card-border: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== LIGHT MODE ===== */
+.light {
+  --bg: #f5f5f5;
+  --fg: #1a1a1a;
+  --clr-primary: #6c5ce7;
+  --clr-on-primary: #ffffff;
+  --clr-primary-container: #6c5ce7;
+  --clr-on-primary-container: #ffffff;
+  --clr-secondary: #5a4fcf;
+  --clr-on-secondary: #ffffff;
+  --clr-secondary-container: #e8e5ff;
+  --clr-on-secondary-container: #2c0d95;
+  --clr-tertiary: #c45d00;
+  --clr-on-tertiary: #ffffff;
+  --clr-tertiary-container: #ffead9;
+  --clr-on-tertiary-container: #4d2600;
+  --clr-surface: #ffffff;
+  --clr-on-surface: #1a1a1a;
+  --clr-surface-lowest: #ffffff;
+  --clr-surface-low: #f8f8f8;
+  --clr-surface-container: #f0f0f0;
+  --clr-surface-high: #e8e8e8;
+  --clr-surface-highest: #dcdcdc;
+  --clr-outline: #6b6880;
+  --clr-outline-variant: #c8c6d4;
+  --clr-error: #ba1a1a;
+  --clr-on-error: #ffffff;
+  --clr-card: #ffffff;
+  --clr-card-muted: #f4f4f5;
+  --clr-card-text: #180065;
+  --clr-card-border: rgba(0, 0, 0, 0.15);
+}
+
+/* Custom Utilities */
+@utility brutalist-border {
+  border: 1px solid var(--clr-card-border);
+}
+
+@utility scanline {
+  background: linear-gradient(to bottom, transparent 50%, rgba(108, 92, 231, 0.05) 51%);
+  background-size: 100% 4px;
+  pointer-events: none;
+}
+
+@utility mono-clip {
+  clip-path: polygon(0 0, 100% 0, 100% 90%, 95% 100%, 0 100%);
+}
+
+@utility data-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+
+/* Base styles — scoped border-color (not * wildcard for perf) */
+div, section, aside, nav, header, footer, article,
+button, a, input, select, textarea, label,
+[class*="brutalist"] {
+  border-color: var(--clr-card-border);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--clr-outline-variant);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--clr-outline);
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--clr-primary-container);
+  color: white;
+}
+
+/* Smooth transitions — scoped to interactive elements only (not every DOM node) */
+a,
+button,
+[role="button"],
+input,
+select,
+textarea,
+.brutalist-border {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+/* Theme-switch animation: apply globally only during active transition */
+[data-transitioning] *,
+[data-transitioning] *::before,
+[data-transitioning] *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--clr-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none !important;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  /* ─── PERF: Prevent CLS during icon font loading ─────────────── */
+  /* Explicit dimensions prevent layout shift when the font swaps in */
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+}
+
+/* ─── PERF: Content visibility for below-fold sections ──────────── */
+/* Tells the browser to skip rendering off-screen content until needed */
+[id="workflow"],
+[id="roles"] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}

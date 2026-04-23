@@ -1,0 +1,520 @@
+// =============================================================================
+// EOD FLOW — Database Schema
+// End Of Day Media — Internal Task Management System
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EMPLOYEE
+}
+
+enum Department {
+  STRATEGY
+  DESIGN
+  AI
+  DEVELOPMENT
+  MANAGEMENT
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  REVISION
+  CLIENT_APPROVAL
+  CLIENT_REVISION
+  APPROVED
+  DONE
+}
+
+enum Priority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ActivityAction {
+  CREATED
+  UPDATED
+  DELETED
+  ASSIGNED
+  STATUS_CHANGED
+  COMMENTED
+  FILE_UPLOADED
+  FILE_VERSIONED
+  APPROVED
+  REJECTED
+  REVISION_REQUESTED
+  TIME_LOGGED
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_STATUS_CHANGED
+  COMMENT_ADDED
+  MENTION
+  FILE_UPLOADED
+  DEADLINE_REMINDER
+  APPROVAL_REQUESTED
+  REVISION_REQUESTED
+  PROJECT_CREATED
+  SYSTEM
+}
+
+// =============================================================================
+// USER & AUTH
+// =============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Custom fields
+  role          Role      @default(EMPLOYEE)
+  department    Department?
+  isActive      Boolean   @default(true)
+  invitedBy     String?
+  lastLoginAt   DateTime?
+
+  // Relations
+  inviter           User?          @relation("UserInvites", fields: [invitedBy], references: [id])
+  invitees          User[]         @relation("UserInvites")
+  pocClients        Client[]       @relation("ClientPOC")
+  createdProjects   Project[]      @relation("ProjectCreator")
+  managedProjects   Project[]      @relation("ProjectManager")
+  assignedTasks     Task[]         @relation("TaskAssignee")
+  createdTasks      Task[]         @relation("TaskCreator")
+  comments          Comment[]
+  timeEntries       TimeEntry[]
+  uploadedFiles     File[]
+  activities        ActivityLog[]
+  notifications     Notification[]
+  accounts          Account[]
+  sessions          Session[]
+  chatMembers       ChatChannelMember[]
+  chatMessages      ChatMessage[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verifications")
+}
+
+// =============================================================================
+// CLIENT & WORKSPACE
+// =============================================================================
+
+model Client {
+  id              String   @id @default(cuid())
+  companyName     String
+  brandColor      String   @default("#6C5CE7")
+  logoUrl         String?
+  pocAdminId      String
+  brandGuidelines Json?    // Structured: fonts, colors, tone, dos/donts
+  industry        String?
+  retainerValue   Decimal? @db.Decimal(10, 2)
+  website         String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  pocAdmin  User      @relation("ClientPOC", fields: [pocAdminId], references: [id])
+  projects  Project[]
+  files     File[]    @relation("ClientFiles")
+
+  @@map("clients")
+}
+
+// =============================================================================
+// PROJECT & BRIEF
+// =============================================================================
+
+model Project {
+  id                String        @id @default(cuid())
+  clientId          String
+  createdById       String
+  assignedManagerId String?
+  title             String
+  briefDescription  String?       @db.Text
+  briefObjective    String?       @db.Text
+  briefDeliverables String?       @db.Text
+  status            ProjectStatus @default(DRAFT)
+  priority          Priority      @default(MEDIUM)
+  deadline          DateTime?
+  templateId        String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  client          Client           @relation(fields: [clientId], references: [id])
+  createdBy       User             @relation("ProjectCreator", fields: [createdById], references: [id])
+  assignedManager User?            @relation("ProjectManager", fields: [assignedManagerId], references: [id])
+  template        ProjectTemplate? @relation(fields: [templateId], references: [id])
+  tasks           Task[]
+  files           File[]           @relation("ProjectFiles")
+  activities      ActivityLog[]
+  chatChannels    ChatChannel[]
+
+  @@index([clientId])
+  @@index([assignedManagerId])
+  @@index([status])
+  @@map("projects")
+}
+
+// =============================================================================
+// TASK & SUBTASK
+// =============================================================================
+
+model Task {
+  id             String     @id @default(cuid())
+  projectId      String
+  assignedToId   String?
+  assignedById   String?
+  title          String
+  description    String?    @db.Text
+  status         TaskStatus @default(BACKLOG)
+  priority       Priority   @default(MEDIUM)
+  dueDate        DateTime?
+  estimatedHours Decimal?   @db.Decimal(5, 1)
+  sortOrder      Int        @default(0)
+  isRecurring    Boolean    @default(false)
+  recurrenceRule String?    // RRULE format
+  revisionCount  Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  project    Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedTo User?         @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  assignedBy User?         @relation("TaskCreator", fields: [assignedById], references: [id])
+  subtasks   Subtask[]
+  comments   Comment[]
+  files      File[]        @relation("TaskFiles")
+  timeEntries TimeEntry[]
+  activities ActivityLog[]
+  tags       TagsOnTasks[]
+
+  @@index([projectId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+  // ─── PERF: Composite indexes for hot query patterns ────────────────────────
+  @@index([assignedToId, status])     // "my active tasks" (Employee dashboard, Tasks page)
+  @@index([status, dueDate])          // "overdue tasks" (Super Admin dashboard)
+  @@index([projectId, sortOrder])     // Kanban board ordering
+  @@index([projectId, status])        // Manager's project tasks by status
+  @@map("tasks")
+}
+
+model Subtask {
+  id        String  @id @default(cuid())
+  taskId    String
+  title     String
+  isDone    Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("subtasks")
+}
+
+model Tag {
+  id    String        @id @default(cuid())
+  name  String        @unique
+  color String        @default("#6C5CE7")
+  tasks TagsOnTasks[]
+
+  @@map("tags")
+}
+
+model TagsOnTasks {
+  taskId String
+  tagId  String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@map("tags_on_tasks")
+}
+
+// =============================================================================
+// FILES & MEDIA LIBRARY
+// =============================================================================
+
+model File {
+  id          String   @id @default(cuid())
+  uploadedById String
+  clientId    String?
+  projectId   String?
+  taskId      String?
+  filename    String
+  originalName String
+  fileUrl     String
+  mimeType    String
+  fileSize    Int      // bytes
+  version     Int      @default(1)
+  parentFileId String? // Points to original file for version tracking
+  createdAt   DateTime @default(now())
+
+  // Relations
+  uploadedBy User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  client     Client?  @relation("ClientFiles", fields: [clientId], references: [id])
+  project    Project? @relation("ProjectFiles", fields: [projectId], references: [id])
+  task       Task?    @relation("TaskFiles", fields: [taskId], references: [id])
+  parentFile File?    @relation("FileVersions", fields: [parentFileId], references: [id])
+  versions   File[]   @relation("FileVersions")
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([taskId])
+  @@index([uploadedById])
+  @@index([parentFileId])
+  @@map("files")
+}
+
+// =============================================================================
+// COMMENTS & ANNOTATIONS
+// =============================================================================
+
+model Comment {
+  id             String   @id @default(cuid())
+  taskId         String
+  userId         String
+  parentId       String?  // For threaded replies
+  content        String   @db.Text
+  annotationData Json?    // { x, y, width, height, fileId } for image annotations
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  task     Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentThread")
+
+  @@index([taskId])
+  @@index([userId])
+  // ─── PERF: Composite index for threaded comment loading ───────────────────
+  @@index([taskId, parentId])
+  @@map("comments")
+}
+
+// =============================================================================
+// TIME TRACKING
+// =============================================================================
+
+model TimeEntry {
+  id           String   @id @default(cuid())
+  taskId       String
+  userId       String
+  durationMins Int
+  notes        String?
+  entryDate    DateTime @default(now()) @db.Date
+  startedAt    DateTime?
+  stoppedAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([entryDate])
+  // ─── PERF: Composite indexes ──────────────────────────────────────────────
+  @@index([userId, entryDate])        // "my time this week" (Employee dashboard)
+  @@index([userId, stoppedAt])        // "running timer" lookup
+  @@map("time_entries")
+}
+
+// =============================================================================
+// ACTIVITY LOG (AUDIT TRAIL)
+// =============================================================================
+
+model ActivityLog {
+  id         String         @id @default(cuid())
+  userId     String
+  taskId     String?
+  projectId  String?
+  action     ActivityAction
+  metadata   Json?          // { field: "status", oldValue: "TODO", newValue: "IN_PROGRESS" }
+  createdAt  DateTime       @default(now())
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task    Task?    @relation(fields: [taskId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("activity_log")
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  linkUrl   String?          // Deep link to task/project
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// =============================================================================
+// TEMPLATES
+// =============================================================================
+
+model ProjectTemplate {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  defaultTasks  Json     // Array of { title, description, estimatedHours, department }
+  createdAt     DateTime @default(now())
+
+  projects Project[]
+
+  @@map("project_templates")
+}
+
+// =============================================================================
+// CHAT & MESSAGING
+// =============================================================================
+
+enum ChannelType {
+  PROJECT
+  DIRECT
+  GROUP
+}
+
+model ChatChannel {
+  id        String      @id @default(cuid())
+  name      String?
+  type      ChannelType @default(PROJECT)
+  projectId String?
+  project   Project?    @relation(fields: [projectId], references: [id])
+  createdAt DateTime    @default(now())
+  messages  ChatMessage[]
+  members   ChatChannelMember[]
+
+  @@index([projectId])
+  @@map("chat_channels")
+}
+
+model ChatChannelMember {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime    @default(now())
+
+  @@unique([channelId, userId])
+  @@index([userId])
+  @@map("chat_channel_members")
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  fileUrl   String?
+  createdAt DateTime    @default(now())
+
+  @@index([channelId])
+  @@index([createdAt])
+  // ─── PERF: Composite index for paginated channel messages ─────────────────
+  @@index([channelId, createdAt])
+  @@map("chat_messages")
+}
