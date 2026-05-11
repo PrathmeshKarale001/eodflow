@@ -17,6 +17,7 @@ export const authApi = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: [
     "http://localhost:3000",
+    "https://flow.eod.media",
     "https://eod-flow.vercel.app",
     // Allow ALL Vercel preview/deployment URLs (they change every deploy)
     "https://*.vercel.app",
