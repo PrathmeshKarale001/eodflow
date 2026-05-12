@@ -258,6 +258,13 @@ export async function acceptInvitation(data: {
   // Hash password
   const passwordHash = await hashPassword(data.password);
 
+  // Fetch invitation creator BEFORE starting the transaction
+  // (avoids connection deadlock with connection_limit=1 on pooler)
+  const invRecord = await db.invitation.findUnique({
+    where: { token: data.token },
+    select: { createdById: true },
+  });
+
   // Create user + credential account in a transaction
   const user = await db.$transaction(async (tx) => {
     const newUser = await tx.user.create({
@@ -267,10 +274,7 @@ export async function acceptInvitation(data: {
         role: inv.role,
         department: inv.department,
         isActive: true,
-        invitedBy: (await db.invitation.findUnique({
-          where: { token: data.token },
-          select: { createdById: true },
-        }))?.createdById,
+        invitedBy: invRecord?.createdById,
       },
     });
 
