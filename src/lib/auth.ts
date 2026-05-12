@@ -50,6 +50,33 @@ export const authApi = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    // Block public sign-up: only allow sign-in for users that already exist
+    // in the DB (created via our invitation server actions).
+    // Better Auth's signUp.email() will fail with "User already exists" for
+    // invited users (good) or create a ghost user for unknown emails.
+    // The databaseHooks below catch and reject the ghost-user creation.
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          // Check if this user was pre-created by our invitation flow.
+          // Invited users are already in the DB before they ever call signUp.
+          // If Better Auth is trying to CREATE a new user (i.e. public signUp),
+          // we reject it — only our server actions can create users.
+          const existing = await db.user.findUnique({
+            where: { email: user.email },
+          });
+          if (!existing) {
+            // Not pre-created by invitation → block the sign-up
+            return false;
+          }
+          // User exists (was created by invitation) → allow Better Auth
+          // to proceed (it will link the account)
+          return true;
+        },
+      },
+    },
   },
   advanced: {
     // Use consistent cookie name regardless of HTTP/HTTPS

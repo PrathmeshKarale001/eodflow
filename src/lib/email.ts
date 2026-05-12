@@ -156,3 +156,65 @@ export async function sendDailyDigestEmail(params: {
     `),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Invitation Email (Magic Link)
+// ---------------------------------------------------------------------------
+
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "DIRECTOR",
+  ADMIN: "POC",
+  EMPLOYEE: "EMPLOYEE",
+};
+
+export async function sendInviteEmail(params: {
+  to: string;
+  name: string;
+  invitedBy: string;
+  role: string;
+  department?: string | null;
+  joinUrl: string;
+  expiresAt: Date;
+}) {
+  const roleLabel = ROLE_LABELS[params.role] || params.role;
+  const expiryStr = params.expiresAt.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return sendEmail({
+    to: params.to,
+    subject: `[EOD Flow] You're invited to join the team`,
+    html: wrapTemplate(`
+      <h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.15em; color: #FF3D00; margin: 0 0 16px;">TEAM_INVITE</h2>
+      <p style="font-size: 13px; line-height: 1.6; margin: 0 0 16px;">
+        Hey <strong>${params.name}</strong>, <strong>${params.invitedBy}</strong> has invited you to <strong>EOD Flow</strong>.
+      </p>
+      <div style="border: 1px solid #333; padding: 16px; margin: 0 0 16px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 6px 0; font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.1em;">ROLE</td>
+            <td style="padding: 6px 0; font-size: 13px; color: #FF3D00; text-align: right; font-weight: bold;">${roleLabel}</td>
+          </tr>
+          ${params.department ? `
+          <tr>
+            <td style="padding: 6px 0; font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; border-top: 1px solid #333;">DEPARTMENT</td>
+            <td style="padding: 6px 0; font-size: 13px; color: #fff; text-align: right; border-top: 1px solid #333;">${params.department}</td>
+          </tr>
+          ` : ""}
+        </table>
+      </div>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${params.joinUrl}" style="display: inline-block; background: #FF3D00; color: #fff; padding: 14px 32px; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.15em; text-decoration: none; font-family: 'JetBrains Mono', 'Courier New', monospace;">
+          SET YOUR PASSWORD &rarr;
+        </a>
+      </div>
+      <p style="font-size: 10px; color: #666; text-align: center; margin: 0; letter-spacing: 0.05em;">
+        This link expires on ${expiryStr}
+      </p>
+    `),
+  });
+}

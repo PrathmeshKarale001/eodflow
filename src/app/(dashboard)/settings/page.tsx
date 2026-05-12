@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/permissions";
 import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
 import { UserManagementPanel } from "@/components/settings/user-management-panel";
+import { InviteCodesPanel } from "@/components/settings/invite-codes-panel";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -28,6 +29,14 @@ export default async function SettingsPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Fetch invitations for the invite system panel (SUPER_ADMIN + ADMIN)
+  const invitations = await db.invitation.findMany({
+    include: {
+      createdBy: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <div className="space-y-6">
       <div className="brutalist-border bg-card p-4 md:p-6 relative overflow-hidden">
@@ -46,6 +55,11 @@ export default async function SettingsPage() {
       </div>
 
       <UserManagementPanel initialUsers={users} currentUserId={session.user.id!} currentUserRole={role} />
+
+      {/* Invite System — visible to SUPER_ADMIN and ADMIN */}
+      {hasPermission(role, "inviteUsers") && (
+        <InviteCodesPanel initialInvitations={invitations} />
+      )}
 
     </div>
   );

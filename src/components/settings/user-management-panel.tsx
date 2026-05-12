@@ -2,7 +2,8 @@
 
 import { useState, startTransition, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { inviteUser, deactivateUser, reactivateUser, deleteUser } from "@/app/actions/users";
+import { createInviteLink } from "@/app/actions/invitations";
+import { deactivateUser, reactivateUser, deleteUser } from "@/app/actions/users";
 import type { Role, Department } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
 
@@ -59,15 +60,23 @@ export function UserManagementPanel({
   const [inviteRole, setInviteRole] = useState<Role>("EMPLOYEE");
   const [inviteDept, setInviteDept] = useState<Department>("DESIGN");
 
-  // Credentials modal state (shown after invite OR reactivate)
+  // Invite success modal state (shown after sending invite)
+  const [inviteResult, setInviteResult] = useState<{
+    name: string;
+    email: string;
+    joinUrl: string;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // Credentials modal state (shown after reactivate)
   const [credentials, setCredentials] = useState<{
     name: string;
     email: string;
     password: string;
   } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [credCopied, setCredCopied] = useState(false);
 
-  // ── Invite ──────────────────────────────────────────────────────────────────
+  // ── Invite (Magic Link) ────────────────────────────────────────────────────
   const handleInvite = () => {
     if (!inviteName.trim() || !inviteEmail.trim()) return;
     setIsSubmitting(true);
@@ -76,19 +85,18 @@ export function UserManagementPanel({
     const emailSnap = inviteEmail.trim();
     startTransition(async () => {
       try {
-        const result = await inviteUser({
+        const result = await createInviteLink({
           name: nameSnap,
           email: emailSnap,
           role: inviteRole,
           department: inviteDept,
         });
-        setCredentials({ name: nameSnap, email: emailSnap, password: result.tempPassword });
+        setInviteResult({ name: nameSnap, email: emailSnap, joinUrl: result.joinUrl });
         setShowInviteForm(false);
         setInviteName("");
         setInviteEmail("");
-        window.location.reload();
       } catch (err: any) {
-        setError(err.message || "Failed to invite user");
+        setError(err.message || "Failed to send invite");
       } finally {
         setIsSubmitting(false);
       }
@@ -148,9 +156,12 @@ export function UserManagementPanel({
     });
   };
 
-  // ── Copy credentials message ─────────────────────────────────────────────
-  const buildShareMessage = (c: typeof credentials) =>
-    `Hi ${c!.name}! You've been invited to EOD Flow.\n\nLogin: ${window.location.origin}/login\nEmail: ${c!.email}\nTemp Password: ${c!.password}\n\nPlease change your password after first login.`;
+  // ── Copy helpers ──────────────────────────────────────────────────────────
+  const buildInviteShareMessage = (r: typeof inviteResult) =>
+    `Hi ${r!.name}! You've been invited to EOD Flow.\n\nClick this link to set up your account:\n${r!.joinUrl}\n\nThis link expires in 48 hours.`;
+
+  const buildCredShareMessage = (c: typeof credentials) =>
+    `Hi ${c!.name}! Your EOD Flow account has been reactivated.\n\nLogin: ${window.location.origin}/login\nEmail: ${c!.email}\nTemp Password: ${c!.password}\n\nPlease change your password after first login.`;
 
   return (
     <div className="space-y-6">
@@ -165,24 +176,100 @@ export function UserManagementPanel({
         </div>
       )}
 
-      {/* ── Credentials Modal ──────────────────────────────────────────────── */}
-      {credentials && (
+      {/* ── Invite Success Modal ──────────────────────────────────────────── */}
+      {inviteResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="brutalist-border bg-background w-full max-w-md mx-4 p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300">
             {/* Header */}
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-2xl text-primary">key</span>
+              <span className="material-symbols-outlined text-2xl text-primary">send</span>
               <div>
                 <h2 className="font-headline text-sm uppercase tracking-widest text-foreground">
-                  USER_CREDENTIALS_READY
+                  INVITE_SENT
                 </h2>
                 <p className="font-label text-[9px] text-outline uppercase tracking-widest">
-                  Share these with the user directly
+                  Email sent via Resend • Link valid for 48h
                 </p>
               </div>
             </div>
 
-            {/* Credentials box */}
+            {/* Info */}
+            <div className="brutalist-border bg-surface-container-lowest p-4 space-y-3 font-mono text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-outline text-[10px] uppercase tracking-widest">TO</span>
+                <span className="text-foreground">{inviteResult.email}</span>
+              </div>
+              <div className="border-t border-white/10" />
+              <div className="flex justify-between items-center">
+                <span className="text-outline text-[10px] uppercase tracking-widest">NAME</span>
+                <span className="text-foreground font-bold">{inviteResult.name}</span>
+              </div>
+              <div className="border-t border-white/10" />
+              <div>
+                <span className="text-outline text-[10px] uppercase tracking-widest block mb-2">INVITE_LINK</span>
+                <span className="text-primary text-[11px] break-all">{inviteResult.joinUrl}</span>
+              </div>
+            </div>
+
+            <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+              📧 Email was sent automatically. Share the link below as a backup.
+            </p>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(buildInviteShareMessage(inviteResult));
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 brutalist-border py-2.5 font-headline text-xs uppercase text-foreground hover:bg-card/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {copied ? "check" : "content_copy"}
+                </span>
+                {copied ? "COPIED!" : "COPY_MESSAGE"}
+              </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(buildInviteShareMessage(inviteResult))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-[#25D366]/20 text-[#25D366] brutalist-border px-4 py-2.5 font-headline text-xs uppercase hover:bg-[#25D366]/30 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">send</span>
+                WHATSAPP
+              </a>
+            </div>
+
+            <button
+              onClick={() => {
+                setInviteResult(null);
+                window.location.reload();
+              }}
+              className="w-full brutalist-border py-2 font-label text-[10px] text-outline uppercase tracking-widest hover:bg-card/5 transition-colors"
+            >
+              DONE — CLOSE
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reactivate Credentials Modal ──────────────────────────────────── */}
+      {credentials && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="brutalist-border bg-background w-full max-w-md mx-4 p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-2xl text-primary">key</span>
+              <div>
+                <h2 className="font-headline text-sm uppercase tracking-widest text-foreground">
+                  USER_REACTIVATED
+                </h2>
+                <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+                  Share these credentials with the user
+                </p>
+              </div>
+            </div>
+
             <div className="brutalist-border bg-surface-container-lowest p-4 space-y-3 font-mono text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-outline text-[10px] uppercase tracking-widest">NAME</span>
@@ -204,23 +291,22 @@ export function UserManagementPanel({
               ⚠ This password is shown ONCE. Copy and share it now.
             </p>
 
-            {/* Action buttons */}
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(buildShareMessage(credentials));
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
+                  navigator.clipboard.writeText(buildCredShareMessage(credentials));
+                  setCredCopied(true);
+                  setTimeout(() => setCredCopied(false), 2000);
                 }}
                 className="flex-1 flex items-center justify-center gap-2 brutalist-border py-2.5 font-headline text-xs uppercase text-foreground hover:bg-card/10 transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">
-                  {copied ? "check" : "content_copy"}
+                  {credCopied ? "check" : "content_copy"}
                 </span>
-                {copied ? "COPIED!" : "COPY_MESSAGE"}
+                {credCopied ? "COPIED!" : "COPY_MESSAGE"}
               </button>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(buildShareMessage(credentials))}`}
+                href={`https://wa.me/?text=${encodeURIComponent(buildCredShareMessage(credentials))}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-[#25D366]/20 text-[#25D366] brutalist-border px-4 py-2.5 font-headline text-xs uppercase hover:bg-[#25D366]/30 transition-colors"
@@ -259,9 +345,14 @@ export function UserManagementPanel({
       {/* ── Invite Form ────────────────────────────────────────────────────── */}
       {showInviteForm && (
         <div className="brutalist-border bg-surface-container-lowest p-4 md:p-3 space-y-4 animate-in slide-in-from-top-2 duration-200">
-          <h3 className="font-headline text-[10px] uppercase tracking-widest text-foreground">
-            INVITE_NEW_USER
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-headline text-[10px] uppercase tracking-widest text-foreground">
+              INVITE_VIA_MAGIC_LINK
+            </h3>
+            <span className="font-label text-[8px] text-primary uppercase tracking-widest">
+              📧 Email sent automatically
+            </span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
               <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
@@ -323,7 +414,7 @@ export function UserManagementPanel({
             className="w-full sm:w-auto mono-clip bg-primary-container text-white px-8 py-4 sm:py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-sm">send</span>
-            {isSubmitting ? "INVITING..." : "SEND_INVITE"}
+            {isSubmitting ? "SENDING..." : "SEND_MAGIC_LINK"}
           </button>
         </div>
       )}

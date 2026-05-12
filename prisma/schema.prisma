@@ -86,6 +86,11 @@ enum NotificationType {
   SYSTEM
 }
 
+enum InvitationType {
+  LINK    // Single-person magic link (emailed)
+  CODE    // Reusable invite code (shared in group)
+}
+
 // =============================================================================
 // USER & AUTH
 // =============================================================================
@@ -123,6 +128,7 @@ model User {
   sessions          Session[]
   chatMembers       ChatChannelMember[]
   chatMessages      ChatMessage[]
+  invitations       Invitation[]
 
   @@map("users")
 }
@@ -170,6 +176,33 @@ model Verification {
   updatedAt  DateTime? @updatedAt
 
   @@map("verifications")
+}
+
+// =============================================================================
+// INVITATIONS (Closed Registration)
+// =============================================================================
+
+model Invitation {
+  id          String         @id @default(cuid())
+  type        InvitationType
+  token       String         @unique
+  email       String?
+  name        String?
+  role        Role           @default(EMPLOYEE)
+  department  Department?
+  maxUses     Int            @default(1)
+  usedCount   Int            @default(0)
+  expiresAt   DateTime
+  isActive    Boolean        @default(true)
+  createdById String
+  createdAt   DateTime       @default(now())
+
+  createdBy   User           @relation(fields: [createdById], references: [id])
+
+  @@index([token])
+  @@index([createdById])
+  @@index([expiresAt])
+  @@map("invitations")
 }
 
 // =============================================================================

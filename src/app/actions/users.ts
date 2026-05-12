@@ -22,66 +22,12 @@ async function genTempPassword() {
 }
 
 // ---------------------------------------------------------------------------
-// Invite User (SUPER_ADMIN only)
+// Invite User — REMOVED
+// Registration is now handled by the invitation system (see invitations.ts).
+// Use createInviteLink() for individual invites or createInviteCode() for batch.
 // ---------------------------------------------------------------------------
 
-export async function inviteUser(data: {
-  email: string;
-  name: string;
-  role: Role;
-  department?: Department;
-}) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
 
-  const userRole = session.user.role as Role;
-  if (!hasPermission(userRole, "inviteUsers")) {
-    throw new Error("FORBIDDEN: You do not have permission to invite users.");
-  }
-
-  // POCs (ADMIN) can only invite EMPLOYEE — not other POCs or Directors
-  if (userRole === Role.ADMIN && data.role !== Role.EMPLOYEE) {
-    throw new Error("FORBIDDEN: POCs can only invite Employees.");
-  }
-
-  const existing = await db.user.findUnique({ where: { email: data.email } });
-  if (existing) throw new Error("USER_EXISTS: A user with this email already exists.");
-
-  const { tempPassword, passwordHash } = await genTempPassword();
-
-  // Better-Auth stores passwords in the Account model, not on User directly
-  const user = await db.user.create({
-    data: {
-      email: data.email,
-      name: data.name,
-      role: data.role,
-      department: data.department,
-      isActive: true,
-    },
-  });
-
-  // Create credential account (Better-Auth convention: providerId = "credential")
-  await db.account.create({
-    data: {
-      userId: user.id,
-      accountId: user.id,
-      providerId: "credential",
-      password: passwordHash,
-    },
-  });
-
-  await db.activityLog.create({
-    data: {
-      userId: session.user.id,
-      action: "CREATED",
-      metadata: { invitedEmail: data.email, invitedRole: data.role },
-    },
-  });
-
-  revalidatePath("/settings");
-  // Return temp password — admin shares it via WhatsApp/message
-  return { userId: user.id, tempPassword };
-}
 
 // ---------------------------------------------------------------------------
 // List Users (ADMIN+)
