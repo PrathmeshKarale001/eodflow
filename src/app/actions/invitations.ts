@@ -24,11 +24,7 @@ function generateInviteCode(): string {
   return `EOD-${part1}-${part2}`;
 }
 
-/** Hash a password with bcrypt */
-async function hashPassword(password: string): Promise<string> {
-  const bcrypt = await import("bcryptjs");
-  return bcrypt.hash(password, 12);
-}
+import { hashPassword } from "better-auth/crypto";
 
 // ---------------------------------------------------------------------------
 // Create Magic Invite Link (SUPER_ADMIN, ADMIN)
@@ -219,8 +215,9 @@ export async function validateInvitation(token: string) {
 export async function acceptInvitation(data: {
   token: string;
   password: string;
-  name?: string;   // Required for CODE type (not pre-filled)
-  email?: string;  // Required for CODE type (not pre-filled)
+  name?: string;       // Required for CODE type (not pre-filled)
+  email?: string;      // Required for CODE type (not pre-filled)
+  department?: string; // Optional for CODE type (user selects)
 }) {
   // Validate the invitation
   const result = await validateInvitation(data.token);
@@ -243,6 +240,11 @@ export async function acceptInvitation(data: {
   if (!name || !email) {
     throw new Error("Name and email are required.");
   }
+
+  // Determine department: user-selected (CODE) → invitation preset → null
+  const dept = (inv.type === "CODE" && data.department
+    ? data.department
+    : inv.department) as Department | null;
 
   // Password validation
   if (!data.password || data.password.length < 8) {
@@ -272,7 +274,7 @@ export async function acceptInvitation(data: {
         email,
         name,
         role: inv.role,
-        department: inv.department,
+        department: dept,
         isActive: true,
         invitedBy: invRecord?.createdById,
       },

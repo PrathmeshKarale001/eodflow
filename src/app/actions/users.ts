@@ -8,16 +8,18 @@ import { Role, Department } from "@prisma/client";
 import { randomBytes } from "crypto";
 
 // ---------------------------------------------------------------------------
-// Shared helper — generates a readable temp password & its bcrypt hash
+// Shared helper — generates a readable temp password & its scrypt hash
+// Uses Better Auth's own hashPassword to ensure login compatibility
 // Format: EOD-XXXX-XXXX  (easy to read over WhatsApp/message)
 // ---------------------------------------------------------------------------
+
+import { hashPassword } from "better-auth/crypto";
 
 async function genTempPassword() {
   const part1 = randomBytes(2).toString("hex").toUpperCase();
   const part2 = randomBytes(2).toString("hex").toUpperCase();
   const tempPassword = `EOD-${part1}-${part2}`;
-  const bcrypt = await import("bcryptjs");
-  const passwordHash = await bcrypt.hash(tempPassword, 12);
+  const passwordHash = await hashPassword(tempPassword);
   return { tempPassword, passwordHash };
 }
 
