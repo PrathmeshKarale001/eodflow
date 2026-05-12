@@ -218,101 +218,106 @@ export async function acceptInvitation(data: {
   name?: string;       // Required for CODE type (not pre-filled)
   email?: string;      // Required for CODE type (not pre-filled)
   department?: string; // Optional for CODE type (user selects)
-}) {
-  // Validate the invitation
-  const result = await validateInvitation(data.token);
-  if (!result.valid) {
-    const messages: Record<string, string> = {
-      INVALID_TOKEN: "This invite link or code is invalid.",
-      DEACTIVATED: "This invitation has been revoked.",
-      EXPIRED: "This invitation has expired. Please request a new one.",
-      MAX_USES_REACHED: "This invite code has reached its maximum uses.",
-    };
-    throw new Error(messages[result.error!] || "Invalid invitation.");
-  }
+}): Promise<{ success: boolean; error?: string; userId?: string }> {
+  try {
+    // Validate the invitation
+    const result = await validateInvitation(data.token);
+    if (!result.valid) {
+      const messages: Record<string, string> = {
+        INVALID_TOKEN: "This invite link or code is invalid.",
+        DEACTIVATED: "This invitation has been revoked.",
+        EXPIRED: "This invitation has expired. Please request a new one.",
+        MAX_USES_REACHED: "This invite code has reached its maximum uses.",
+      };
+      return { success: false, error: messages[result.error!] || "Invalid invitation." };
+    }
 
-  const inv = result.invitation!;
+    const inv = result.invitation!;
 
-  // Determine name and email based on invitation type
-  const name = inv.type === "LINK" ? inv.name! : data.name?.trim();
-  const email = inv.type === "LINK" ? inv.email! : data.email?.trim();
+    // Determine name and email based on invitation type
+    const name = inv.type === "LINK" ? inv.name! : data.name?.trim();
+    const email = inv.type === "LINK" ? inv.email! : data.email?.trim();
 
-  if (!name || !email) {
-    throw new Error("Name and email are required.");
-  }
+    if (!name || !email) {
+      return { success: false, error: "Name and email are required." };
+    }
 
-  // Determine department: user-selected (CODE) → invitation preset → null
-  const dept = (inv.type === "CODE" && data.department
-    ? data.department
-    : inv.department) as Department | null;
+    // Determine department: user-selected (CODE) → invitation preset → null
+    const dept = (inv.type === "CODE" && data.department
+      ? data.department
+      : inv.department) as Department | null;
 
-  // Password validation
-  if (!data.password || data.password.length < 8) {
-    throw new Error("Password must be at least 8 characters.");
-  }
+    // Password validation
+    if (!data.password || data.password.length < 8) {
+      return { success: false, error: "Password must be at least 8 characters." };
+    }
 
-  // Check if user already exists
-  const existing = await db.user.findUnique({ where: { email } });
-  if (existing) {
-    throw new Error("An account with this email already exists. Please log in instead.");
-  }
+    // Check if user already exists
+    const existing = await db.user.findUnique({ where: { email } });
+    if (existing) {
+      return { success: false, error: "An account with this email already exists. Please log in instead." };
+    }
 
-  // Hash password
-  const passwordHash = await hashPassword(data.password);
+    // Hash password
+    const passwordHash = await hashPassword(data.password);
 
-  // Fetch invitation creator BEFORE starting the transaction
-  // (avoids connection deadlock with connection_limit=1 on pooler)
-  const invRecord = await db.invitation.findUnique({
-    where: { token: data.token },
-    select: { createdById: true },
-  });
-
-  // Create user + credential account in a transaction
-  const user = await db.$transaction(async (tx) => {
-    const newUser = await tx.user.create({
-      data: {
-        email,
-        name,
-        role: inv.role,
-        department: dept,
-        isActive: true,
-        invitedBy: invRecord?.createdById,
-      },
-    });
-
-    // Create credential account (Better-Auth convention)
-    await tx.account.create({
-      data: {
-        userId: newUser.id,
-        accountId: newUser.id,
-        providerId: "credential",
-        password: passwordHash,
-      },
-    });
-
-    // Increment used count (and deactivate if single-use link)
-    await tx.invitation.update({
+    // Fetch invitation creator BEFORE starting the transaction
+    // (avoids connection deadlock with connection_limit=1 on pooler)
+    const invRecord = await db.invitation.findUnique({
       where: { token: data.token },
+      select: { createdById: true },
+    });
+
+    // Create user + credential account in a transaction
+    const user = await db.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          name,
+          role: inv.role,
+          department: dept,
+          isActive: true,
+          invitedBy: invRecord?.createdById,
+        },
+      });
+
+      // Create credential account (Better-Auth convention)
+      await tx.account.create({
+        data: {
+          userId: newUser.id,
+          accountId: newUser.id,
+          providerId: "credential",
+          password: passwordHash,
+        },
+      });
+
+      // Increment used count (and deactivate if single-use link)
+      await tx.invitation.update({
+        where: { token: data.token },
+        data: {
+          usedCount: { increment: 1 },
+          ...(inv.type === "LINK" ? { isActive: false } : {}),
+        },
+      });
+
+      return newUser;
+    });
+
+    // Log activity
+    await db.activityLog.create({
       data: {
-        usedCount: { increment: 1 },
-        ...(inv.type === "LINK" ? { isActive: false } : {}),
+        userId: user.id,
+        action: "CREATED",
+        metadata: { type: "ACCEPTED_INVITATION", invitationType: inv.type },
       },
     });
 
-    return newUser;
-  });
-
-  // Log activity
-  await db.activityLog.create({
-    data: {
-      userId: user.id,
-      action: "CREATED",
-      metadata: { type: "ACCEPTED_INVITATION", invitationType: inv.type },
-    },
-  });
-
-  revalidatePath("/settings");
-  return { success: true, userId: user.id };
+    revalidatePath("/settings");
+    return { success: true, userId: user.id };
+  } catch (err: any) {
+    console.error("acceptInvitation error:", err);
+    return { success: false, error: err.message || "Failed to create account. Please try again." };
+  }
 }
 
 // ---------------------------------------------------------------------------

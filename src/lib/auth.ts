@@ -79,6 +79,10 @@ export const authApi = betterAuth({
       },
     },
   },
+  rateLimit: {
+    window: 60,   // 60 second window
+    max: 100,     // 100 requests per window (default is 10)
+  },
   advanced: {
     // Use consistent cookie name regardless of HTTP/HTTPS
     // Production HTTPS would prefix with __Secure- which breaks server reads

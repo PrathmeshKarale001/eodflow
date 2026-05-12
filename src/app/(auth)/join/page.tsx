@@ -125,7 +125,7 @@ function JoinForm() {
     setSubmitting(true);
     try {
       const token = invitation?.type === "LINK" ? tokenFromUrl! : code.trim().toUpperCase();
-      await acceptInvitation({
+      const res = await acceptInvitation({
         token,
         password,
         ...(invitation?.type === "CODE"
@@ -133,11 +133,18 @@ function JoinForm() {
           : {}),
       });
 
+      if (!res.success) {
+        setError(res.error || "Failed to create account.");
+        setSubmitting(false);
+        return;
+      }
+
       // Auto sign-in after account creation
       const signInEmail = invitation?.type === "LINK" ? invitation.email! : email.trim();
       const result = await signIn.email({ email: signInEmail, password });
 
       if (result.error) {
+        // Account was created successfully but auto-login failed — go to login
         setStep("success");
         setTimeout(() => router.push("/login"), 2000);
       } else {
