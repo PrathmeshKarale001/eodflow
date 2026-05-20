@@ -4,7 +4,7 @@ import { useState, useCallback, startTransition } from "react";
 import { FileUploadModal } from "@/components/files/file-upload-modal";
 import { FilePreviewModal } from "@/components/files/file-preview-modal";
 import { deleteFile, uploadNewVersion } from "@/app/actions/files";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile } from "@/lib/storage-client";
 
 interface FileRecord {
   id: string;

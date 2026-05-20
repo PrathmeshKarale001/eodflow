@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { createProjectRecord, createProjectFileRecord } from "@/app/actions/create-project";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile } from "@/lib/storage-client";
 import { Priority } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
 

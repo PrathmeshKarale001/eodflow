@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { updateProfile } from "@/app/actions/profile";
 import { requestDepartmentChange } from "@/app/actions/users";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile } from "@/lib/storage-client";
 import type { Role, Department } from "@prisma/client";
 
 const ROLE_LABELS: Record<Role, string> = {

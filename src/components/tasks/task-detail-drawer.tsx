@@ -5,7 +5,7 @@ import { getTaskFiles } from "@/app/actions/tasks";
 import { TaskStatus, Priority } from "@prisma/client";
 import { submitForReview, createTaskFileRecord } from "@/app/actions/task-submissions";
 import { updateTaskStatus, deleteTask, markTaskDone } from "@/app/actions/tasks";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile } from "@/lib/storage-client";
 import { hasPermission } from "@/lib/permissions";
 import { Role } from "@prisma/client";
 import dynamic from "next/dynamic";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile } from "@/lib/storage-client";
 import { createBrandAssetRecord } from "@/app/actions/client-assets";
 import { File as PrismaFile } from "@prisma/client";
 
