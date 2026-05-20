@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { LandingPage } from "@/components/landing-page";
 import { Navbar } from "@/components/navbar";
-
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const session = await auth();

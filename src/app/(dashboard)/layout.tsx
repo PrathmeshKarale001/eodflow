@@ -7,8 +7,7 @@ import { SearchDialog } from "@/components/search/search-dialog";
 import { MainContentContainer } from "@/components/layout/main-content-container";
 import type { Role } from "@prisma/client";
 
-// auth() uses headers() — will automatically make routes dynamic at request time
-// but removing the explicit flag allows for better optimization granularly
+export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
   children,
