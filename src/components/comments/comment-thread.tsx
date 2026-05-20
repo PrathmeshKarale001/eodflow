@@ -158,7 +158,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
         if (attachedFile) {
           setIsUploadingFile(true);
           const { uploadFile } = await import("@/lib/storage-client");
-          const res = await uploadFile(attachedFile, `tasks/${taskId}/comments`);
+          const res = await uploadFile(attachedFile, `comments/tasks/${taskId}/${currentUserId}`);
           uploadedUrl = res.url;
           uploadedName = attachedFile.name;
         }

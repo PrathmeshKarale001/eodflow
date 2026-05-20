@@ -72,6 +72,7 @@ export default async function FilesPage() {
       projects={projects}
       totalSize={totalSize}
       uploaderName={session.user.name || "Unknown"}
+      userId={session.user.id}
     />
   );
 }

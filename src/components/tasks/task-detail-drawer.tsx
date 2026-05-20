@@ -131,7 +131,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
 
     setIsUpgradingVersion(true);
     try {
-      const pathPrefix = `tasks/${task.id}/revisions`;
+      const pathPrefix = `tasks/${task.id}/revisions/${userId}`;
       const { url } = await uploadFile(fileInput, pathPrefix);
 
       const newVersion = await uploadNewVersion({
@@ -201,7 +201,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     setIsUploading(true);
     try {
       for (const file of files) {
-        const { url } = await uploadFile(file, `tasks/${task.id}`);
+        const { url } = await uploadFile(file, `tasks/${task.id}/${userId}`);
         await createTaskFileRecord({
           taskId: task.id,
           uploadedById: userId,

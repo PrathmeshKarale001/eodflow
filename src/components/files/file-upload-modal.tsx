@@ -10,6 +10,7 @@ interface FileUploadModalProps {
   clients: Array<{ id: string; companyName: string }>;
   projects: Array<{ id: string; title: string; clientId: string }>;
   uploaderName?: string;
+  userId: string;
 }
 
 interface UploadingFile {
@@ -19,7 +20,7 @@ interface UploadingFile {
   error?: string;
 }
 
-export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderName }: FileUploadModalProps) {
+export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderName, userId }: FileUploadModalProps) {
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
@@ -63,13 +64,13 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
 
           let pathPrefix: string;
           if (clientName && projectTitle) {
-            pathPrefix = `clients/${clientName}/${projectTitle}`;
+            pathPrefix = `clients/${clientName}/${projectTitle}/${userId}`;
           } else if (clientName) {
-            pathPrefix = `clients/${clientName}`;
+            pathPrefix = `clients/${clientName}/${userId}`;
           } else if (projectTitle) {
-            pathPrefix = `projects/${projectTitle}`;
+            pathPrefix = `projects/${projectTitle}/${userId}`;
           } else {
-            pathPrefix = `general/${uploaderName || "uploads"}`;  
+            pathPrefix = `general/${userId}`;  
           }
 
           // Upload via server-side API route — uses service role key, bypasses RLS.

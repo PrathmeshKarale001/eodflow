@@ -29,9 +29,10 @@ interface FilesLibraryClientProps {
   projects: Array<{ id: string; title: string; clientId: string }>;
   totalSize: number;
   uploaderName?: string;
+  userId: string;
 }
 
-export function FilesLibraryClient({ initialFiles, clients, projects, totalSize, uploaderName }: FilesLibraryClientProps) {
+export function FilesLibraryClient({ initialFiles, clients, projects, totalSize, uploaderName, userId }: FilesLibraryClientProps) {
   const [files, setFiles] = useState<FileRecord[]>(initialFiles);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "image" | "video" | "document">("all");
@@ -90,10 +91,10 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
 
     try {
       const pathPrefix = parentFile.client
-        ? `clients/${parentFile.client.companyName}`
+        ? `clients/${parentFile.client.companyName}/${userId}`
         : parentFile.project
-          ? `projects/${parentFile.project.title}`
-          : "general";
+          ? `projects/${parentFile.project.title}/${userId}`
+          : `general/${userId}`;
 
       const { url } = await uploadFile(fileInput, pathPrefix);
 
@@ -332,6 +333,7 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
         clients={clients}
         projects={projects}
         uploaderName={uploaderName}
+        userId={userId}
       />
 
       {/* Preview Modal */}

@@ -40,7 +40,7 @@ export function BrandAssetsManager({
       try {
         for (const file of droppedFiles) {
           // 1. Upload to Supabase Storage
-          const { url } = await uploadFile(file, `clients/${clientId}`);
+          const { url } = await uploadFile(file, `clients/${clientId}/${userId}`);
 
           // 2. Insert record via Server Action
           const newRecord = await createBrandAssetRecord({
@@ -73,7 +73,7 @@ export function BrandAssetsManager({
     try {
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
-        const { url } = await uploadFile(file, `clients/${clientId}`);
+        const { url } = await uploadFile(file, `clients/${clientId}/${userId}`);
         const newRecord = await createBrandAssetRecord({
           clientId,
           uploadedById: userId,

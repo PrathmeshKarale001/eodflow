@@ -85,7 +85,7 @@ export function CreateProjectForm({ clients, managers }: CreateProjectFormProps)
       // 2. Upload attachments if any
       if (attachments.length > 0) {
         for (const file of attachments) {
-          const { url } = await uploadFile(file, `projects/${project.id}`);
+          const { url } = await uploadFile(file, `projects/${project.id}/${project.createdById}`);
           await createProjectFileRecord({
             projectId: project.id,
             uploadedById: project.createdById,
