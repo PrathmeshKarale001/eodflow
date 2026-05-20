@@ -3,7 +3,7 @@
 import { useState, startTransition, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createInviteLink } from "@/app/actions/invitations";
-import { deactivateUser, reactivateUser, deleteUser } from "@/app/actions/users";
+import { deactivateUser, reactivateUser, deleteUser, changeUserDepartment } from "@/app/actions/users";
 import type { Role, Department } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
 
@@ -20,7 +20,7 @@ interface UserData {
 
 const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: "DIRECTOR",
-  ADMIN: "POC",
+  ADMIN: "MANAGEMENT",
   EMPLOYEE: "EMPLOYEE",
 };
 
@@ -30,7 +30,7 @@ const ROLE_COLORS: Record<Role, string> = {
   EMPLOYEE: "bg-outline/20 text-outline",
 };
 
-const DEPARTMENTS: Department[] = ["STRATEGY", "DESIGN", "AI", "DEVELOPMENT", "MANAGEMENT"];
+const DEPARTMENTS: Department[] = ["STRATEGY", "EDITOR", "DESIGN", "TECH", "AI"];
 const ROLES: Role[] = ["SUPER_ADMIN", "ADMIN", "EMPLOYEE"];
 
 export function UserManagementPanel({
@@ -464,9 +464,33 @@ export function UserManagementPanel({
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="font-label text-[9px] text-foreground uppercase">
-                      {user.department ?? "—"}
-                    </span>
+                    {currentUserRole === "SUPER_ADMIN" && user.id !== currentUserId ? (
+                      <select
+                        value={user.department ?? ""}
+                        onChange={async (e) => {
+                          const newDept = e.target.value as Department;
+                          if (!newDept) return;
+                          try {
+                            await changeUserDepartment(user.id, newDept);
+                            setUsers((prev) =>
+                              prev.map((u) => (u.id === user.id ? { ...u, department: newDept } : u))
+                            );
+                          } catch (err: any) {
+                            setError(err.message || "Failed to change department");
+                          }
+                        }}
+                        className="bg-transparent brutalist-border px-2 py-1 font-label text-[9px] text-foreground uppercase tracking-wide cursor-pointer focus:outline-none focus:border-primary"
+                      >
+                        <option value="">—</option>
+                        {DEPARTMENTS.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="font-label text-[9px] text-foreground uppercase">
+                        {user.department ?? "—"}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`flex items-center gap-1.5 font-label text-[9px] uppercase tracking-widest ${user.isActive ? "text-primary font-bold" : "text-error"}`}>

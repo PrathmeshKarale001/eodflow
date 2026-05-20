@@ -34,7 +34,7 @@ export function MobileSidebar({ isOpen, onClose, user, navItems }: MobileSidebar
 
   const roleLabel: Record<Role, string> = {
     SUPER_ADMIN: "DIRECTOR",
-    ADMIN: "POC",
+    ADMIN: "MANAGEMENT",
     EMPLOYEE: "EMPLOYEE",
   };
 

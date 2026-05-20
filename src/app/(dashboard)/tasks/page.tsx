@@ -4,29 +4,21 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MyTasksList } from "@/components/tasks/my-tasks-list";
 import { hasPermission } from "@/lib/permissions";
-import { Role, Department, Prisma } from "@prisma/client";
+import { Role, Prisma } from "@prisma/client";
 
 export default async function TasksPage() {
   const session = await auth();
   if (!session?.user?.id) return notFound();
 
   const userRole = session.user.role as Role;
-  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === Department.MANAGEMENT;
 
-  const canAssign = hasPermission(userRole, "assignTask") || isManagementEmployee;
-  const canCreateTask = hasPermission(userRole, "createTask") || isManagementEmployee;
+  const canAssign = hasPermission(userRole, "assignTask");
+  const canCreateTask = hasPermission(userRole, "createTask") || userRole === Role.EMPLOYEE; // all employees can self-assign
 
-  // Admin/Super Admin see ALL tasks; Management employees see tasks assigned to/created by MANAGEMENT; others see only their own
+  // Admin/Super Admin see ALL tasks; employees see only their own
   const tasksWhereClause: Prisma.TaskWhereInput = hasPermission(userRole, "assignTask")
     ? {}
-    : isManagementEmployee
-    ? {
-        OR: [
-          { assignedTo: { department: Department.MANAGEMENT } },
-          { assignedById: session.user.id }
-        ]
-      }
-    : { assignedToId: session.user.id };
+    : { OR: [{ assignedToId: session.user.id }, { assignedById: session.user.id }] };
 
   // ─── PERF: All 3 queries are independent → run in parallel ────────────────
   const [tasks, teamMembers, projects] = await Promise.all([
@@ -35,10 +27,7 @@ export default async function TasksPage() {
       include: {
         assignedTo: { select: { id: true, name: true, image: true } },
         project: { select: { id: true, title: true } },
-        files: {
-          select: { id: true, filename: true, fileUrl: true, mimeType: true, fileSize: true, createdAt: true },
-          orderBy: { createdAt: "desc" },
-        },
+        _count: { select: { files: true } },
         subtasks: {
           select: { id: true, title: true, isDone: true },
           orderBy: { sortOrder: "asc" },
@@ -46,13 +35,10 @@ export default async function TasksPage() {
       },
       orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
     }),
-    // Fetch team members for assignment dropdown
+    // Fetch team members for assignment dropdown (admins only)
     canAssign
       ? db.user.findMany({
-          where: { 
-            isActive: true,
-            ...(isManagementEmployee ? { department: "MANAGEMENT" } : {})
-          },
+          where: { isActive: true },
           select: { id: true, name: true, role: true, department: true, image: true },
           orderBy: { name: "asc" },
         })

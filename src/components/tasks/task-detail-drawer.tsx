@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, startTransition } from "react";
+import { useState, useCallback, useEffect, startTransition } from "react";
+import { getTaskFiles } from "@/app/actions/tasks";
 import { TaskStatus, Priority } from "@prisma/client";
 import { submitForReview, createTaskFileRecord } from "@/app/actions/task-submissions";
 import { updateTaskStatus, deleteTask, markTaskDone } from "@/app/actions/tasks";
@@ -59,7 +60,7 @@ interface TaskDetailDrawerProps {
     revisionCount: number;
     projectId: string;
     assignedTo: { id: string; name: string } | null;
-    files: Array<{ id: string; filename: string; fileUrl: string; mimeType: string; fileSize: number; createdAt: Date }>;
+    files?: Array<{ id: string; filename: string; fileUrl: string; mimeType: string; fileSize: number; createdAt: Date }>;
     subtasks: Array<{ id: string; title: string; isDone: boolean }>;
   };
   userId: string;
@@ -79,6 +80,21 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("details");
+  const [files, setFiles] = useState(task.files ?? []);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(!task.files);
+
+  // ─── PERF: Load files on-demand when drawer opens ──────────────────────────
+  useEffect(() => {
+    if (isOpen && !task.files) {
+      setIsLoadingFiles(true);
+      getTaskFiles(task.id).then((data) => {
+        setFiles(data);
+        setIsLoadingFiles(false);
+      }).catch(() => setIsLoadingFiles(false));
+    } else if (task.files) {
+      setFiles(task.files);
+    }
+  }, [isOpen, task.id, task.files]);
 
   const isAssignee = task.assignedTo?.id === userId;
   const canSubmit = isAssignee && (
@@ -355,9 +371,14 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 </div>
 
                 {/* File List */}
-                {task.files.length > 0 ? (
+                {isLoadingFiles ? (
+                  <div className="mt-4 p-4 text-center">
+                    <span className="material-symbols-outlined text-primary animate-spin">progress_activity</span>
+                    <p className="font-label text-[9px] text-outline uppercase tracking-widest mt-2">LOADING_FILES...</p>
+                  </div>
+                ) : files.length > 0 ? (
                   <div className="mt-4 space-y-2">
-                    {task.files.map((file) => (
+                    {files.map((file) => (
                       <div key={file.id} className="flex items-center justify-between p-3 brutalist-border bg-surface-container-lowest">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <span className="material-symbols-outlined text-lg text-primary flex-shrink-0">

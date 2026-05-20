@@ -70,3 +70,45 @@
   - Web Push API via service worker
   - Permission request on first interaction
   - Push channels: assignments, deadlines, mentions
+
+---
+
+## Phase 7: Performance & Infrastructure Optimization
+**Status**: ✅ Complete
+**Goal:** Every page loads instantly with skeleton transitions, database queries are lean, and Redis caching eliminates redundant DB hits.
+
+- **Plan 7.1: Dev Stability & Query Payload Reduction** (Wave 1)
+  - Fix ENOENT Turbopack crash with clean script
+  - Tasks page: replace file arrays with _count
+  - Client detail: fix pocAdmin over-fetch
+  - Add missing loading.tsx for project/client detail pages
+- **Plan 7.2: Projects Query Optimization & Chat Dedup** (Wave 1)
+  - Projects page: optimize task status aggregation
+  - Chat layout/page: eliminate duplicate getUserChannels()
+  - Material Symbols: subset font loading
+- **Plan 7.3: Redis Caching Layer (Upstash)** (Wave 2)
+  - Install @upstash/redis
+  - Cache dashboard counts, reports data
+  - Cache invalidation on write actions
+  - Stale-while-revalidate pattern
+
+---
+
+## Phase 8: User Profile & Chat Intelligence
+**Status**: 🔄 In Progress
+**Goal:** Users can edit their own profile. Chat gets attachments panel, per-channel search, and quick DM thread in sidebar.
+
+- **Plan 8.1: User Profile Edit Page** (Wave 1)
+  - /profile route with avatar upload + name edit
+  - Server action for self-update
+  - Sidebar avatar clickable to /profile
+- **Plan 8.2: Chat Attachments & Media Panel** (Wave 1)
+  - Info panel with Media/Files/Links tabs
+  - Lazy-loaded on panel open
+- **Plan 8.3: Chat Message Search** (Wave 2)
+  - Per-channel search with debounced input
+  - Click result to scroll to message
+- **Plan 8.4: Quick Chat Thread in Sidebar** (Wave 2)
+  - User search above New Project button
+  - Instant DM channel creation + navigation
+  - Recent DM contacts as quick-access

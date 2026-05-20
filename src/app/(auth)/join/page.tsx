@@ -20,11 +20,12 @@ type InvitationData = {
 
 type Step = "loading" | "enter-code" | "set-password" | "error" | "success";
 
-const DEPARTMENTS = ["STRATEGY", "DESIGN", "AI", "DEVELOPMENT", "MANAGEMENT"] as const;
+const DEPARTMENTS = ["STRATEGY", "EDITOR", "DESIGN", "TECH", "AI"] as const;
+const ROLES = ["EMPLOYEE", "ADMIN"] as const;
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "DIRECTOR",
-  ADMIN: "POC",
+  ADMIN: "MANAGEMENT",
   EMPLOYEE: "EMPLOYEE",
 };
 
@@ -49,6 +50,7 @@ function JoinForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState<string>("DESIGN");
+  const [selectedRole, setSelectedRole] = useState<string>("EMPLOYEE");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -129,7 +131,7 @@ function JoinForm() {
         token,
         password,
         ...(invitation?.type === "CODE"
-          ? { name: name.trim(), email: email.trim(), department }
+          ? { name: name.trim(), email: email.trim(), department, role: selectedRole }
           : {}),
       });
 
@@ -162,7 +164,7 @@ function JoinForm() {
 
   return (
     <div className="flex items-center justify-center min-h-[100dvh] px-4 py-8 sm:py-12">
-      <div className="w-full max-w-md brutalist-border bg-surface-container-lowest p-5 sm:p-8 flex flex-col relative z-10 box-border">
+      <div className={`w-full ${step === "set-password" && invitation ? "max-w-3xl" : "max-w-md"} brutalist-border bg-surface-container-lowest p-5 sm:p-8 flex flex-col relative z-10 box-border transition-all duration-300`}>
 
         {/* Decorative ID */}
         <div className="absolute top-0 right-0 p-2 border-l border-b border-on-surface/10 font-label text-[8px] uppercase">
@@ -246,128 +248,163 @@ function JoinForm() {
 
         {/* ── SET PASSWORD (shared by both LINK and CODE) ─────────── */}
         {step === "set-password" && invitation && (
-          <form onSubmit={handleAccept} className="space-y-4 sm:space-y-5">
-            {/* Invitation info badge */}
-            <div className="brutalist-border bg-primary/5 p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-label text-[9px] text-outline uppercase tracking-widest">ROLE</span>
-                <span className="font-label text-[9px] text-primary font-bold uppercase tracking-widest">
-                  {ROLE_LABELS[invitation.role] || invitation.role}
-                </span>
-              </div>
-              {invitation.department && invitation.type === "LINK" && (
-                <div className="flex items-center justify-between border-t border-on-surface/10 pt-2">
-                  <span className="font-label text-[9px] text-outline uppercase tracking-widest">DEPT</span>
-                  <span className="font-label text-[9px] text-foreground uppercase tracking-widest">
-                    {invitation.department}
+          <form onSubmit={handleAccept} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+              {/* Invitation info badge */}
+              <div className="md:col-span-2 brutalist-border bg-primary/5 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-label text-[9px] text-outline uppercase tracking-widest">ROLE</span>
+                  <span className="font-label text-[9px] text-primary font-bold uppercase tracking-widest">
+                    {ROLE_LABELS[invitation.role] || invitation.role}
                   </span>
                 </div>
-              )}
-            </div>
+                {invitation.department && invitation.type === "LINK" && (
+                  <div className="flex items-center justify-between border-t border-on-surface/10 pt-2">
+                    <span className="font-label text-[9px] text-outline uppercase tracking-widest">DEPT</span>
+                    <span className="font-label text-[9px] text-foreground uppercase tracking-widest">
+                      {invitation.department}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-            {/* Name (editable for CODE, read-only for LINK) */}
-            <div className="space-y-1.5">
-              <label htmlFor="join-name" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
-                FULL_NAME
-              </label>
-              <input
-                id="join-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                readOnly={invitation.type === "LINK"}
-                required
-                placeholder="Your Name"
-                className={`w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all ${invitation.type === "LINK" ? "opacity-60 cursor-not-allowed" : ""}`}
-              />
-            </div>
+              {/* Left Column: Personal Info / Role & Department Selection */}
+              <div className="space-y-4 sm:space-y-5">
+                {/* Name (editable for CODE, read-only for LINK) */}
+                <div className="space-y-1.5">
+                  <label htmlFor="join-name" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
+                    FULL_NAME
+                  </label>
+                  <input
+                    id="join-name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    readOnly={invitation.type === "LINK"}
+                    required
+                    placeholder="Your Name"
+                    className={`w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all ${invitation.type === "LINK" ? "opacity-60 cursor-not-allowed" : ""}`}
+                  />
+                </div>
 
-            {/* Email (editable for CODE, read-only for LINK) */}
-            <div className="space-y-1.5">
-              <label htmlFor="join-email" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
-                EMAIL
-              </label>
-              <input
-                id="join-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                readOnly={invitation.type === "LINK"}
-                required
-                placeholder="you@eodmedia.in"
-                className={`w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all ${invitation.type === "LINK" ? "opacity-60 cursor-not-allowed" : ""}`}
-              />
-            </div>
+                {/* Email (editable for CODE, read-only for LINK) */}
+                <div className="space-y-1.5">
+                  <label htmlFor="join-email" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
+                    EMAIL
+                  </label>
+                  <input
+                    id="join-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    readOnly={invitation.type === "LINK"}
+                    required
+                    placeholder="you@eodmedia.in"
+                    className={`w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all ${invitation.type === "LINK" ? "opacity-60 cursor-not-allowed" : ""}`}
+                  />
+                </div>
 
-            {/* Department — selectable for CODE, read-only for LINK with dept */}
-            {canEditDept && (
-              <div className="space-y-1.5">
-                <label htmlFor="join-dept" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
-                  DEPARTMENT
-                </label>
-                <div className="relative">
-                  <select
-                    id="join-dept"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all appearance-none cursor-pointer"
-                  >
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d} className="bg-surface-container-lowest text-white">
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/40 text-sm pointer-events-none">
-                    expand_more
-                  </span>
+                {/* Department — selectable for CODE, read-only for LINK with dept */}
+                {canEditDept && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="join-dept" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
+                      DEPARTMENT
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="join-dept"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all appearance-none cursor-pointer"
+                      >
+                        {DEPARTMENTS.map((d) => (
+                          <option key={d} value={d} className="bg-surface-container-lowest text-white">
+                            {d}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/40 text-sm pointer-events-none">
+                        expand_more
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Role — selectable for CODE type */}
+                {invitation.type === "CODE" && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="join-role" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
+                      ROLE
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="join-role"
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all appearance-none cursor-pointer"
+                      >
+                        {ROLES.map((r) => (
+                          <option key={r} value={r} className="bg-surface-container-lowest text-white">
+                            {ROLE_LABELS[r]}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface/40 text-sm pointer-events-none">
+                        expand_more
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Security Keys / Password */}
+              <div className="space-y-4 sm:space-y-5">
+                {/* Password */}
+                <div className="space-y-1.5">
+                  <label htmlFor="join-password" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
+                    SECURITY_KEY [PASSWORD]
+                  </label>
+                  <input
+                    id="join-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    required
+                    minLength={8}
+                    className="w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all"
+                  />
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-1.5">
+                  <label htmlFor="join-confirm" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
+                    CONFIRM_KEY
+                  </label>
+                  <input
+                    id="join-confirm"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    required
+                    minLength={8}
+                    className="w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all"
+                  />
                 </div>
               </div>
-            )}
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="join-password" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
-                SECURITY_KEY [PASSWORD]
-              </label>
-              <input
-                id="join-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 8 characters"
-                required
-                minLength={8}
-                className="w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all"
-              />
-            </div>
-
-            {/* Confirm Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="join-confirm" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
-                CONFIRM_KEY
-              </label>
-              <input
-                id="join-confirm"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
-                required
-                minLength={8}
-                className="w-full rounded-none brutalist-border bg-transparent px-4 py-3 text-sm text-white placeholder:text-on-surface/20 focus:border-primary-container focus:outline-none focus:bg-card/5 transition-all"
-              />
-            </div>
-
-            <div className="pt-1 sm:pt-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-primary-container text-white px-6 py-3.5 sm:py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all mono-clip disabled:opacity-50"
-              >
-                {submitting ? "CREATING_ACCOUNT..." : "ACTIVATE_ACCOUNT"}
-                <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
-              </button>
+              {/* Submit Button */}
+              <div className="md:col-span-2 pt-1 sm:pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-primary-container text-white px-6 py-3.5 sm:py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all mono-clip disabled:opacity-50"
+                >
+                  {submitting ? "CREATING_ACCOUNT..." : "ACTIVATE_ACCOUNT"}
+                  <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
+                </button>
+              </div>
             </div>
           </form>
         )}

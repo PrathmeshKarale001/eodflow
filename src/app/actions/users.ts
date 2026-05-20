@@ -176,3 +176,129 @@ export async function deleteUser(userId: string) {
 
   revalidatePath("/settings");
 }
+
+// ---------------------------------------------------------------------------
+// Change User Department (SUPER_ADMIN — direct, no approval needed)
+// ---------------------------------------------------------------------------
+
+export async function changeUserDepartment(userId: string, department: Department) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const role = session.user.role as Role;
+  if (role !== "SUPER_ADMIN") throw new Error("FORBIDDEN: Only Super Admins can directly change departments.");
+
+  await db.user.update({
+    where: { id: userId },
+    data: { department },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/profile");
+}
+
+// ---------------------------------------------------------------------------
+// Request Department Change (any user — needs SUPER_ADMIN approval)
+// ---------------------------------------------------------------------------
+
+export async function requestDepartmentChange(requestedDept: Department) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { department: true },
+  });
+
+  if (user?.department === requestedDept) throw new Error("ALREADY_IN_DEPARTMENT");
+
+  // Check for existing pending request
+  const existing = await db.departmentChangeRequest.findFirst({
+    where: { userId: session.user.id, status: "PENDING" },
+  });
+  if (existing) throw new Error("REQUEST_ALREADY_PENDING");
+
+  await db.departmentChangeRequest.create({
+    data: {
+      userId: session.user.id,
+      currentDept: user?.department,
+      requestedDept,
+    },
+  });
+
+  revalidatePath("/profile");
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Get Pending Department Change Requests (SUPER_ADMIN)
+// ---------------------------------------------------------------------------
+
+export async function getPendingDeptRequests() {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const role = session.user.role as Role;
+  if (role !== "SUPER_ADMIN") throw new Error("FORBIDDEN");
+
+  return db.departmentChangeRequest.findMany({
+    where: { status: "PENDING" },
+    include: {
+      user: { select: { id: true, name: true, email: true, department: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Approve / Reject Department Change Request (SUPER_ADMIN)
+// ---------------------------------------------------------------------------
+
+export async function reviewDeptRequest(requestId: string, action: "APPROVED" | "REJECTED") {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const role = session.user.role as Role;
+  if (role !== "SUPER_ADMIN") throw new Error("FORBIDDEN");
+
+  const request = await db.departmentChangeRequest.findUnique({
+    where: { id: requestId },
+  });
+  if (!request || request.status !== "PENDING") throw new Error("REQUEST_NOT_FOUND");
+
+  // Update request status
+  await db.departmentChangeRequest.update({
+    where: { id: requestId },
+    data: {
+      status: action,
+      reviewedById: session.user.id,
+      reviewedAt: new Date(),
+    },
+  });
+
+  // If approved, update the user's department
+  if (action === "APPROVED") {
+    await db.user.update({
+      where: { id: request.userId },
+      data: { department: request.requestedDept },
+    });
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/profile");
+}
+
+// ---------------------------------------------------------------------------
+// Get My Pending Department Request (for profile page)
+// ---------------------------------------------------------------------------
+
+export async function getMyPendingDeptRequest() {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  return db.departmentChangeRequest.findFirst({
+    where: { userId: session.user.id, status: "PENDING" },
+    select: { id: true, requestedDept: true, createdAt: true },
+  });
+}
+

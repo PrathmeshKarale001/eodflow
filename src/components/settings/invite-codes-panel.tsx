@@ -23,7 +23,7 @@ interface InvitationData {
 
 const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: "DIRECTOR",
-  ADMIN: "POC",
+  ADMIN: "MANAGEMENT",
   EMPLOYEE: "EMPLOYEE",
 };
 
@@ -217,7 +217,7 @@ export function InviteCodesPanel({
               <AppSelect
                 options={[
                   { value: "EMPLOYEE", label: "EMPLOYEE" },
-                  { value: "ADMIN", label: "POC" },
+                  { value: "ADMIN", label: "MANAGEMENT" },
                 ]}
                 value={codeRole}
                 onChange={(val) => setCodeRole(val as Role)}

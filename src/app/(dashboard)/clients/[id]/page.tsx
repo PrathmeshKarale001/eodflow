@@ -23,7 +23,7 @@ export default async function ClientDetailsPage({
   const client = await db.client.findUnique({
     where: { id },
     include: {
-      pocAdmin: true,
+      pocAdmin: { select: { name: true } },
       files: {
         orderBy: { createdAt: "desc" },
       },

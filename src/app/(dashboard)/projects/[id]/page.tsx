@@ -20,13 +20,10 @@ export default async function ProjectDetailPage({
   if (!project) return notFound();
 
   const userRole = session.user.role as Role;
-  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === "MANAGEMENT";
-  const canCreateTask = hasPermission(userRole, "createTask") || isManagementEmployee;
+  const canCreateTask = hasPermission(userRole, "createTask") || userRole === Role.EMPLOYEE;
 
-  // Filter team members passed to the board if they are in the MANAGEMENT department
-  const filteredTeamMembers = isManagementEmployee
-    ? teamMembers.filter((m) => m.department === "MANAGEMENT")
-    : teamMembers;
+  // All team members available (admins assign to anyone, employees self-assign via UI)
+  const filteredTeamMembers = teamMembers;
 
   // Managers are any ADMIN or SUPER_ADMIN user
   const managers = teamMembers

@@ -19,6 +19,8 @@ interface UnreadContextValue {
   markRead: (channelId: string) => void;
   toasts: Toast[];
   dismissToast: (id: string) => void;
+  channels: Array<{ id: string; name: string | null; type: string }>;
+  currentUserId: string;
 }
 
 const UnreadContext = createContext<UnreadContextValue>({
@@ -26,6 +28,8 @@ const UnreadContext = createContext<UnreadContextValue>({
   markRead: () => {},
   toasts: [],
   dismissToast: () => {},
+  channels: [],
+  currentUserId: "",
 });
 
 export function useUnread() {
@@ -145,6 +149,8 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
         markRead,
         toasts,
         dismissToast,
+        channels,
+        currentUserId,
       }}
     >
       {children}

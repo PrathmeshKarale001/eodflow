@@ -2,6 +2,13 @@
 // EOD FLOW — Database Schema
 // End Of Day Media — Internal Task Management System
 // =============================================================================
+//
+// ⛔⛔⛔ CRITICAL: DO NOT RUN force-reset, migrate reset, or DROP commands ⛔⛔⛔
+// NEVER use: prisma db push --force-reset | prisma migrate reset | DROP TABLE
+// For new tables: use raw SQL "CREATE TABLE IF NOT EXISTS" or safe migrations
+// For new columns: use "ALTER TABLE ... ADD COLUMN"
+// See prisma/DATABASE_SAFETY.md and .agent/RULES.md
+// =============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -25,8 +32,11 @@ enum Role {
 
 enum Department {
   STRATEGY
+  EDITOR
   DESIGN
+  TECH
   AI
+  // Legacy values — kept for PostgreSQL enum compatibility, not shown in UI
   DEVELOPMENT
   MANAGEMENT
 }
@@ -129,8 +139,31 @@ model User {
   chatMembers       ChatChannelMember[]
   chatMessages      ChatMessage[]
   invitations       Invitation[]
+  deptChangeRequests DepartmentChangeRequest[] @relation("DeptChangeUser")
+  deptChangeReviews  DepartmentChangeRequest[] @relation("DeptChangeReviewer")
 
   @@map("users")
+}
+
+// =============================================================================
+// DEPARTMENT CHANGE REQUESTS
+// =============================================================================
+
+model DepartmentChangeRequest {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation("DeptChangeUser", fields: [userId], references: [id], onDelete: Cascade)
+  currentDept     Department?
+  requestedDept   Department
+  status          String      @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedById    String?
+  reviewedBy      User?       @relation("DeptChangeReviewer", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@map("department_change_requests")
 }
 
 model Session {

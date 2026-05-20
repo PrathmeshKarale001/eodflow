@@ -28,35 +28,51 @@ export default async function ProjectsPage() {
   const userRole = session.user.role as Role;
   const canCreateProject = hasPermission(userRole, "createProject");
 
-  // Admin/Super Admin see all; others see projects they manage or have tasks in
-  const projects = await db.project.findMany({
-    where:
-      userRole === "SUPER_ADMIN" || userRole === "ADMIN"
-        ? {}
-        : {
-            OR: [
-              { assignedManagerId: session.user.id },
-              { createdById: session.user.id },
-              { tasks: { some: { assignedToId: session.user.id } } },
-            ],
-          },
-    include: {
-      client: { select: { companyName: true, brandColor: true } },
-      assignedManager: { select: { name: true } },
-      _count: { select: { tasks: true, files: true } },
-      tasks: {
-        select: { status: true },
+  // ─── PERF: Fetch projects (lean) + task status counts via groupBy ───────────
+  // Previously fetched ALL task objects just for status. Now uses a single
+  // groupBy query which runs as native SQL COUNT(*) GROUP BY on Postgres.
+  const [projects, taskStatusCounts] = await Promise.all([
+    db.project.findMany({
+      where:
+        userRole === "SUPER_ADMIN" || userRole === "ADMIN"
+          ? {}
+          : {
+              OR: [
+                { assignedManagerId: session.user.id },
+                { createdById: session.user.id },
+                { tasks: { some: { assignedToId: session.user.id } } },
+              ],
+            },
+      include: {
+        client: { select: { companyName: true, brandColor: true } },
+        assignedManager: { select: { name: true } },
+        _count: { select: { tasks: true, files: true } },
       },
-    },
-    orderBy: [{ priority: "asc" }, { updatedAt: "desc" }],
-  });
+      orderBy: [{ priority: "asc" }, { updatedAt: "desc" }],
+    }),
+    db.task.groupBy({
+      by: ["projectId", "status"],
+      _count: { id: true },
+    }),
+  ]);
+
+  // Build a lookup: projectId → { done, inProgress }
+  const statusMap = new Map<string, { done: number; inProgress: number }>();
+  for (const row of taskStatusCounts) {
+    const entry = statusMap.get(row.projectId) ?? { done: 0, inProgress: 0 };
+    if (row.status === "DONE" || row.status === "APPROVED") {
+      entry.done += row._count.id;
+    } else if (row.status === "IN_PROGRESS") {
+      entry.inProgress += row._count.id;
+    }
+    statusMap.set(row.projectId, entry);
+  }
 
   // Compute task stats per project
   const projectsWithStats = projects.map((p) => {
-    const total = p.tasks.length;
-    const done = p.tasks.filter((t) => t.status === "DONE" || t.status === "APPROVED").length;
-    const inProgress = p.tasks.filter((t) => t.status === "IN_PROGRESS").length;
-    const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+    const total = p._count.tasks;
+    const stats = statusMap.get(p.id) ?? { done: 0, inProgress: 0 };
+    const progress = total > 0 ? Math.round((stats.done / total) * 100) : 0;
     return {
       id: p.id,
       title: p.title,
@@ -68,8 +84,8 @@ export default async function ProjectsPage() {
       deadline: p.deadline,
       taskCount: total,
       fileCount: p._count.files,
-      tasksDone: done,
-      tasksInProgress: inProgress,
+      tasksDone: stats.done,
+      tasksInProgress: stats.inProgress,
       progress,
       updatedAt: p.updatedAt,
     };

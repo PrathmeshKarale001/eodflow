@@ -1,11 +1,8 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getUserChannels, getChannelMessages } from "@/app/actions/chat";
-import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { getChannelMessages } from "@/app/actions/chat";
 import { ChatWindow } from "@/components/chat/chat-window";
 import { db } from "@/lib/db";
-import { hasPermission } from "@/lib/permissions";
-import type { Role } from "@prisma/client";
 
 interface Props {
   params: Promise<{ channelId: string }>;
@@ -17,9 +14,10 @@ export default async function ChatChannelPage({ params }: Props) {
 
   const { channelId } = await params;
 
-  // Run ALL queries in parallel (not sequentially)
-  const [channel, channels, messages] = await Promise.all([
-    // Channel details
+  // ─── PERF: Only fetch channel details + messages ──────────────────────────
+  // ChatSidebar + getUserChannels() have been moved to chat/layout.tsx.
+  // This page only needs the active channel's data.
+  const [channel, messages] = await Promise.all([
     db.chatChannel.findUnique({
       where: { id: channelId },
       include: {
@@ -27,9 +25,6 @@ export default async function ChatChannelPage({ params }: Props) {
         members: { include: { user: { select: { id: true, name: true } } } },
       },
     }),
-    // Sidebar channels (needed for ChatSidebar prop)
-    getUserChannels(),
-    // Channel messages
     getChannelMessages(channelId),
   ]);
 
@@ -41,25 +36,13 @@ export default async function ChatChannelPage({ params }: Props) {
       : channel.name || channel.project?.title || "Channel";
 
   return (
-    <div className="flex flex-1 min-h-0 w-full h-full overflow-hidden">
-      <div className="hidden md:block md:w-72 md:flex-shrink-0 h-full">
-        <ChatSidebar
-          channels={channels as any}
-          currentUserId={session.user.id}
-          canManageChannels={hasPermission(session.user.role as Role, "createChannel")}
-        />
-      </div>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <ChatWindow
-          channelId={channelId}
-          channelName={channelName}
-          channelType={channel.type}
-          currentUserId={session.user.id}
-          initialMessages={messages as any}
-          memberCount={channel.members.length}
-        />
-      </div>
-    </div>
+    <ChatWindow
+      channelId={channelId}
+      channelName={channelName}
+      channelType={channel.type}
+      currentUserId={session.user.id}
+      initialMessages={messages as any}
+      memberCount={channel.members.length}
+    />
   );
 }

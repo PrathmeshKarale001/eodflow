@@ -5,6 +5,8 @@ import Link from "next/link";
 import { MessageBubble } from "./message-bubble";
 import { sendMessage } from "@/app/actions/chat";
 import { createClient } from "@/lib/realtime";
+import { ChatInfoPanel } from "./chat-info-panel";
+import { ChatSearch } from "./chat-search";
 
 interface Message {
   id: string;
@@ -38,6 +40,8 @@ export function ChatWindow({
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -176,7 +180,8 @@ export function ChatWindow({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full">
+    <div className="flex flex-col flex-1 min-w-0 h-full">
       {/* Channel header */}
       <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -193,9 +198,44 @@ export function ChatWindow({
             {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "CHANNEL" : "PROJECT"}
           </span>
         </div>
-        <span className="font-mono text-[9px] text-on-surface/40 uppercase">
-          {memberCount} member{memberCount !== 1 ? "s" : ""}
-        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={() => setShowSearch((v) => !v)}
+            className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${
+              showSearch ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm">search</span>
+          </button>
+          <button
+            onClick={() => setShowInfoPanel((v) => !v)}
+            className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${
+              showInfoPanel ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm">info</span>
+          </button>
+          <span className="font-mono text-[9px] text-on-surface/40 uppercase hidden sm:inline">
+            {memberCount} member{memberCount !== 1 ? "s" : ""}
+          </span>
+        </div>
+      </div>
+
+      {/* Search overlay */}
+      <div className="relative">
+        <ChatSearch
+          channelId={channelId}
+          isOpen={showSearch}
+          onClose={() => setShowSearch(false)}
+          onScrollToMessage={(id: string) => {
+            const el = document.getElementById(`msg-${id}`);
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+              el.classList.add("bg-primary/10");
+              setTimeout(() => el.classList.remove("bg-primary/10"), 2000);
+            }
+          }}
+        />
       </div>
 
       {/* Messages area */}
@@ -217,8 +257,8 @@ export function ChatWindow({
           </div>
         ) : (
           messages.map((msg) => (
+            <div key={msg.id} id={`msg-${msg.id}`} className="transition-colors duration-500">
             <MessageBubble
-              key={msg.id}
               content={msg.content}
               userName={msg.user.name}
               userImage={msg.user.image}
@@ -226,6 +266,7 @@ export function ChatWindow({
               isOwn={msg.user.id === currentUserId}
               fileUrl={msg.fileUrl}
             />
+            </div>
           ))
         )}
       </div>
@@ -281,6 +322,16 @@ export function ChatWindow({
           <span className="material-symbols-outlined text-sm">send</span>
         </button>
       </div>
+    </div>
+
+    {/* Info Panel (slide-out) */}
+    <ChatInfoPanel
+      channelId={channelId}
+      channelName={channelName}
+      memberCount={memberCount}
+      isOpen={showInfoPanel}
+      onClose={() => setShowInfoPanel(false)}
+    />
     </div>
   );
 }

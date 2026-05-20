@@ -5,24 +5,27 @@ import { Role, TaskStatus, ProjectStatus } from "@prisma/client";
 import { SuperAdminDashboard } from "@/components/dashboard/super-admin-dashboard";
 import { ManagerDashboard } from "@/components/dashboard/manager-dashboard";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
-import { unstable_cache } from "next/cache";
+import { cacheFetch, CacheKeys, CacheTTL } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
-// Cache slow-changing counts (activeProjects, totalClients, totalTeam)
-// These change rarely but were being queried on EVERY dashboard load
-const getCachedCounts = unstable_cache(
-  async () => {
-    const [activeProjects, totalClients, totalTeam] = await Promise.all([
-      db.project.count({ where: { status: ProjectStatus.ACTIVE } }),
-      db.client.count({ where: { isActive: true } }),
-      db.user.count({ where: { isActive: true } }),
-    ]);
-    return { activeProjects, totalClients, totalTeam };
-  },
-  ["dashboard-counts"],
-  { revalidate: 60 } // Fresh every 60 seconds
-);
+// ─── PERF: Redis-cached dashboard counts (with DB fallback) ─────────────────
+// Uses Upstash Redis when configured, otherwise queries Postgres directly.
+// These counts change rarely but were queried on every dashboard load.
+async function getCachedCounts() {
+  return cacheFetch(
+    CacheKeys.DASHBOARD_COUNTS,
+    async () => {
+      const [activeProjects, totalClients, totalTeam] = await Promise.all([
+        db.project.count({ where: { status: ProjectStatus.ACTIVE } }),
+        db.client.count({ where: { isActive: true } }),
+        db.user.count({ where: { isActive: true } }),
+      ]);
+      return { activeProjects, totalClients, totalTeam };
+    },
+    CacheTTL.DASHBOARD_COUNTS,
+  );
+}
 
 export default async function OverviewPage() {
   const session = await auth();

@@ -206,3 +206,71 @@ export function SettingsSkeleton() {
   );
 }
 
+export function ProjectDetailSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse">
+      {/* Project Header */}
+      <div className="brutalist-border bg-surface-container-lowest p-6 relative overflow-hidden">
+        <div className="absolute inset-0 scanline opacity-10 pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-8 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+      {/* Kanban Columns */}
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="min-w-[260px] brutalist-border p-3 space-y-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ClientDetailSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse">
+      {/* Client Header */}
+      <div className="brutalist-border bg-surface-container-lowest p-6 relative overflow-hidden">
+        <div className="absolute inset-0 scanline opacity-10 pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-72" />
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-12 w-48" />
+        </div>
+      </div>
+      {/* Brand Assets Grid */}
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-8 brutalist-border p-6 space-y-4">
+          <Skeleton className="h-6 w-36" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="col-span-12 lg:col-span-4 brutalist-border p-6 space-y-4">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}

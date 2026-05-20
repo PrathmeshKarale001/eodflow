@@ -16,7 +16,7 @@ import { Role } from "@prisma/client";
 
 export const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: "DIRECTOR",
-  ADMIN: "POC",
+  ADMIN: "MANAGEMENT",
   EMPLOYEE: "EMPLOYEE",
 };
 
@@ -36,7 +36,7 @@ export const PERMISSIONS = {
   // Client management
   viewAllClients: [Role.SUPER_ADMIN],
   viewOwnClients: [Role.SUPER_ADMIN, Role.ADMIN],
-  createClient: [Role.SUPER_ADMIN],
+  createClient: [Role.SUPER_ADMIN, Role.ADMIN],
   editClient: [Role.SUPER_ADMIN, Role.ADMIN],
   deleteClient: [Role.SUPER_ADMIN, Role.ADMIN],
 
@@ -146,6 +146,7 @@ export const ROUTE_ACCESS: Record<string, Role[]> = {
   "/tasks": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/files": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/chat": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
+  "/profile": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/time": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/calendar": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/reports": [Role.SUPER_ADMIN, Role.ADMIN],

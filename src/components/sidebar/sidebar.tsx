@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/permissions";
@@ -31,11 +31,16 @@ interface SidebarProps {
 
 export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [chatSearch, setChatSearch] = useState("");
+  const [chatSearchResults, setChatSearchResults] = useState<{ id: string; name: string; image: string | null }[]>([]);
+  const [chatSearching, setChatSearching] = useState(false);
+  const [chatSearchOpen, setChatSearchOpen] = useState(false);
 
   const roleLabel: Record<Role, string> = {
     SUPER_ADMIN: "DIRECTOR",
-    ADMIN: "POC",
+    ADMIN: "MANAGEMENT",
     EMPLOYEE: "EMPLOYEE",
   };
 
@@ -68,9 +73,86 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
         </button>
       </div>
 
+      {/* Quick Chat Search */}
+      {!collapsed && (
+        <div className="px-3 pt-3 pb-1.5">
+          <div className="relative">
+            <div className="flex items-center gap-2 brutalist-border bg-surface-container-lowest px-2.5 py-1.5">
+              <span className="material-symbols-outlined text-sm text-on-surface/30">chat</span>
+              <input
+                type="text"
+                value={chatSearch}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  setChatSearch(val);
+                  setChatSearchOpen(true);
+                  if (val.trim().length < 1) {
+                    setChatSearchResults([]);
+                    return;
+                  }
+                  setChatSearching(true);
+                  try {
+                    const { getAvailableDMUsers } = await import("@/app/actions/chat");
+                    const users = await getAvailableDMUsers();
+                    const filtered = (users as { id: string; name: string; image?: string | null }[]).filter(
+                      (u) => u.name.toLowerCase().includes(val.toLowerCase()) && u.id !== user.id
+                    );
+                    setChatSearchResults(filtered.slice(0, 5).map((u) => ({ id: u.id, name: u.name, image: u.image ?? null })));
+                  } catch { setChatSearchResults([]); }
+                  finally { setChatSearching(false); }
+                }}
+                onFocus={() => setChatSearchOpen(true)}
+                placeholder="Quick chat..."
+                className="flex-1 bg-transparent font-body text-xs text-foreground placeholder:text-on-surface/30 focus:outline-none min-w-0"
+              />
+              {chatSearching && (
+                <span className="material-symbols-outlined text-xs text-primary animate-spin">progress_activity</span>
+              )}
+            </div>
+            {/* Search Results Dropdown */}
+            {chatSearchOpen && chatSearch.trim().length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 z-50 brutalist-border bg-surface-container-lowest max-h-40 overflow-y-auto shadow-lg">
+                {chatSearchResults.length === 0 && !chatSearching ? (
+                  <div className="p-3 text-center">
+                    <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">NO_USERS_FOUND</p>
+                  </div>
+                ) : (
+                  chatSearchResults.map((u) => (
+                    <button
+                      key={u.id}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-container-low transition-colors"
+                      onClick={async () => {
+                        setChatSearch("");
+                        setChatSearchOpen(false);
+                        setChatSearchResults([]);
+                        try {
+                          const { getOrCreateDMChannel } = await import("@/app/actions/chat");
+                          const channelId = await getOrCreateDMChannel(u.id);
+                          router.push(`/chat/${channelId}`);
+                        } catch {}
+                      }}
+                    >
+                      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center bg-primary-container/30 text-[9px] font-headline font-bold text-primary uppercase overflow-hidden">
+                        {u.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={u.image} alt={u.name} className="w-full h-full object-cover" />
+                        ) : (
+                          u.name.charAt(0)
+                        )}
+                      </div>
+                      <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{u.name}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Quick actions */}
       {!collapsed && (
-        <div className="px-3 py-3 border-b border-on-surface/10 space-y-1.5">
+        <div className="px-3 pb-3 pt-1.5 border-b border-on-surface/10 space-y-1.5">
           {/* Row 1: New Project (full width) */}
           <Link
             href="/projects/new"
@@ -136,23 +218,30 @@ export function Sidebar({ user, navItems, unreadCount = 0 }: SidebarProps) {
       {/* User profile */}
       <div className="border-t border-on-surface/10 p-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center bg-primary-container/30 text-xs font-headline font-bold text-primary uppercase">
-            {user.name.charAt(0)}
-          </div>
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-headline font-bold text-foreground uppercase tracking-tight">
-                {user.name}
-              </p>
-              <p className="truncate text-[9px] font-label text-outline uppercase tracking-widest">
-                {roleLabel[user.role]}
-              </p>
+          <Link href="/profile" className="flex items-center gap-2.5 group cursor-pointer flex-1 min-w-0">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center bg-primary-container/30 text-xs font-headline font-bold text-primary uppercase group-hover:bg-primary/20 transition-colors overflow-hidden">
+              {user.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user.name.charAt(0)
+              )}
             </div>
-          )}
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-headline font-bold text-foreground uppercase tracking-tight group-hover:text-primary transition-colors">
+                  {user.name}
+                </p>
+                <p className="truncate text-[9px] font-label text-outline uppercase tracking-widest">
+                  {roleLabel[user.role]}
+                </p>
+              </div>
+            )}
+          </Link>
           {!collapsed && (
             <button
               onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login" } } })}
-              className="flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-error/10 hover:text-error transition-colors"
+              className="flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-error/10 hover:text-error transition-colors flex-shrink-0"
             >
               <span className="material-symbols-outlined text-sm">logout</span>
             </button>

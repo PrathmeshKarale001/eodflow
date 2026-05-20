@@ -32,17 +32,12 @@ export async function GET(req: NextRequest) {
   if (status) where.status = status;
   if (assignedTo) where.assignedToId = assignedTo;
 
-  // Employees only see their own tasks (unless they are Management department employees)
+  // Employees see their own tasks (assigned to or created by them)
   if (role === "EMPLOYEE") {
-    const isManagementEmployee = session.user.department === "MANAGEMENT";
-    if (isManagementEmployee) {
-      where.OR = [
-        { assignedTo: { department: "MANAGEMENT" } },
-        { assignedBy: { department: "MANAGEMENT" } }
-      ];
-    } else {
-      where.assignedToId = userId;
-    }
+    where.OR = [
+      { assignedToId: userId },
+      { assignedById: userId }
+    ];
   }
 
   // Admins see tasks within their client projects, or projects they are assigned to manage
@@ -100,13 +95,13 @@ export async function POST(req: NextRequest) {
   }
 
   const role = session.user.role as Role;
-  const isManagementEmployee = role === "EMPLOYEE" && session.user.department === "MANAGEMENT";
+  const body = await req.json();
+  const isSelfAssign = role === "EMPLOYEE" && (!body?.assignedToId || body?.assignedToId === session.user.id);
 
-  if (!hasPermission(role, "createTask") && !isManagementEmployee) {
+  if (!hasPermission(role, "createTask") && !isSelfAssign) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
   const parsed = createTaskSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -118,15 +113,9 @@ export async function POST(req: NextRequest) {
 
   const data = parsed.data;
 
-  // Verify assignee is in MANAGEMENT if creator is a MANAGEMENT employee
-  if (isManagementEmployee && data.assignedToId) {
-    const assignee = await db.user.findUnique({
-      where: { id: data.assignedToId },
-      select: { department: true }
-    });
-    if (assignee?.department !== "MANAGEMENT") {
-      return NextResponse.json({ error: "Forbidden: Management employees can only assign to other Management employees" }, { status: 403 });
-    }
+  // Employees can only assign tasks to themselves
+  if (role === "EMPLOYEE" && data.assignedToId && data.assignedToId !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden: Employees can only create tasks for themselves" }, { status: 403 });
   }
 
   // Verify project exists and user has access

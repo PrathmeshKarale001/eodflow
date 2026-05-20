@@ -32,7 +32,7 @@ export async function createGroupChannel(name: string, memberIds: string[]) {
   const user = await getAuthenticatedUser();
 
   if (!hasPermission(user.role, "createChannel")) {
-    throw new Error("FORBIDDEN: Only Directors, Managers and POCs can create channels");
+    throw new Error("FORBIDDEN: Only Directors and Management can create channels");
   }
 
   // Check if channel with same name already exists

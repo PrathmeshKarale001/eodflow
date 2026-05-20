@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
 import { UserManagementPanel } from "@/components/settings/user-management-panel";
 import { InviteCodesPanel } from "@/components/settings/invite-codes-panel";
+import { DeptChangeRequestsPanel } from "@/components/settings/dept-change-requests-panel";
+import { getPendingDeptRequests } from "@/app/actions/users";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -53,6 +55,11 @@ export default async function SettingsPage() {
           <span className="material-symbols-outlined text-[32px] md:text-[36px] text-primary self-end md:self-auto">admin_panel_settings</span>
         </div>
       </div>
+
+      {/* Department Change Requests — SUPER_ADMIN only */}
+      {role === "SUPER_ADMIN" && (
+        <DeptChangeRequestsPanel initialRequests={await getPendingDeptRequests()} />
+      )}
 
       <UserManagementPanel initialUsers={users} currentUserId={session.user.id!} currentUserRole={role} />
 

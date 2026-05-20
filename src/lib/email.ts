@@ -163,7 +163,7 @@ export async function sendDailyDigestEmail(params: {
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "DIRECTOR",
-  ADMIN: "POC",
+  ADMIN: "MANAGEMENT",
   EMPLOYEE: "EMPLOYEE",
 };
 

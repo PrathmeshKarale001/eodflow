@@ -64,7 +64,7 @@ interface TaskType {
   projectId: string;
   assignedTo: { id: string; name: string; image: string | null } | null;
   project?: { id: string; title: string } | null;
-  files: Array<{ id: string; filename: string; fileUrl: string; mimeType: string; fileSize: number; createdAt: Date }>;
+  _count: { files: number };
   subtasks: Array<{ id: string; title: string; isDone: boolean }>;
 }
 
@@ -229,10 +229,10 @@ export function MyTasksList({
                       </div>
                       <div className="flex items-center justify-between sm:justify-end gap-4 text-[9px] font-mono text-muted-foreground uppercase flex-shrink-0">
                         <div className="flex items-center gap-3">
-                          {task.files.length > 0 ? (
+                          {task._count.files > 0 ? (
                             <span className="flex items-center gap-0.5">
                               <span className="material-symbols-outlined text-xs">attach_file</span>
-                              {task.files.length}
+                              {task._count.files}
                             </span>
                           ) : null}
                           {dueLabel ? (

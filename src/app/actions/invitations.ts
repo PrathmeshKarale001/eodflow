@@ -44,9 +44,9 @@ export async function createInviteLink(data: {
     throw new Error("FORBIDDEN: You do not have permission to invite users.");
   }
 
-  // POCs (ADMIN) can only invite EMPLOYEE
+  // Management (ADMIN) can only invite EMPLOYEE
   if (userRole === Role.ADMIN && data.role !== Role.EMPLOYEE) {
-    throw new Error("FORBIDDEN: POCs can only invite Employees.");
+    throw new Error("FORBIDDEN: Management can only invite Employees.");
   }
 
   // Check if user already exists
@@ -218,6 +218,7 @@ export async function acceptInvitation(data: {
   name?: string;       // Required for CODE type (not pre-filled)
   email?: string;      // Required for CODE type (not pre-filled)
   department?: string; // Optional for CODE type (user selects)
+  role?: string;       // Optional for CODE type (user selects)
 }): Promise<{ success: boolean; error?: string; userId?: string }> {
   try {
     // Validate the invitation
@@ -268,13 +269,18 @@ export async function acceptInvitation(data: {
       select: { createdById: true },
     });
 
+    // Determine role: user-selected (CODE) → invitation preset
+    const userRole = (inv.type === "CODE" && data.role
+      ? data.role
+      : inv.role) as Role;
+
     // Create user + credential account in a transaction
     const user = await db.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           email,
           name,
-          role: inv.role,
+          role: userRole,
           department: dept,
           isActive: true,
           invitedBy: invRecord?.createdById,
