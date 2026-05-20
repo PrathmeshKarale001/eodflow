@@ -32,9 +32,17 @@ export async function GET(req: NextRequest) {
   if (status) where.status = status;
   if (assignedTo) where.assignedToId = assignedTo;
 
-  // Employees only see their own tasks
+  // Employees only see their own tasks (unless they are Management department employees)
   if (role === "EMPLOYEE") {
-    where.assignedToId = userId;
+    const isManagementEmployee = session.user.department === "MANAGEMENT";
+    if (isManagementEmployee) {
+      where.OR = [
+        { assignedTo: { department: "MANAGEMENT" } },
+        { assignedBy: { department: "MANAGEMENT" } }
+      ];
+    } else {
+      where.assignedToId = userId;
+    }
   }
 
   // Admins see tasks within their client projects, or projects they are assigned to manage
@@ -92,8 +100,9 @@ export async function POST(req: NextRequest) {
   }
 
   const role = session.user.role as Role;
+  const isManagementEmployee = role === "EMPLOYEE" && session.user.department === "MANAGEMENT";
 
-  if (!hasPermission(role, "createTask")) {
+  if (!hasPermission(role, "createTask") && !isManagementEmployee) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -108,6 +117,17 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+
+  // Verify assignee is in MANAGEMENT if creator is a MANAGEMENT employee
+  if (isManagementEmployee && data.assignedToId) {
+    const assignee = await db.user.findUnique({
+      where: { id: data.assignedToId },
+      select: { department: true }
+    });
+    if (assignee?.department !== "MANAGEMENT") {
+      return NextResponse.json({ error: "Forbidden: Management employees can only assign to other Management employees" }, { status: 403 });
+    }
+  }
 
   // Verify project exists and user has access
   const project = await db.project.findUnique({

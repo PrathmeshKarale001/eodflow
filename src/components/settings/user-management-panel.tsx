@@ -419,6 +419,7 @@ export function UserManagementPanel({
         </div>
       )}
 
+
       {/* ── Users - Desktop Table / Mobile List ────────────────────────────────── */}
       <div className="brutalist-border overflow-hidden">
         {/* Desktop Table */}
@@ -454,6 +455,7 @@ export function UserManagementPanel({
                         </p>
                         <p className="font-label text-[9px] text-outline lowercase">{user.email}</p>
                       </div>
+
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -593,6 +595,93 @@ export function UserManagementPanel({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Mobile Users Card List ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-3 md:hidden">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            className={`brutalist-border bg-card p-4 space-y-3 transition-colors ${!user.isActive ? "opacity-60" : ""}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 flex items-center justify-center bg-primary-container/30 text-[10px] font-headline font-bold text-primary uppercase flex-shrink-0">
+                  {user.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-headline text-[11px] uppercase tracking-tight text-foreground font-bold">
+                    {user.name}
+                    {user.id === currentUserId && (
+                      <span className="ml-1.5 text-[7px] text-primary">(YOU)</span>
+                    )}
+                  </p>
+                  <p className="font-label text-[8px] text-outline">{user.email}</p>
+                </div>
+              </div>
+              
+              <span className={`flex items-center gap-1 font-label text-[8px] uppercase tracking-widest ${user.isActive ? "text-primary" : "text-error"}`}>
+                <span className={`w-1.5 h-1.5 ${user.isActive ? "bg-primary" : "bg-error"}`} />
+                {user.isActive ? "ACTIVE" : "INACTIVE"}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <span className={`px-1.5 py-0.5 text-[8px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+                {ROLE_LABELS[user.role]}
+              </span>
+              {user.department && (
+                <span className="px-1.5 py-0.5 text-[8px] font-label uppercase tracking-widest bg-surface-container-high text-foreground">
+                  {user.department}
+                </span>
+              )}
+            </div>
+
+            <div className="text-[9px] font-label text-outline uppercase tracking-wider flex justify-between border-t border-white/5 pt-2 font-mono">
+              <span>LAST_LOGIN</span>
+              <span>
+                {user.lastLoginAt
+                  ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "NEVER"}
+              </span>
+            </div>
+
+            {user.id !== currentUserId && (
+              <div className="flex gap-2 pt-1 border-t border-white/5">
+                {user.isActive ? (
+                  <button
+                    onClick={() => handleDeactivate(user.id, user.name)}
+                    className="flex-1 brutalist-border py-2 text-center font-label text-[9px] uppercase tracking-widest text-error hover:bg-error/10 transition-colors"
+                  >
+                    DEACTIVATE
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleReactivate(user.id)}
+                    className="flex-1 brutalist-border py-2 text-center font-label text-[9px] uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    REACTIVATE
+                  </button>
+                )}
+
+                {currentUserRole === "SUPER_ADMIN" && (
+                  <button
+                    onClick={() => handleDelete(user.id, user.name)}
+                    title="Permanently delete user"
+                    className="w-9 h-9 flex items-center justify-center brutalist-border text-error/60 hover:text-error hover:bg-error/10 transition-colors flex-shrink-0"
+                  >
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

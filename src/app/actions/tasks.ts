@@ -22,8 +22,21 @@ export async function createTask(data: {
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
 
   const userRole = session.user.role as Role;
-  if (!hasPermission(userRole, "createTask")) {
+  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === "MANAGEMENT";
+
+  if (!hasPermission(userRole, "createTask") && !isManagementEmployee) {
     throw new Error("FORBIDDEN: Insufficient permissions to create tasks.");
+  }
+
+  // If a management employee is assigning a task, verify the assignee is also a management employee
+  if (isManagementEmployee && data.assignedToId) {
+    const assignee = await db.user.findUnique({
+      where: { id: data.assignedToId },
+      select: { department: true }
+    });
+    if (assignee?.department !== "MANAGEMENT") {
+      throw new Error("FORBIDDEN: Management department employees can only assign tasks to other Management department employees.");
+    }
   }
 
   const task = await db.task.create({
@@ -35,6 +48,7 @@ export async function createTask(data: {
       assignedToId: data.assignedToId || undefined,
       assignedById: session.user.id,
       status: TaskStatus.BACKLOG,
+      dueDate: data.dueDate,
     },
   });
 
@@ -190,7 +204,9 @@ export async function reassignTask(taskId: string, newAssigneeId: string) {
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
 
   const userRole = session.user.role as Role;
-  if (!hasPermission(userRole, "assignTask")) {
+  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === "MANAGEMENT";
+
+  if (!hasPermission(userRole, "assignTask") && !isManagementEmployee) {
     throw new Error("FORBIDDEN: You do not have permission to assign tasks.");
   }
 
@@ -202,9 +218,14 @@ export async function reassignTask(taskId: string, newAssigneeId: string) {
     }),
     db.user.findUnique({
       where: { id: newAssigneeId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, department: true },
     }),
   ]);
+
+  // If a management employee is assigning, make sure the assignee is also in MANAGEMENT
+  if (isManagementEmployee && newAssignee?.department !== "MANAGEMENT") {
+    throw new Error("FORBIDDEN: Management department employees can only assign tasks to other Management department employees.");
+  }
   if (!task) throw new Error("NOT_FOUND: Task not found.");
   if (!newAssignee) throw new Error("NOT_FOUND: Assignee not found.");
 
@@ -295,9 +316,24 @@ export async function deleteTask(taskId: string) {
 
   const userRole = session.user.role as Role;
   const isAssignee = task.assignedToId === session.user.id;
+  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === "MANAGEMENT";
 
-  // Decision logic: Admins/Super Admins or the Assignee can delete
-  if (!isAssignee && !hasPermission(userRole, "editAnyTask")) {
+  let isMgmtTask = false;
+  if (isManagementEmployee) {
+    const taskCreatorOrAssignee = await db.task.findUnique({
+      where: { id: taskId },
+      select: {
+        assignedTo: { select: { department: true } },
+        assignedBy: { select: { department: true } },
+      }
+    });
+    isMgmtTask = 
+      taskCreatorOrAssignee?.assignedTo?.department === "MANAGEMENT" ||
+      taskCreatorOrAssignee?.assignedBy?.department === "MANAGEMENT";
+  }
+
+  // Decision logic: Admins/Super Admins or the Assignee or Management employees for their tasks can delete
+  if (!isAssignee && !hasPermission(userRole, "editAnyTask") && !(isManagementEmployee && isMgmtTask)) {
     throw new Error("FORBIDDEN: Insufficient permissions to delete this task.");
   }
 
@@ -342,9 +378,35 @@ export async function updateTask(taskId: string, data: {
 
   const userRole = session.user.role as Role;
   const isAssignee = task.assignedToId === session.user.id;
+  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === "MANAGEMENT";
 
-  if (!isAssignee && !hasPermission(userRole, "editAnyTask")) {
+  let isMgmtTask = false;
+  if (isManagementEmployee) {
+    const taskCreatorOrAssignee = await db.task.findUnique({
+      where: { id: taskId },
+      select: {
+        assignedTo: { select: { department: true } },
+        assignedBy: { select: { department: true } },
+      }
+    });
+    isMgmtTask = 
+      taskCreatorOrAssignee?.assignedTo?.department === "MANAGEMENT" ||
+      taskCreatorOrAssignee?.assignedBy?.department === "MANAGEMENT";
+  }
+
+  if (!isAssignee && !hasPermission(userRole, "editAnyTask") && !(isManagementEmployee && isMgmtTask)) {
     throw new Error("FORBIDDEN: Insufficient permissions to edit this task.");
+  }
+
+  // If assigning to a new user, check if management assignee rule applies
+  if (isManagementEmployee && data.assignedToId) {
+    const assignee = await db.user.findUnique({
+      where: { id: data.assignedToId },
+      select: { department: true }
+    });
+    if (assignee?.department !== "MANAGEMENT") {
+      throw new Error("FORBIDDEN: Management department employees can only assign tasks to other Management department employees.");
+    }
   }
 
   const updatedTask = await db.task.update({

@@ -12,7 +12,7 @@ export default async function ChatPage() {
   const channels = await getUserChannels();
 
   return (
-    <div className="-mx-4 md:-mx-6 -my-4 md:-my-6 flex flex-1 min-h-0 overflow-hidden">
+    <div className="flex flex-1 min-h-0 w-full h-full overflow-hidden">
       <ChatSidebar
         channels={channels as any}
         currentUserId={session.user.id}
@@ -20,7 +20,7 @@ export default async function ChatPage() {
       />
 
       {/* Empty state */}
-      <div className="flex-1 flex items-center justify-center bg-surface-container-lowest">
+      <div className="hidden md:flex flex-1 items-center justify-center bg-surface-container-lowest">
         <div className="text-center">
           <span className="material-symbols-outlined text-5xl text-on-surface/15 mb-3 block">
             forum

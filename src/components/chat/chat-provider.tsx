@@ -19,8 +19,6 @@ interface UnreadContextValue {
   markRead: (channelId: string) => void;
   toasts: Toast[];
   dismissToast: (id: string) => void;
-  subscribeToChannel: (channelId: string, channelName: string, currentUserId: string) => void;
-  unsubscribeFromChannel: (channelId: string) => void;
 }
 
 const UnreadContext = createContext<UnreadContextValue>({
@@ -28,8 +26,6 @@ const UnreadContext = createContext<UnreadContextValue>({
   markRead: () => {},
   toasts: [],
   dismissToast: () => {},
-  subscribeToChannel: () => {},
-  unsubscribeFromChannel: () => {},
 });
 
 export function useUnread() {
@@ -46,7 +42,6 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
   const pathname = usePathname();
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const subscriptionsRef = useRef<Record<string, RealtimeChannel>>({});
 
   // Mark a channel as read (when user opens it)
   const markRead = useCallback((channelId: string) => {
@@ -57,87 +52,91 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const subscribeToChannel = useCallback(
-    (channelId: string, channelName: string, userId: string) => {
-      if (subscriptionsRef.current[channelId]) return; // already subscribed
-
-      const supabase = createClient();
-      const sub = supabase
-        .channel(`chat-${channelId}`)
-        .on("broadcast", { event: "new-message" }, (payload) => {
-          const msg = payload.payload as {
-            id: string;
-            content: string;
-            user: { id: string; name: string };
-          };
-
-          // Ignore own messages
-          if (msg.user.id === userId) return;
-
-          // Determine if the user is currently viewing this channel
-          const isActive = window.location.pathname === `/chat/${channelId}`;
-
-          if (!isActive) {
-            // Increment unread count
-            setUnreadCounts((prev) => ({
-              ...prev,
-              [channelId]: (prev[channelId] ?? 0) + 1,
-            }));
-
-            // Show toast
-            const toastId = `toast-${Date.now()}-${Math.random()}`;
-            const newToast: Toast = {
-              id: toastId,
-              channelId,
-              channelName,
-              senderName: msg.user.name,
-              content: msg.content,
-              timestamp: Date.now(),
-            };
-            setToasts((prev) => [newToast, ...prev].slice(0, 3)); // max 3
-
-            // Auto-dismiss after 5s
-            setTimeout(() => {
-              setToasts((prev) => prev.filter((t) => t.id !== toastId));
-            }, 5000);
-          }
-        })
-        .subscribe();
-
-      subscriptionsRef.current[channelId] = sub;
-    },
-    []
-  );
-
-  const unsubscribeFromChannel = useCallback((channelId: string) => {
-    const sub = subscriptionsRef.current[channelId];
-    if (sub) {
-      const supabase = createClient();
-      supabase.removeChannel(sub);
-      delete subscriptionsRef.current[channelId];
-    }
-  }, []);
-
-  // Subscribe to all channels on mount
+  // Subscribe to global notification channel
   useEffect(() => {
-    channels.forEach((ch) => {
-      const name = ch.name || ch.type;
-      subscribeToChannel(ch.id, name, currentUserId);
-    });
+    const supabase = createClient();
+    const channel = supabase
+      .channel("chat-notifications")
+      .on("broadcast", { event: "new-notification" }, (payload) => {
+        const data = payload.payload as {
+          channelId: string;
+          senderId: string;
+          senderName: string;
+          content: string;
+        };
+
+        // Ignore own messages
+        if (data.senderId === currentUserId) return;
+
+        // Ignore if we are already in this channel (the active channel subscription handles it)
+        const isActive = pathname === `/chat/${data.channelId}`;
+        if (isActive) return;
+
+        // Check if user is even a member of this channel
+        const isMember = channels.some((c) => c.id === data.channelId);
+        if (!isMember) return;
+
+        // Increment unread count
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [data.channelId]: (prev[data.channelId] ?? 0) + 1,
+        }));
+
+        // Show toast
+        const toastId = `toast-${Date.now()}`;
+        const channelName = channels.find((c) => c.id === data.channelId)?.name || "New Message";
+        
+        setToasts((prev) => [
+          {
+            id: toastId,
+            channelId: data.channelId,
+            channelName,
+            senderName: data.senderName,
+            content: data.content,
+            timestamp: Date.now(),
+          },
+          ...prev,
+        ].slice(0, 3));
+
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.id !== toastId));
+        }, 5000);
+      })
+      .subscribe();
 
     return () => {
-      Object.keys(subscriptionsRef.current).forEach(unsubscribeFromChannel);
+      supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channels.length]);
+  }, [currentUserId, pathname, channels]);
 
-  // Auto-mark current channel as read when pathname changes
+  // Subscribe to the ACTIVE channel specifically
   useEffect(() => {
     const match = pathname.match(/\/chat\/(.+)/);
-    if (match) {
-      markRead(match[1]);
-    }
-  }, [pathname, markRead]);
+    if (!match) return;
+
+    const channelId = match[1];
+    const channelName = channels.find((c) => c.id === channelId)?.name || "Channel";
+
+    // Mark as read immediately
+    markRead(channelId);
+
+    // Subscribe to this specific channel for high-fidelity updates
+    // (though the ChatWindow also subscribes, this ensures unread sync)
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`chat-${channelId}`)
+      .on("broadcast", { event: "new-message" }, (payload) => {
+        const msg = payload.payload as { user: { id: string } };
+        if (msg.user.id !== currentUserId) {
+          markRead(channelId);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pathname, channels, currentUserId, markRead]);
 
   return (
     <UnreadContext.Provider
@@ -146,8 +145,6 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
         markRead,
         toasts,
         dismissToast,
-        subscribeToChannel,
-        unsubscribeFromChannel,
       }}
     >
       {children}

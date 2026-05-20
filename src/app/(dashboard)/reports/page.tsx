@@ -155,6 +155,170 @@ export default async function ReportsPage() {
     };
   });
 
+  // Fetch detailed tasks for Director report
+  let managementTasksReport: any[] = [];
+  let teamPerformanceReport: any[] = [];
+
+  if (userRole === Role.SUPER_ADMIN) {
+    const [managementEmployeeTasks, allUsersWithStats] = await Promise.all([
+      db.task.findMany({
+        where: {
+          assignedTo: {
+            role: Role.EMPLOYEE,
+          },
+          OR: [
+            { assignedBy: { role: { in: [Role.SUPER_ADMIN, Role.ADMIN] } } },
+            { assignedBy: { department: "MANAGEMENT" } }
+          ]
+        },
+        include: {
+          assignedTo: { select: { name: true, department: true } },
+          assignedBy: { select: { name: true, role: true } },
+          project: { select: { title: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      db.user.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          department: true,
+          assignedTasks: {
+            select: {
+              id: true,
+              status: true,
+              dueDate: true,
+              updatedAt: true,
+              revisionCount: true,
+            }
+          },
+          createdTasks: {
+            select: {
+              id: true,
+              status: true,
+            }
+          },
+          managedProjects: {
+            select: { id: true }
+          },
+          timeEntries: {
+            select: {
+              durationMins: true,
+            }
+          },
+          activities: {
+            where: {
+              action: { in: ["APPROVED", "REVISION_REQUESTED", "STATUS_CHANGED"] },
+            },
+            select: {
+              action: true,
+              metadata: true,
+            }
+          }
+        }
+      })
+    ]);
+
+    managementTasksReport = managementEmployeeTasks.map((t) => {
+      const isCompleted = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
+      const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+      const completedAt = isCompleted ? new Date(t.updatedAt) : null;
+      
+      let isOverdue = false;
+      let overdueDays = 0;
+      
+      if (dueDate) {
+        if (isCompleted && completedAt && completedAt > dueDate) {
+          isOverdue = true;
+          const diffTime = Math.abs(completedAt.getTime() - dueDate.getTime());
+          overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        } else if (!isCompleted && new Date() > dueDate) {
+          isOverdue = true;
+          const diffTime = Math.abs(new Date().getTime() - dueDate.getTime());
+          overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+      }
+
+      return {
+        id: t.id,
+        title: t.title,
+        projectTitle: t.project.title,
+        assigneeName: t.assignedTo?.name || "Unassigned",
+        assigneeDept: t.assignedTo?.department || null,
+        creatorName: t.assignedBy?.name || "System",
+        creatorRole: t.assignedBy?.role || "SYSTEM",
+        status: t.status,
+        dueDate: t.dueDate,
+        completedAt: completedAt,
+        revisionCount: t.revisionCount,
+        isOverdue,
+        overdueDays,
+      };
+    });
+
+    teamPerformanceReport = allUsersWithStats.map((u) => {
+      const hoursLogged = u.timeEntries.reduce((sum, e) => sum + e.durationMins, 0) / 60;
+      
+      if (u.role === Role.EMPLOYEE) {
+        const assignedCount = u.assignedTasks.length;
+        const completedCount = u.assignedTasks.filter(t => t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED).length;
+        const ongoingCount = assignedCount - completedCount;
+        const totalRevisions = u.assignedTasks.reduce((sum, t) => sum + t.revisionCount, 0);
+        
+        const doneProperlyCount = u.assignedTasks.filter(t => 
+          (t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED) && t.revisionCount === 0
+        ).length;
+        const doneProperlyRate = completedCount > 0 ? Math.round((doneProperlyCount / completedCount) * 100) : 100;
+
+        const overdueCount = u.assignedTasks.filter(t => {
+          if (!t.dueDate) return false;
+          const isCompleted = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
+          if (isCompleted) {
+            return new Date(t.updatedAt) > new Date(t.dueDate);
+          } else {
+            return new Date() > new Date(t.dueDate);
+          }
+        }).length;
+        const overdueRate = assignedCount > 0 ? Math.round((overdueCount / assignedCount) * 100) : 0;
+
+        return {
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          department: u.department,
+          type: "employee",
+          ongoingCount,
+          completedCount,
+          totalRevisions,
+          doneProperlyRate,
+          overdueRate,
+          hoursLogged,
+        };
+      } else {
+        const projectsManaged = u.managedProjects.length;
+        const tasksCreated = u.createdTasks.length;
+        const reviewsPerformed = u.activities.filter(a => 
+          a.action === "REVISION_REQUESTED" || 
+          (a.action === "STATUS_CHANGED" && (a.metadata as any)?.newStatus === "CLIENT_APPROVAL")
+        ).length;
+
+        return {
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          department: u.department,
+          type: "manager",
+          projectsManaged,
+          tasksCreated,
+          reviewsPerformed,
+          hoursLogged,
+        };
+      }
+    });
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
@@ -174,6 +338,7 @@ export default async function ReportsPage() {
       </div>
 
       <ReportsDashboard
+        userRole={userRole}
         projectStatusCounts={projectStatusCounts}
         taskStatusCounts={taskStatusCounts}
         totalTasks={totalTasks}
@@ -192,6 +357,8 @@ export default async function ReportsPage() {
           projectTitle: a.project?.title || null,
           createdAt: a.createdAt,
         }))}
+        managementTasksReport={managementTasksReport}
+        teamPerformanceReport={teamPerformanceReport}
       />
     </div>
   );

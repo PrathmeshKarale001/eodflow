@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { MessageBubble } from "./message-bubble";
 import { sendMessage } from "@/app/actions/chat";
 import { createClient } from "@/lib/realtime";
@@ -120,6 +121,14 @@ export function ChatWindow({
     }
   };
 
+  const handleFocus = useCallback(() => {
+    setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    }, 150);
+  }, []);
+
   // -----------------------------------------------------------------------
   // File attachment upload
   // -----------------------------------------------------------------------
@@ -170,14 +179,17 @@ export function ChatWindow({
     <div className="flex flex-col h-full">
       {/* Channel header */}
       <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm text-primary">
+        <div className="flex items-center gap-2 min-w-0">
+          <Link href="/chat" className="md:hidden flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-card/5 hover:text-foreground transition-colors mr-1 flex-shrink-0">
+            <span className="material-symbols-outlined text-sm">arrow_back</span>
+          </Link>
+          <span className="material-symbols-outlined text-sm text-primary flex-shrink-0">
             {channelType === "DIRECT" ? "person" : "tag"}
           </span>
-          <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">
+          <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text truncate">
             {channelName}
           </h2>
-          <span className="font-mono text-[8px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase">
+          <span className="font-mono text-[8px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase flex-shrink-0">
             {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "CHANNEL" : "PROJECT"}
           </span>
         </div>
@@ -220,7 +232,7 @@ export function ChatWindow({
 
       {/* Upload progress bar */}
       {uploadProgress && (
-        <div className="px-4 py-2 bg-primary/10 brutalist-border border-x-0 border-b-0">
+        <div className="px-4 py-2 bg-primary/10 brutalist-border border-x-0 border-b-0 flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-xs text-primary animate-spin">progress_activity</span>
             <span className="font-mono text-[9px] uppercase tracking-widest text-primary">
@@ -231,7 +243,7 @@ export function ChatWindow({
       )}
 
       {/* Input bar */}
-      <div className="px-4 py-3 brutalist-border border-b-0 border-x-0 bg-card flex items-end gap-2">
+      <div className="px-4 pt-3 pb-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] brutalist-border border-b-0 border-x-0 bg-card flex items-end gap-2 flex-shrink-0">
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -246,7 +258,7 @@ export function ChatWindow({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading || sending}
-          className="flex h-9 w-9 items-center justify-center text-on-surface/60 hover:text-primary hover:bg-primary/10 brutalist-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          className="flex h-10 w-10 md:h-9 md:w-9 items-center justify-center text-on-surface/60 hover:text-primary hover:bg-primary/10 brutalist-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           title="Attach file"
         >
           <span className="material-symbols-outlined text-sm">attach_file</span>
@@ -256,14 +268,15 @@ export function ChatWindow({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
           placeholder="Type a message..."
           rows={1}
-          className="flex-1 bg-surface-container-lowest brutalist-border px-3 py-2 text-xs text-on-surface font-mono placeholder:text-on-surface/30 resize-none max-h-24 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="flex-1 bg-surface-container-lowest brutalist-border px-3 py-2 text-base md:text-xs text-on-surface font-mono placeholder:text-on-surface/30 resize-none max-h-24 focus:outline-none focus:ring-1 focus:ring-primary"
         />
         <button
           onClick={() => handleSend()}
           disabled={(!input.trim() && !uploading) || sending}
-          className="flex h-9 w-9 items-center justify-center bg-primary text-on-primary brutalist-border hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          className="flex h-10 w-10 md:h-9 md:w-9 items-center justify-center bg-primary text-on-primary brutalist-border hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
           <span className="material-symbols-outlined text-sm">send</span>
         </button>

@@ -196,7 +196,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels }: Chat
   };
 
   return (
-    <div className="w-72 brutalist-border border-t-0 border-b-0 border-l-0 flex flex-col bg-card h-full flex-shrink-0">
+    <div className="w-full md:w-72 brutalist-border border-t-0 border-b-0 border-l-0 flex flex-col bg-card h-full flex-shrink-0">
       {/* Header */}
       <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted">
         <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">

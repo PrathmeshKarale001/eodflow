@@ -20,7 +20,13 @@ export default async function ProjectDetailPage({
   if (!project) return notFound();
 
   const userRole = session.user.role as Role;
-  const canCreateTask = hasPermission(userRole, "createTask");
+  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === "MANAGEMENT";
+  const canCreateTask = hasPermission(userRole, "createTask") || isManagementEmployee;
+
+  // Filter team members passed to the board if they are in the MANAGEMENT department
+  const filteredTeamMembers = isManagementEmployee
+    ? teamMembers.filter((m) => m.department === "MANAGEMENT")
+    : teamMembers;
 
   // Managers are any ADMIN or SUPER_ADMIN user
   const managers = teamMembers
@@ -80,7 +86,7 @@ export default async function ProjectDetailPage({
       <KanbanBoard
         tasks={tasks}
         projectId={project.id}
-        teamMembers={teamMembers.map((m) => ({
+        teamMembers={filteredTeamMembers.map((m) => ({
           id: m.id,
           name: m.name,
           department: m.department,

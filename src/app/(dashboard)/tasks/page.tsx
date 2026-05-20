@@ -4,21 +4,34 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MyTasksList } from "@/components/tasks/my-tasks-list";
 import { hasPermission } from "@/lib/permissions";
-import type { Role } from "@prisma/client";
+import { Role, Department, Prisma } from "@prisma/client";
 
 export default async function TasksPage() {
   const session = await auth();
   if (!session?.user?.id) return notFound();
 
   const userRole = session.user.role as Role;
-  const canAssign = hasPermission(userRole, "assignTask");
-  const canCreate = hasPermission(userRole, "createTask");
+  const isManagementEmployee = userRole === Role.EMPLOYEE && session.user.department === Department.MANAGEMENT;
+
+  const canAssign = hasPermission(userRole, "assignTask") || isManagementEmployee;
+  const canCreateTask = hasPermission(userRole, "createTask") || isManagementEmployee;
+
+  // Admin/Super Admin see ALL tasks; Management employees see tasks assigned to/created by MANAGEMENT; others see only their own
+  const tasksWhereClause: Prisma.TaskWhereInput = hasPermission(userRole, "assignTask")
+    ? {}
+    : isManagementEmployee
+    ? {
+        OR: [
+          { assignedTo: { department: Department.MANAGEMENT } },
+          { assignedById: session.user.id }
+        ]
+      }
+    : { assignedToId: session.user.id };
 
   // ─── PERF: All 3 queries are independent → run in parallel ────────────────
   const [tasks, teamMembers, projects] = await Promise.all([
-    // Admin/Super Admin see ALL tasks; others see only their own
     db.task.findMany({
-      where: canAssign ? {} : { assignedToId: session.user.id },
+      where: tasksWhereClause,
       include: {
         assignedTo: { select: { id: true, name: true, image: true } },
         project: { select: { id: true, title: true } },
@@ -33,16 +46,19 @@ export default async function TasksPage() {
       },
       orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
     }),
-    // Fetch team members for assignment dropdown (Admin/Super Admin only)
+    // Fetch team members for assignment dropdown
     canAssign
       ? db.user.findMany({
-          where: { isActive: true },
+          where: { 
+            isActive: true,
+            ...(isManagementEmployee ? { department: "MANAGEMENT" } : {})
+          },
           select: { id: true, name: true, role: true, department: true, image: true },
           orderBy: { name: "asc" },
         })
       : Promise.resolve([]),
     // Fetch projects for Task Creation selector
-    canCreate
+    canCreateTask
       ? db.project.findMany({
           where: { status: { not: "COMPLETED" } },
           select: { id: true, title: true },
@@ -66,7 +82,7 @@ export default async function TasksPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {canCreate && (
+            {canCreateTask && (
               <Link
                 href="?action=new-task"
                 className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
@@ -88,7 +104,7 @@ export default async function TasksPage() {
         canAssign={canAssign}
         teamMembers={teamMembers}
         projects={projects}
-        canCreateTask={canCreate}
+        canCreateTask={canCreateTask}
       />
     </div>
   );

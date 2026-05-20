@@ -11,7 +11,7 @@ import Link from "next/link";
  * Instead of calling auth() server-side in the Navbar (which forces dynamic rendering),
  * this component checks for the session cookie client-side to determine nav state.
  */
-export function NavbarAuthSection() {
+export function NavbarAuthSection({ className }: { className?: string }) {
   const [hasSession, setHasSession] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -28,10 +28,13 @@ export function NavbarAuthSection() {
     setHasSession(hasCookie);
   }, []);
 
+  const defaultClass = "flex-1 h-full bg-primary-container text-on-primary-container font-headline text-sm uppercase font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center mono-clip";
+  const appliedClass = className || defaultClass;
+
   // Render a skeleton placeholder during SSR/hydration to prevent CLS
   if (hasSession === null) {
     return (
-      <div className="flex-1 h-full bg-primary-container/50 animate-pulse mono-clip" />
+      <div className={`${appliedClass} opacity-50 animate-pulse`} />
     );
   }
 
@@ -39,7 +42,7 @@ export function NavbarAuthSection() {
     return (
       <Link
         href="/overview"
-        className="flex-1 h-full bg-primary-container text-on-primary-container font-headline text-sm uppercase font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center mono-clip"
+        className={appliedClass}
       >
         DASHBOARD
       </Link>
@@ -49,9 +52,9 @@ export function NavbarAuthSection() {
   return (
     <Link
       href="/login"
-      className="flex-1 h-full bg-primary-container text-on-primary-container font-headline text-sm uppercase font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center mono-clip"
+      className={appliedClass}
     >
-      SIGN IN_SYS
+      SIGN IN
     </Link>
   );
 }

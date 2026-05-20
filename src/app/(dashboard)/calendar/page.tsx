@@ -5,7 +5,7 @@ import { TaskStatus } from "@prisma/client";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+// Page rendering can be optimized by Next.js
 
 export default async function CalendarPage() {
   const session = await auth();

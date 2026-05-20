@@ -41,12 +41,14 @@ export default async function ChatChannelPage({ params }: Props) {
       : channel.name || channel.project?.title || "Channel";
 
   return (
-    <div className="-mx-4 md:-mx-6 -my-4 md:-my-6 flex flex-1 min-h-0 overflow-hidden">
-      <ChatSidebar
-        channels={channels as any}
-        currentUserId={session.user.id}
-        canManageChannels={hasPermission(session.user.role as Role, "createChannel")}
-      />
+    <div className="flex flex-1 min-h-0 w-full h-full overflow-hidden">
+      <div className="hidden md:block md:w-72 md:flex-shrink-0 h-full">
+        <ChatSidebar
+          channels={channels as any}
+          currentUserId={session.user.id}
+          canManageChannels={hasPermission(session.user.role as Role, "createChannel")}
+        />
+      </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <ChatWindow

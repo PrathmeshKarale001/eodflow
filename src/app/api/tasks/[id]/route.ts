@@ -63,9 +63,25 @@ export async function PATCH(
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
-  // Permission check: employees can only edit their own tasks
+  // Permission check: employees can only edit their own tasks (unless they are management employees editing management tasks)
+  const isManagementEmployee = role === "EMPLOYEE" && session.user.department === "MANAGEMENT";
   if (role === "EMPLOYEE" && existingTask.assignedToId !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    let isMgmtTask = false;
+    if (isManagementEmployee) {
+      const taskDetail = await db.task.findUnique({
+        where: { id },
+        select: {
+          assignedTo: { select: { department: true } },
+          assignedBy: { select: { department: true } },
+        }
+      });
+      isMgmtTask = 
+        taskDetail?.assignedTo?.department === "MANAGEMENT" ||
+        taskDetail?.assignedBy?.department === "MANAGEMENT";
+    }
+    if (!isMgmtTask) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   const body = await req.json();
@@ -79,6 +95,17 @@ export async function PATCH(
   }
 
   const data = parsed.data;
+
+  // Verify assignee is in MANAGEMENT if editor is a MANAGEMENT employee
+  if (isManagementEmployee && data.assignedToId) {
+    const assignee = await db.user.findUnique({
+      where: { id: data.assignedToId },
+      select: { department: true }
+    });
+    if (assignee?.department !== "MANAGEMENT") {
+      return NextResponse.json({ error: "Forbidden: Management employees can only assign to other Management employees" }, { status: 403 });
+    }
+  }
 
   // Validate status transition
   if (data.status && data.status !== existingTask.status) {

@@ -4,10 +4,11 @@ import { getNavForRole } from "@/lib/permissions";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { SearchDialog } from "@/components/search/search-dialog";
+import { MainContentContainer } from "@/components/layout/main-content-container";
 import type { Role } from "@prisma/client";
 
-// auth() uses headers() — must be dynamic, cannot be statically rendered
-export const dynamic = "force-dynamic";
+// auth() uses headers() — will automatically make routes dynamic at request time
+// but removing the explicit flag allows for better optimization granularly
 
 export default async function DashboardLayout({
   children,
@@ -56,12 +57,10 @@ export default async function DashboardLayout({
         navItems={navItems}
       />
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto min-h-0 flex flex-col">
-        <div className="w-full px-4 py-4 md:px-6 md:py-6 flex-1 flex flex-col min-h-0">
-          {children}
-        </div>
-      </main>
+      {/* Main content with conditional scroll/padding */}
+      <MainContentContainer>
+        {children}
+      </MainContentContainer>
 
       {/* Global Search */}
       <SearchDialog />

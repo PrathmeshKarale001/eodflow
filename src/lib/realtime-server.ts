@@ -68,8 +68,29 @@ export async function broadcastChatMessage(
       payload: message,
     });
 
+    // Broadcast to global notification channel for unread counts
+    const notificationChannel = client.channel("chat-notifications");
+    await new Promise<void>((resolve) => {
+      notificationChannel.subscribe((status) => {
+        if (status === "SUBSCRIBED") resolve();
+      });
+    });
+
+    await notificationChannel.send({
+      type: "broadcast",
+      event: "new-notification",
+      payload: {
+        channelId,
+        messageId: message.id,
+        content: message.content.substring(0, 50), // Snippet for toast
+        senderName: message.user.name,
+        senderId: message.user.id,
+      },
+    });
+
     // Cleanup: unsubscribe after sending (server shouldn't hold channels open)
     await client.removeChannel(channel);
+    await client.removeChannel(notificationChannel);
   } catch (err) {
     console.error("[REALTIME_SERVER] Broadcast failed:", err);
     // Non-fatal — message is already saved in DB; user will see it on next refresh

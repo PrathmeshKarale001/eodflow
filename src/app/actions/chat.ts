@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { cache } from "react";
 import { broadcastChatMessage } from "@/lib/realtime-server";
 import { hasPermission } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
@@ -161,17 +162,14 @@ export async function getChannelMembers(channelId: string) {
 export async function getNonMembers(channelId: string) {
   const user = await getAuthenticatedUser();
 
-  const existingMemberIds = (
-    await db.chatChannelMember.findMany({
-      where: { channelId },
-      select: { userId: true },
-    })
-  ).map((m) => m.userId);
-
   const nonMembers = await db.user.findMany({
     where: {
       isActive: true,
-      id: { notIn: existingMemberIds },
+      chatMembers: {
+        none: {
+          channelId: channelId
+        }
+      }
     },
     select: { id: true, name: true, image: true, role: true, department: true },
     orderBy: { name: "asc" },
@@ -262,7 +260,6 @@ export async function sendMessage(data: {
     user: message.user,
   });
 
-  revalidatePath("/chat");
   return message;
 }
 
@@ -293,10 +290,10 @@ export async function getChannelMessages(channelId: string, cursor?: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Get User's Channels (GROUP + DIRECT)
+// Get User's Channels (GROUP + DIRECT) — Cached for request-level deduping
 // ---------------------------------------------------------------------------
 
-export async function getUserChannels() {
+export const getUserChannels = cache(async () => {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
 
@@ -304,21 +301,54 @@ export async function getUserChannels() {
     where: {
       members: { some: { userId: session.user.id } },
     },
-    include: {
-      project: { select: { title: true, client: { select: { companyName: true, brandColor: true } } } },
-      members: { include: { user: { select: { id: true, name: true, image: true } } } },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      createdAt: true,
+      project: {
+        select: {
+          title: true,
+          client: {
+            select: {
+              companyName: true,
+              brandColor: true,
+            },
+          },
+        },
+      },
+      members: {
+        take: 5, // Just take first few for the list view
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1,
-        include: { user: { select: { name: true } } },
+        select: {
+          content: true,
+          createdAt: true,
+          user: { select: { name: true } },
+        },
       },
-      _count: { select: { messages: true } },
+      _count: {
+        select: {
+          messages: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
 
   return channels;
-}
+});
 
 // ---------------------------------------------------------------------------
 // Get Available DM Users
