@@ -160,7 +160,7 @@ export default async function ReportsPage() {
   let teamPerformanceReport: any[] = [];
 
   if (userRole === Role.SUPER_ADMIN) {
-    const [managementEmployeeTasks, allUsersWithStats] = await Promise.all([
+    const [managementEmployeeTasks, allUsersWithStats, timeSums] = await Promise.all([
       db.task.findMany({
         where: {
           assignedTo: {
@@ -203,11 +203,6 @@ export default async function ReportsPage() {
           managedProjects: {
             select: { id: true }
           },
-          timeEntries: {
-            select: {
-              durationMins: true,
-            }
-          },
           activities: {
             where: {
               action: { in: ["APPROVED", "REVISION_REQUESTED", "STATUS_CHANGED"] },
@@ -218,8 +213,16 @@ export default async function ReportsPage() {
             }
           }
         }
+      }),
+      db.timeEntry.groupBy({
+        by: ["userId"],
+        _sum: { durationMins: true },
       })
     ]);
+
+    const hoursLoggedMap = Object.fromEntries(
+      timeSums.map((t) => [t.userId, (t._sum.durationMins || 0) / 60])
+    );
 
     managementTasksReport = managementEmployeeTasks.map((t) => {
       const isCompleted = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
@@ -259,7 +262,7 @@ export default async function ReportsPage() {
     });
 
     teamPerformanceReport = allUsersWithStats.map((u) => {
-      const hoursLogged = u.timeEntries.reduce((sum, e) => sum + e.durationMins, 0) / 60;
+      const hoursLogged = hoursLoggedMap[u.id] || 0;
       
       if (u.role === Role.EMPLOYEE) {
         const assignedCount = u.assignedTasks.length;
