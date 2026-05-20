@@ -5,6 +5,7 @@ import { getTaskFiles } from "@/app/actions/tasks";
 import { TaskStatus, Priority } from "@prisma/client";
 import { submitForReview, createTaskFileRecord } from "@/app/actions/task-submissions";
 import { updateTaskStatus, deleteTask, markTaskDone } from "@/app/actions/tasks";
+import { deleteFile, uploadNewVersion } from "@/app/actions/files";
 import { uploadFile } from "@/lib/storage-client";
 import { hasPermission } from "@/lib/permissions";
 import { Role } from "@prisma/client";
@@ -60,7 +61,18 @@ interface TaskDetailDrawerProps {
     revisionCount: number;
     projectId: string;
     assignedTo: { id: string; name: string } | null;
-    files?: Array<{ id: string; filename: string; fileUrl: string; mimeType: string; fileSize: number; createdAt: Date }>;
+    files?: Array<{
+      id: string;
+      filename: string;
+      fileUrl: string;
+      mimeType: string;
+      fileSize: number;
+      createdAt: Date;
+      uploadedById?: string;
+      uploadedBy?: { name: string } | null;
+      version?: number;
+      parentFileId?: string | null;
+    }>;
     subtasks: Array<{ id: string; title: string; isDone: boolean }>;
   };
   userId: string;
@@ -80,8 +92,11 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("details");
-  const [files, setFiles] = useState(task.files ?? []);
+  const [files, setFiles] = useState<any[]>(task.files ?? []);
   const [isLoadingFiles, setIsLoadingFiles] = useState(!task.files);
+  const [upgradingFileId, setUpgradingFileId] = useState<string | null>(null);
+  const [isUpgradingVersion, setIsUpgradingVersion] = useState(false);
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
 
   // ─── PERF: Load files on-demand when drawer opens ──────────────────────────
   useEffect(() => {
@@ -95,6 +110,65 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
       setFiles(task.files);
     }
   }, [isOpen, task.id, task.files]);
+
+  const handleDeleteFile = useCallback(async (fileId: string) => {
+    if (!confirm("Are you sure you want to permanently delete this file?")) return;
+    try {
+      await deleteFile(fileId);
+      setFiles((prev) => prev.filter((f) => f.id !== fileId));
+      const { toast } = await import("react-hot-toast");
+      toast.success("File deleted successfully.");
+    } catch (err: any) {
+      const { toast } = await import("react-hot-toast");
+      toast.error(err?.message || "Failed to delete file.");
+    }
+  }, []);
+
+  const handleUpgradeVersion = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const parentFileId = upgradingFileId;
+    const fileInput = e.target.files?.[0];
+    if (!parentFileId || !fileInput) return;
+
+    setIsUpgradingVersion(true);
+    try {
+      const pathPrefix = `tasks/${task.id}/revisions`;
+      const { url } = await uploadFile(fileInput, pathPrefix);
+
+      const newVersion = await uploadNewVersion({
+        parentFileId,
+        filename: fileInput.name,
+        originalName: fileInput.name,
+        fileUrl: url,
+        mimeType: fileInput.type,
+        fileSize: fileInput.size,
+      });
+
+      const newFileItem = {
+        id: newVersion.id,
+        filename: newVersion.filename,
+        originalName: newVersion.originalName,
+        fileUrl: newVersion.fileUrl,
+        mimeType: newVersion.mimeType,
+        fileSize: newVersion.fileSize,
+        createdAt: new Date(newVersion.createdAt),
+        uploadedById: newVersion.uploadedById,
+        version: newVersion.version,
+        parentFileId: newVersion.parentFileId,
+        uploadedBy: { name: "You" }
+      };
+
+      setFiles((prev) => [newFileItem, ...prev]);
+      const { toast } = await import("react-hot-toast");
+      toast.success(`Successfully uploaded version v${newVersion.version}!`);
+    } catch (err: any) {
+      const { toast } = await import("react-hot-toast");
+      toast.error(err?.message || "Failed to upload new version.");
+    } finally {
+      setIsUpgradingVersion(false);
+      setUpgradingFileId(null);
+      if (e.target) e.target.value = "";
+    }
+  }, [upgradingFileId, task.id]);
 
   const isAssignee = task.assignedTo?.id === userId;
   const canSubmit = isAssignee && (
@@ -378,21 +452,181 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                   </div>
                 ) : files.length > 0 ? (
                   <div className="mt-4 space-y-2">
-                    {files.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between p-3 brutalist-border bg-surface-container-lowest">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <span className="material-symbols-outlined text-lg text-primary flex-shrink-0">
-                            {file.mimeType.includes("image") ? "image" : "description"}
-                          </span>
-                          <span className="truncate font-label text-[10px] uppercase tracking-wide text-foreground">
-                            {file.filename}
-                          </span>
-                        </div>
-                        <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="flex h-8 w-8 items-center justify-center text-outline hover:text-primary transition-colors ml-2">
-                          <span className="material-symbols-outlined text-lg">download</span>
-                        </a>
-                      </div>
-                    ))}
+                    {(() => {
+                      const rootMap: Record<string, any[]> = {};
+                      
+                      files.forEach(file => {
+                        const rootId = file.parentFileId || file.id;
+                        if (!rootMap[rootId]) {
+                          rootMap[rootId] = [];
+                        }
+                        rootMap[rootId].push(file);
+                      });
+
+                      const organizedFilesList = Object.keys(rootMap).map(rootId => {
+                        const group = rootMap[rootId];
+                        group.sort((a, b) => {
+                          const aVer = a.version ?? 1;
+                          const bVer = b.version ?? 1;
+                          if (aVer !== bVer) return bVer - aVer;
+                          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                        });
+                        const latest = group[0];
+                        const history = group.slice(1);
+                        return {
+                          ...latest,
+                          history
+                        };
+                      });
+
+                      return organizedFilesList.map((file) => {
+                        const isExpanded = !!expandedFiles[file.id];
+                        const isUploader = file.uploadedById === userId;
+                        const canDeleteLatest = isUploader || userRole === "SUPER_ADMIN" || userRole === "ADMIN";
+
+                        return (
+                          <div key={file.id} className="brutalist-border bg-surface-container-lowest overflow-hidden">
+                            {/* File Header / Latest Version */}
+                            <div className="flex items-center justify-between p-3">
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <span className="material-symbols-outlined text-lg text-primary flex-shrink-0">
+                                  {file.mimeType?.includes("image") ? "image" : "description"}
+                                </span>
+                                <div className="flex flex-col min-w-0 flex-1">
+                                  <span className="truncate font-label text-[10px] uppercase tracking-wide text-foreground">
+                                    {file.filename}
+                                  </span>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {file.uploadedBy?.name && (
+                                      <span className="font-label text-[8px] text-outline uppercase tracking-wider">
+                                        BY: {file.uploadedBy.name}
+                                      </span>
+                                    )}
+                                    <span className="font-mono text-[8px] text-primary/80 uppercase">
+                                      V{file.version ?? 1}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center ml-2">
+                                {/* Version History Toggle */}
+                                {file.history.length > 0 && (
+                                  <button
+                                    onClick={() => setExpandedFiles(prev => ({ ...prev, [file.id]: !prev[file.id] }))}
+                                    className="flex h-8 px-2 items-center gap-1 brutalist-border bg-surface-container-low text-primary font-mono text-[8px] hover:bg-neutral-200 transition-colors mr-2"
+                                    title="View Revision History"
+                                  >
+                                    <span className="material-symbols-outlined text-xs">history</span>
+                                    {file.history.length} {file.history.length === 1 ? "REV" : "REVS"}
+                                  </button>
+                                )}
+
+                                {/* Upload New Version */}
+                                <button
+                                  onClick={() => {
+                                    setUpgradingFileId(file.id);
+                                    const trigger = document.getElementById(`version-upgrade-input-${file.id}`);
+                                    trigger?.click();
+                                  }}
+                                  disabled={isUpgradingVersion}
+                                  className="flex h-8 w-8 items-center justify-center text-outline hover:text-primary transition-colors"
+                                  title="Upload revision / new version"
+                                >
+                                  <span className="material-symbols-outlined text-lg">upgrade</span>
+                                </button>
+                                <input
+                                  id={`version-upgrade-input-${file.id}`}
+                                  type="file"
+                                  className="hidden"
+                                  onChange={handleUpgradeVersion}
+                                />
+
+                                {/* Download Link */}
+                                <a
+                                  href={file.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex h-8 w-8 items-center justify-center text-outline hover:text-primary transition-colors"
+                                  title="Download"
+                                >
+                                  <span className="material-symbols-outlined text-lg">download</span>
+                                </a>
+
+                                {/* Delete button */}
+                                {canDeleteLatest && (
+                                  <button
+                                    onClick={() => handleDeleteFile(file.id)}
+                                    className="flex h-8 w-8 items-center justify-center text-outline hover:text-error transition-colors ml-1"
+                                    title="Delete File"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Nested History/Revisions */}
+                            {isExpanded && file.history.length > 0 && (
+                              <div className="bg-surface-container-low/50 divide-y divide-on-surface/5 border-t border-on-surface/10">
+                                {file.history.map((rev: any) => {
+                                  const isRevUploader = rev.uploadedById === userId;
+                                  const canDeleteRev = isRevUploader || userRole === "SUPER_ADMIN" || userRole === "ADMIN";
+                                  return (
+                                    <div key={rev.id} className="flex items-center justify-between p-2.5 pl-6 bg-surface-container-low/30">
+                                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                        <span className="material-symbols-outlined text-sm text-outline flex-shrink-0">
+                                          history
+                                        </span>
+                                        <div className="flex flex-col min-w-0 flex-1">
+                                          <span className="truncate font-mono text-[9px] text-foreground/80">
+                                            {rev.filename}
+                                          </span>
+                                          <div className="flex items-center gap-2 mt-0.5">
+                                            {rev.uploadedBy?.name && (
+                                              <span className="font-label text-[7px] text-outline uppercase tracking-wider">
+                                                BY: {rev.uploadedBy.name}
+                                              </span>
+                                            )}
+                                            <span className="font-mono text-[7px] text-outline uppercase">
+                                              V{rev.version ?? 1}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center">
+                                        {/* Download Link */}
+                                        <a
+                                          href={rev.fileUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex h-7 w-7 items-center justify-center text-outline hover:text-primary transition-colors"
+                                          title="Download Revision"
+                                        >
+                                          <span className="material-symbols-outlined text-base">download</span>
+                                        </a>
+
+                                        {/* Delete button */}
+                                        {canDeleteRev && (
+                                          <button
+                                            onClick={() => handleDeleteFile(rev.id)}
+                                            className="flex h-7 w-7 items-center justify-center text-outline hover:text-error transition-colors ml-1"
+                                            title="Delete Revision"
+                                          >
+                                            <span className="material-symbols-outlined text-base">delete</span>
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 ) : null}
               </div>

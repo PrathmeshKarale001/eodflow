@@ -28,6 +28,8 @@ export async function addComment(data: {
   taskId: string;
   content: string;
   parentId?: string;
+  fileUrl?: string;
+  fileName?: string;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
@@ -43,6 +45,8 @@ export async function addComment(data: {
       userId: session.user.id,
       content: data.content,
       parentId: data.parentId,
+      fileUrl: data.fileUrl,
+      fileName: data.fileName,
     },
     include: {
       user: { select: { id: true, name: true, image: true } },

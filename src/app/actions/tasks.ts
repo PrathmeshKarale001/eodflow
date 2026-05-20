@@ -486,7 +486,22 @@ export async function getTaskFiles(taskId: string) {
 
   return db.file.findMany({
     where: { taskId },
-    select: { id: true, filename: true, fileUrl: true, mimeType: true, fileSize: true, createdAt: true },
+    select: {
+      id: true,
+      filename: true,
+      fileUrl: true,
+      mimeType: true,
+      fileSize: true,
+      createdAt: true,
+      uploadedById: true,
+      version: true,
+      parentFileId: true,
+      uploadedBy: {
+        select: {
+          name: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 }

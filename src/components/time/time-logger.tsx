@@ -22,21 +22,55 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
 
-  // Load entries on mount
+  // Load entries and recover timer state from localStorage on mount/taskId change
   useEffect(() => {
     getTaskTimeEntries(taskId).then(setEntries).catch(console.error);
+
+    const savedRunning = localStorage.getItem(`eodflow_timer_running_${taskId}`) === "true";
+    const savedStart = localStorage.getItem(`eodflow_timer_start_${taskId}`);
+
+    if (savedRunning && savedStart) {
+      const startTime = new Date(savedStart).getTime();
+      const elapsed = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+      
+      setSeconds(elapsed);
+      setIsRunning(true);
+      startTimeRef.current = new Date(startTime);
+
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
+        setSeconds(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
+      }, 1000);
+    } else {
+      setIsRunning(false);
+      setSeconds(0);
+      startTimeRef.current = null;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
   }, [taskId]);
 
   const handleStart = useCallback(() => {
+    const now = new Date();
+    localStorage.setItem(`eodflow_timer_start_${taskId}`, now.toISOString());
+    localStorage.setItem(`eodflow_timer_running_${taskId}`, "true");
+
     setIsRunning(true);
     setSeconds(0);
-    startTimeRef.current = new Date();
+    startTimeRef.current = now;
+
+    if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
-      setSeconds((prev) => prev + 1);
+      setSeconds(Math.max(0, Math.floor((Date.now() - now.getTime()) / 1000)));
     }, 1000);
-  }, []);
+  }, [taskId]);
 
   const handleStop = useCallback(() => {
+    localStorage.removeItem(`eodflow_timer_start_${taskId}`);
+    localStorage.removeItem(`eodflow_timer_running_${taskId}`);
+
     setIsRunning(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
