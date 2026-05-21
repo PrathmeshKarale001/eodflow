@@ -261,7 +261,7 @@ export function ChatWindow({
         fileUrl: fileUrl || undefined,
         replyToId: replyId,
       });
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? (msg as Message) : m)));
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? (msg as unknown as Message) : m)));
 
       if (channelRef.current) {
         channelRef.current.send({ type: "broadcast", event: "new-message", payload: msg });
