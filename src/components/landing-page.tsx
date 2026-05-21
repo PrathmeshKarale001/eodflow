@@ -334,7 +334,7 @@ export function LandingPage() {
         <footer className="data-grid gap-4 mt-8">
           <div className="col-span-12 brutalist-border p-6 bg-surface-container-lowest flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
-              <span className="text-lg font-headline font-bold text-white uppercase block mb-1">EOD Flow</span>
+              <img src="/flowlogo.svg" alt="EOD Flow" className="h-6 w-auto block mb-2" />
               <p className="text-[10px] font-label text-on-surface/40 uppercase tracking-widest">Built by End Of Day Media · Part of Lokshahi Group</p>
             </div>
             <div className="flex gap-8">

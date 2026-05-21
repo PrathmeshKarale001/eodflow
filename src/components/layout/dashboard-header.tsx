@@ -30,12 +30,7 @@ export function DashboardHeader({ user, navItems }: DashboardHeaderProps) {
           <span className="material-symbols-outlined">menu</span>
         </button>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center bg-primary-container text-[10px] font-headline font-bold text-white">
-            E
-          </div>
-          <span className="text-xs font-headline font-bold text-foreground uppercase tracking-tight">
-            EOD <span className="text-primary">Flow</span>
-          </span>
+          <img src="/flowlogo.svg" alt="EOD Flow" className="h-5 w-auto block" />
         </div>
       </div>
 

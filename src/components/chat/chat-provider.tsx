@@ -107,6 +107,19 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
         setTimeout(() => {
           setToasts((prev) => prev.filter((t) => t.id !== toastId));
         }, 5000);
+
+        // ─── BROWSER NOTIFICATION (when tab is not focused) ─────────────────
+        if (typeof window !== "undefined" && document.hidden && "Notification" in window && Notification.permission === "granted") {
+          try {
+            new Notification(`${data.senderName} • ${channelName}`, {
+              body: data.content,
+              icon: "/icon-192.png",
+              tag: `chat-${data.channelId}`,
+            });
+          } catch {
+            // Silently fail — some browsers block Notification constructor
+          }
+        }
       })
       .subscribe();
 
@@ -121,7 +134,6 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     if (!match) return;
 
     const channelId = match[1];
-    const channelName = channels.find((c) => c.id === channelId)?.name || "Channel";
 
     // Mark as read immediately
     markRead(channelId);
@@ -175,6 +187,81 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
 
     return () => {
       supabase.removeChannel(presenceChannel);
+    };
+  }, [currentUserId]);
+
+  // ─── Subscribe to global task notifications ──────────────────────────────
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("task-notifications")
+      .on("broadcast", { event: "task-event" }, (payload) => {
+        const data = payload.payload as {
+          type: string;
+          taskId: string;
+          taskTitle: string;
+          actorName: string;
+          actorId: string;
+          assigneeIds?: string[];
+          oldStatus?: string;
+          newStatus?: string;
+        };
+
+        // Ignore own actions
+        if (data.actorId === currentUserId) return;
+
+        // Only notify if user is an assignee or affected
+        const isAssignee = data.assigneeIds?.includes(currentUserId);
+        if (!isAssignee) return;
+
+        // Build notification text
+        let title = "Task Update";
+        let body = "";
+        if (data.type === "TASK_CREATED") {
+          title = "New Task Assigned";
+          body = `${data.actorName} assigned you: "${data.taskTitle}"`;
+        } else if (data.type === "TASK_STATUS_CHANGED") {
+          title = "Task Status Changed";
+          body = `${data.actorName} moved task to ${data.newStatus?.replace(/_/g, " ")}`;
+        }
+
+        // Show in-app toast
+        const toastId = `task-toast-${Date.now()}`;
+        setToasts((prev) => [
+          {
+            id: toastId,
+            channelId: data.taskId,
+            channelName: title,
+            senderName: data.actorName,
+            content: body,
+            timestamp: Date.now(),
+          },
+          ...prev,
+        ].slice(0, 3));
+
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.id !== toastId));
+        }, 5000);
+
+        // Show browser notification when tab is not focused
+        if (typeof window !== "undefined" && document.hidden && "Notification" in window && Notification.permission === "granted") {
+          try {
+            new Notification(title, {
+              body,
+              icon: "/icon-192.png",
+              tag: `task-${data.taskId}`,
+            });
+          } catch {
+            // Silently fail
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
   }, [currentUserId]);
 

@@ -17,8 +17,8 @@ export function Navbar() {
       <div className="flex items-center justify-between brutalist-border p-3 bg-surface-container-lowest w-full lg:contents">
         {/* Brand Block */}
         <div className="lg:col-span-3 lg:brutalist-border lg:p-4 flex items-center justify-between lg:bg-surface-container-lowest flex-shrink-0">
-          <Link href="/" className="font-headline font-extrabold text-xl lg:text-2xl tracking-tighter uppercase hover:text-primary transition-colors">
-            EOD FLOW
+          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <img src="/flowlogo.svg" alt="EOD Flow" className="h-6 lg:h-7 w-auto block" />
           </Link>
           <div className="flex items-center gap-2 ml-3">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>

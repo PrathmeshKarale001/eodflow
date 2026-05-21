@@ -48,12 +48,7 @@ export function MobileSidebar({ isOpen, onClose, user, navItems }: MobileSidebar
           <Dialog.Title className="sr-only">Navigation Menu</Dialog.Title>
           <div className="flex items-center justify-between p-4 border-b border-on-surface/10">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center bg-primary-container text-xs font-headline font-bold text-white">
-                E
-              </div>
-              <span className="text-sm font-headline font-bold text-foreground uppercase tracking-tight">
-                EOD <span className="text-primary">Flow</span>
-              </span>
+              <img src="/flowlogo.svg" alt="EOD Flow" className="h-6 w-auto block" />
             </div>
             <Dialog.Close asChild>
               <button className="flex h-8 w-8 items-center justify-center brutalist-border text-outline hover:text-foreground transition-colors">

@@ -51,12 +51,12 @@ export function ChatWindow({
   const [typingUsers, setTypingUsers] = useState<Array<{ userId: string; userName: string; timestamp: number }>>([]);
   const lastTypingBroadcast = useRef<number>(0);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom (also when typing indicator shows/hides)
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, typingUsers]);
 
   const channelRef = useRef<any>(null);
   const notifChannelRef = useRef<any>(null);
@@ -267,188 +267,186 @@ export function ChatWindow({
 
   return (
     <div className="flex h-full">
-    <div className="flex flex-col flex-1 min-w-0 h-full">
-      {/* Channel header */}
-      <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <Link href="/chat" className="md:hidden flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-card/5 hover:text-foreground transition-colors mr-1 flex-shrink-0">
-            <span className="material-symbols-outlined text-sm">arrow_back</span>
-          </Link>
-          <span className="material-symbols-outlined text-sm text-primary flex-shrink-0">
-            {channelType === "DIRECT" ? "person" : "tag"}
-          </span>
-          <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text truncate">
-            {channelName}
-          </h2>
-          <span className="font-mono text-[8px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase flex-shrink-0">
-            {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "CHANNEL" : "PROJECT"}
-          </span>
+      <div className="flex flex-col flex-1 min-w-0 h-full">
+        {/* Channel header */}
+        <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link href="/chat" className="md:hidden flex h-7 w-7 items-center justify-center brutalist-border text-outline hover:bg-card/5 hover:text-foreground transition-colors mr-1 flex-shrink-0">
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
+            </Link>
+            <span className="material-symbols-outlined text-sm text-primary flex-shrink-0">
+              {channelType === "DIRECT" ? "person" : "tag"}
+            </span>
+            <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text truncate">
+              {channelName}
+            </h2>
+            <span className="font-mono text-[8px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase flex-shrink-0">
+              {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "CHANNEL" : "PROJECT"}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={() => setShowSearch((v) => !v)}
+              className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${showSearch ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"
+                }`}
+            >
+              <span className="material-symbols-outlined text-sm">search</span>
+            </button>
+            <button
+              onClick={() => setShowInfoPanel((v) => !v)}
+              className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${showInfoPanel ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"
+                }`}
+            >
+              <span className="material-symbols-outlined text-sm">info</span>
+            </button>
+            <span className="font-mono text-[9px] text-on-surface/40 uppercase hidden sm:inline">
+              {memberCount} member{memberCount !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <button
-            onClick={() => setShowSearch((v) => !v)}
-            className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${
-              showSearch ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm">search</span>
-          </button>
-          <button
-            onClick={() => setShowInfoPanel((v) => !v)}
-            className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${
-              showInfoPanel ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm">info</span>
-          </button>
-          <span className="font-mono text-[9px] text-on-surface/40 uppercase hidden sm:inline">
-            {memberCount} member{memberCount !== 1 ? "s" : ""}
-          </span>
-        </div>
-      </div>
 
-      {/* Search overlay */}
-      <div className="relative">
-        <ChatSearch
-          channelId={channelId}
-          isOpen={showSearch}
-          onClose={() => setShowSearch(false)}
-          onScrollToMessage={async (id: string) => {
-            // Try to find the message in the DOM first
-            let el = document.getElementById(`msg-${id}`);
-            if (el) {
-              el.scrollIntoView({ behavior: "smooth", block: "center" });
-              el.classList.add("bg-primary/10");
-              setTimeout(() => el!.classList.remove("bg-primary/10"), 2000);
-              return;
-            }
-
-            // Message not in DOM — load all messages to include the target
-            try {
-              const allMessages = await getMessagesAroundTarget(channelId, id);
-              if (allMessages.length > 0) {
-                setMessages(allMessages as Message[]);
-                // Wait for React to render the new messages, then scroll
-                setTimeout(() => {
-                  const targetEl = document.getElementById(`msg-${id}`);
-                  if (targetEl) {
-                    targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
-                    targetEl.classList.add("bg-primary/10");
-                    setTimeout(() => targetEl.classList.remove("bg-primary/10"), 2500);
-                  }
-                }, 100);
+        {/* Search overlay */}
+        <div className="relative">
+          <ChatSearch
+            channelId={channelId}
+            isOpen={showSearch}
+            onClose={() => setShowSearch(false)}
+            onScrollToMessage={async (id: string) => {
+              // Try to find the message in the DOM first
+              let el = document.getElementById(`msg-${id}`);
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.classList.add("bg-primary/10");
+                setTimeout(() => el!.classList.remove("bg-primary/10"), 2000);
+                return;
               }
-            } catch {
-              // Silently fail — message may have been deleted
-            }
-          }}
-        />
-      </div>
 
-      {/* Messages area */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-lowest"
-      >
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-2">
-              chat_bubble_outline
-            </span>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">
-              NO_MESSAGES_YET
-            </p>
-            <p className="font-mono text-[9px] text-on-surface/20 mt-1">
-              Start the conversation
-            </p>
-          </div>
-        ) : (
-          messages.map((msg) => (
-            <div key={msg.id} id={`msg-${msg.id}`} className="transition-colors duration-500">
-            <MessageBubble
-              content={msg.content}
-              userName={msg.user.name}
-              userImage={msg.user.image}
-              timestamp={msg.createdAt}
-              isOwn={msg.user.id === currentUserId}
-              fileUrl={msg.fileUrl}
-            />
+              // Message not in DOM — load all messages to include the target
+              try {
+                const allMessages = await getMessagesAroundTarget(channelId, id);
+                if (allMessages.length > 0) {
+                  setMessages(allMessages as Message[]);
+                  // Wait for React to render the new messages, then scroll
+                  setTimeout(() => {
+                    const targetEl = document.getElementById(`msg-${id}`);
+                    if (targetEl) {
+                      targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                      targetEl.classList.add("bg-primary/10");
+                      setTimeout(() => targetEl.classList.remove("bg-primary/10"), 2500);
+                    }
+                  }, 100);
+                }
+              } catch {
+                // Silently fail — message may have been deleted
+              }
+            }}
+          />
+        </div>
+
+        {/* Messages area */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-lowest"
+        >
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-2">
+                chat_bubble_outline
+              </span>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">
+                NO_MESSAGES_YET
+              </p>
+              <p className="font-mono text-[9px] text-on-surface/20 mt-1">
+                Start the conversation
+              </p>
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} id={`msg-${msg.id}`} className="transition-colors duration-500">
+                <MessageBubble
+                  content={msg.content}
+                  userName={msg.user.name}
+                  userImage={msg.user.image}
+                  timestamp={msg.createdAt}
+                  isOwn={msg.user.id === currentUserId}
+                  fileUrl={msg.fileUrl}
+                />
+              </div>
+            ))
+          )}
+        </div>
 
-      {/* Upload progress bar */}
-      {uploadProgress && (
-        <div className="px-4 py-2 bg-primary/10 brutalist-border border-x-0 border-b-0 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-xs text-primary animate-spin">progress_activity</span>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-primary">
-              {uploadProgress}
-            </span>
+        {/* Upload progress bar */}
+        {uploadProgress && (
+          <div className="px-4 py-2 bg-primary/10 brutalist-border border-x-0 border-b-0 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-xs text-primary animate-spin">progress_activity</span>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-primary">
+                {uploadProgress}
+              </span>
+            </div>
           </div>
+        )}
+
+        {/* Typing indicator */}
+        {typingUsers.length > 0 && (
+          <div className="px-4 py-1.5 bg-surface-container-low/40 border-t border-outline-variant/10 flex-shrink-0">
+            <p className="font-mono text-[9px] text-primary/80 lowercase tracking-wider animate-pulse flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[11px] animate-bounce">keyboard</span>
+              {typingUsers.map((u) => u.userName).join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing...
+            </p>
+          </div>
+        )}
+
+        {/* Input bar */}
+        <div className="px-4 pt-3 pb-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] brutalist-border border-b-0 border-x-0 bg-card flex items-end gap-2 flex-shrink-0">
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileSelect}
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.csv"
+          />
+
+          {/* Attachment button */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || sending}
+            className="flex h-10 w-10 md:h-9 md:w-9 items-center justify-center text-on-surface/60 hover:text-primary hover:bg-primary/10 brutalist-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            title="Attach file"
+          >
+            <span className="material-symbols-outlined text-sm">attach_file</span>
+          </button>
+
+          <textarea
+            value={input}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            placeholder="Type a message..."
+            rows={1}
+            className="flex-1 bg-surface-container-lowest brutalist-border px-3 py-2 text-base md:text-xs text-on-surface font-mono placeholder:text-on-surface/30 resize-none max-h-24 focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <button
+            onClick={() => handleSend()}
+            disabled={(!input.trim() && !uploading) || sending}
+            className="flex h-10 w-10 md:h-9 md:w-9 items-center justify-center bg-primary text-on-primary brutalist-border hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          >
+            <span className="material-symbols-outlined text-sm">send</span>
+          </button>
         </div>
-      )}
-
-      {/* Typing indicator */}
-      {typingUsers.length > 0 && (
-        <div className="px-4 py-1.5 bg-surface-container-low/40 border-t border-outline-variant/10 flex-shrink-0">
-          <p className="font-mono text-[9px] text-primary/80 lowercase tracking-wider animate-pulse flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[11px] animate-bounce">keyboard</span>
-            {typingUsers.map((u) => u.userName).join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing...
-          </p>
-        </div>
-      )}
-
-      {/* Input bar */}
-      <div className="px-4 pt-3 pb-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] brutalist-border border-b-0 border-x-0 bg-card flex items-end gap-2 flex-shrink-0">
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          onChange={handleFileSelect}
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.csv"
-        />
-
-        {/* Attachment button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading || sending}
-          className="flex h-10 w-10 md:h-9 md:w-9 items-center justify-center text-on-surface/60 hover:text-primary hover:bg-primary/10 brutalist-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-          title="Attach file"
-        >
-          <span className="material-symbols-outlined text-sm">attach_file</span>
-        </button>
-
-        <textarea
-          value={input}
-          onChange={(e) => handleInputChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={handleFocus}
-          placeholder="Type a message..."
-          rows={1}
-          className="flex-1 bg-surface-container-lowest brutalist-border px-3 py-2 text-base md:text-xs text-on-surface font-mono placeholder:text-on-surface/30 resize-none max-h-24 focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <button
-          onClick={() => handleSend()}
-          disabled={(!input.trim() && !uploading) || sending}
-          className="flex h-10 w-10 md:h-9 md:w-9 items-center justify-center bg-primary text-on-primary brutalist-border hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-        >
-          <span className="material-symbols-outlined text-sm">send</span>
-        </button>
       </div>
-    </div>
 
-    {/* Info Panel (slide-out) */}
-    <ChatInfoPanel
-      channelId={channelId}
-      channelName={channelName}
-      memberCount={memberCount}
-      isOpen={showInfoPanel}
-      onClose={() => setShowInfoPanel(false)}
-    />
+      {/* Info Panel (slide-out) */}
+      <ChatInfoPanel
+        channelId={channelId}
+        channelName={channelName}
+        memberCount={memberCount}
+        isOpen={showInfoPanel}
+        onClose={() => setShowInfoPanel(false)}
+      />
     </div>
   );
 }

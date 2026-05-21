@@ -31,6 +31,11 @@ export const metadata: Metadata = {
   },
   description: "Internal Task Management System — End Of Day Media",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/flowico.ico",
+    shortcut: "/flowico.ico",
+    apple: "/icon-192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

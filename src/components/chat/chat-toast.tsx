@@ -52,11 +52,11 @@ export function ChatToastContainer() {
 
             {/* Action */}
             <Link
-              href={`/chat/${toast.channelId}`}
+              href={toast.id.startsWith("task-toast") ? `/tasks` : `/chat/${toast.channelId}`}
               onClick={() => dismissToast(toast.id)}
               className="inline-flex items-center gap-1 mt-2 font-mono text-[8px] uppercase tracking-widest text-primary hover:text-primary/70 transition-colors"
             >
-              <span>Open channel</span>
+              <span>{toast.id.startsWith("task-toast") ? "View tasks" : "Open channel"}</span>
               <span className="material-symbols-outlined text-[9px]">arrow_forward</span>
             </Link>
           </div>

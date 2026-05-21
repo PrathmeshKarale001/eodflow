@@ -96,3 +96,50 @@ export async function broadcastChatMessage(
     // Non-fatal — message is already saved in DB; user will see it on next refresh
   }
 }
+
+// ---------------------------------------------------------------------------
+// Broadcast a task event (assignment, status change, etc.) to all clients
+// ---------------------------------------------------------------------------
+
+export async function broadcastTaskNotification(data: {
+  type: "TASK_ASSIGNED" | "TASK_STATUS_CHANGED" | "TASK_CREATED";
+  taskId: string;
+  taskTitle: string;
+  projectId: string;
+  actorName: string;
+  actorId: string;
+  assigneeIds?: string[];
+  oldStatus?: string;
+  newStatus?: string;
+}) {
+  const client = getAdminClient();
+  if (!client) return;
+
+  try {
+    const channel = client.channel("task-notifications");
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Subscribe timeout")), 5000);
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          clearTimeout(timeout);
+          resolve();
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          clearTimeout(timeout);
+          reject(new Error(`Channel subscribe failed: ${status}`));
+        }
+      });
+    });
+
+    await channel.send({
+      type: "broadcast",
+      event: "task-event",
+      payload: data,
+    });
+
+    await client.removeChannel(channel);
+  } catch (err) {
+    console.error("[REALTIME_SERVER] Task notification broadcast failed:", err);
+  }
+}
+

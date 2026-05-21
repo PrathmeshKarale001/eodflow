@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { hasPermission } from "@/lib/permissions";
 import { Priority, TaskStatus, Role } from "@prisma/client";
 import { cacheDelete, CacheKeys } from "@/lib/cache";
+import { broadcastTaskNotification } from "@/lib/realtime-server";
 
 // ---------------------------------------------------------------------------
 // Create Task
@@ -74,6 +75,18 @@ export async function createTask(data: {
   revalidatePath(`/projects/${data.projectId}`);
   // ─── PERF: Invalidate Redis caches affected by new task ────────────────────
   cacheDelete(CacheKeys.DASHBOARD_COUNTS, CacheKeys.PROJECTS_STATUS_COUNTS).catch(() => {});
+
+  // Broadcast task creation notification to all clients
+  broadcastTaskNotification({
+    type: "TASK_CREATED",
+    taskId: task.id,
+    taskTitle: data.title,
+    projectId: data.projectId,
+    actorName: session.user.name || "Someone",
+    actorId: session.user.id,
+    assigneeIds: data.assigneeIds || (leadAssigneeId ? [leadAssigneeId] : []),
+  }).catch(() => {});
+
   return task;
 }
 
@@ -171,6 +184,20 @@ export async function updateTaskStatus(data: {
 
   revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
+
+  // Broadcast task status change notification
+  broadcastTaskNotification({
+    type: "TASK_STATUS_CHANGED",
+    taskId: data.taskId,
+    taskTitle: "Task",
+    projectId: task.projectId,
+    actorName: session.user.name || "Someone",
+    actorId: session.user.id,
+    assigneeIds: task.assignedToId ? [task.assignedToId] : [],
+    oldStatus: oldStatus,
+    newStatus: data.status,
+  }).catch(() => {});
+
   return updatedTask;
 }
 
@@ -275,6 +302,18 @@ export async function reassignTask(taskId: string, newAssigneeId: string) {
 
   revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
+
+  // Broadcast task assignment notification
+  broadcastTaskNotification({
+    type: "TASK_CREATED",
+    taskId,
+    taskTitle: task.title,
+    projectId: task.projectId,
+    actorName: session.user.name || "Someone",
+    actorId: session.user.id,
+    assigneeIds: [newAssigneeId],
+  }).catch(() => {});
+
   return updatedTask;
 }
 
@@ -407,6 +446,19 @@ export async function updateTask(taskId: string, data: {
 
   revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
+
+  // Broadcast task update notification
+  broadcastTaskNotification({
+    type: data.status ? "TASK_STATUS_CHANGED" : "TASK_CREATED",
+    taskId,
+    taskTitle: updatedTask.title,
+    projectId: task.projectId,
+    actorName: session.user.name || "Someone",
+    actorId: session.user.id,
+    assigneeIds: updatedTask.assignedToId ? [updatedTask.assignedToId] : [],
+    newStatus: data.status,
+  }).catch(() => {});
+
   return updatedTask;
 }
 
@@ -470,6 +522,20 @@ export async function markTaskDone(taskId: string) {
 
   revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
+
+  // Broadcast task completion notification
+  broadcastTaskNotification({
+    type: "TASK_STATUS_CHANGED",
+    taskId,
+    taskTitle: task.title,
+    projectId: task.projectId,
+    actorName: session.user.name || "Someone",
+    actorId: session.user.id,
+    assigneeIds: task.assignedToId ? [task.assignedToId] : [],
+    oldStatus: task.status,
+    newStatus: TaskStatus.DONE,
+  }).catch(() => {});
+
   return updatedTask;
 }
 

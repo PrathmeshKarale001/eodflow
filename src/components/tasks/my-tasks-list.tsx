@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { TaskStatus, Priority, Role } from "@prisma/client";
 import { reassignTask } from "@/app/actions/tasks";
+import { createClient } from "@/lib/realtime";
 
 // ─── PERF: Lazy-load heavy modal/drawer but prefetch eagerly ────────────────
 const TaskDetailDrawer = dynamic(
@@ -100,6 +101,23 @@ export function MyTasksList({
       router.replace(`/tasks?${params.toString()}`);
     }
   }, [searchParams, selectedTaskId, router]);
+
+  // Subscribe to real-time task notifications for automatic UI refresh
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("task-notifications-refresh")
+      .on("broadcast", { event: "task-event" }, () => {
+        startTransition(() => {
+          router.refresh();
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router]);
 
   const closeCreateModal = () => {
     const params = new URLSearchParams(searchParams.toString());
