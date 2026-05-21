@@ -40,7 +40,7 @@ interface AvailableUser {
 export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobile = false }: ChatSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { unreadCounts } = useUnread();
+  const { unreadCounts, onlineUsers } = useUnread();
   const searchParams = useSearchParams();
   const [showNewDM, setShowNewDM] = useState(false);
   const [showNewChannel, setShowNewChannel] = useState(false);
@@ -336,6 +336,9 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                   <div className="flex h-5 w-5 items-center justify-center bg-surface-container-high text-[8px] font-headline font-bold text-on-surface/60 uppercase">
                     {otherUser?.name.charAt(0) || "?"}
                   </div>
+                  {otherUser?.id && onlineUsers[otherUser.id] && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-card flex-shrink-0" />
+                  )}
                   {unread > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-primary text-on-primary text-[7px] font-bold font-mono rounded-full flex items-center justify-center px-0.5">
                       {unread > 9 ? "9+" : unread}

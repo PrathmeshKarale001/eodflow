@@ -4,9 +4,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { MessageBubble } from "./message-bubble";
 import { sendMessage, getMessagesAroundTarget } from "@/app/actions/chat";
-import { createClient } from "@/lib/realtime";
+import { createClient, broadcastTyping } from "@/lib/realtime";
 import { ChatInfoPanel } from "./chat-info-panel";
 import { ChatSearch } from "./chat-search";
+import { useSession } from "@/lib/auth-client";
 
 interface Message {
   id: string;
@@ -33,6 +34,9 @@ export function ChatWindow({
   initialMessages,
   memberCount,
 }: ChatWindowProps) {
+  const { data: session } = useSession();
+  const currentUserName = session?.user?.name || "Someone";
+
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -42,6 +46,10 @@ export function ChatWindow({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+
+  // Real-time typing users state
+  const [typingUsers, setTypingUsers] = useState<Array<{ userId: string; userName: string; timestamp: number }>>([]);
+  const lastTypingBroadcast = useRef<number>(0);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -89,6 +97,48 @@ export function ChatWindow({
       notifChannelRef.current = null;
     };
   }, [channelId]);
+
+  // -----------------------------------------------------------------------
+  // Listen to typing events
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    const supabase = createClient();
+    const typingChannelName = `typing-${channelId}`;
+    const channel = supabase.channel(typingChannelName);
+
+    channel
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const data = payload.payload as { userId: string; userName: string; timestamp: number };
+        if (data.userId === currentUserId) return;
+
+        setTypingUsers((prev) => {
+          const filtered = prev.filter((u) => u.userId !== data.userId);
+          return [...filtered, { userId: data.userId, userName: data.userName, timestamp: Date.now() }];
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [channelId, currentUserId]);
+
+  // Periodically clean up expired typing indicators (older than 3 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTypingUsers((prev) => prev.filter((u) => Date.now() - u.timestamp < 3000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleInputChange = (val: string) => {
+    setInput(val);
+    const now = Date.now();
+    if (now - lastTypingBroadcast.current > 1500) {
+      lastTypingBroadcast.current = now;
+      broadcastTyping(channelId, currentUserId, currentUserName);
+    }
+  };
 
   // -----------------------------------------------------------------------
   // Send text message
@@ -340,6 +390,16 @@ export function ChatWindow({
         </div>
       )}
 
+      {/* Typing indicator */}
+      {typingUsers.length > 0 && (
+        <div className="px-4 py-1.5 bg-surface-container-low/40 border-t border-outline-variant/10 flex-shrink-0">
+          <p className="font-mono text-[9px] text-primary/80 lowercase tracking-wider animate-pulse flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[11px] animate-bounce">keyboard</span>
+            {typingUsers.map((u) => u.userName).join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing...
+          </p>
+        </div>
+      )}
+
       {/* Input bar */}
       <div className="px-4 pt-3 pb-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] brutalist-border border-b-0 border-x-0 bg-card flex items-end gap-2 flex-shrink-0">
         {/* Hidden file input */}
@@ -364,7 +424,7 @@ export function ChatWindow({
 
         <textarea
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           placeholder="Type a message..."

@@ -21,6 +21,7 @@ interface UnreadContextValue {
   dismissToast: (id: string) => void;
   channels: Array<{ id: string; name: string | null; type: string }>;
   currentUserId: string;
+  onlineUsers: Record<string, any>;
 }
 
 const UnreadContext = createContext<UnreadContextValue>({
@@ -30,6 +31,7 @@ const UnreadContext = createContext<UnreadContextValue>({
   dismissToast: () => {},
   channels: [],
   currentUserId: "",
+  onlineUsers: {},
 });
 
 export function useUnread() {
@@ -142,6 +144,40 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     };
   }, [pathname, channels, currentUserId, markRead]);
 
+  // Online presence tracking
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const supabase = createClient();
+    const presenceChannel = supabase.channel("online-users", {
+      config: { presence: { key: currentUserId } },
+    });
+
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChannel.presenceState();
+        const onlineIds: Record<string, any> = {};
+        Object.keys(state).forEach((key) => {
+          onlineIds[key] = state[key][0];
+        });
+        setOnlineUsers(onlineIds);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await presenceChannel.track({
+            userId: currentUserId,
+            onlineAt: new Date().toISOString(),
+          });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [currentUserId]);
+
   return (
     <UnreadContext.Provider
       value={{
@@ -151,6 +187,7 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
         dismissToast,
         channels,
         currentUserId,
+        onlineUsers,
       }}
     >
       {children}
