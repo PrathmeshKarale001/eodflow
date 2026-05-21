@@ -9,6 +9,7 @@ interface ProjectCard {
   title: string;
   status: ProjectStatus;
   priority: Priority;
+  clientId: string;
   clientName: string;
   clientColor: string;
   managerName: string | null;
@@ -49,12 +50,30 @@ const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
 export function ProjectsListClient({ projects, statusConfig, priorityConfig }: ProjectsListClientProps) {
   const [filter, setFilter] = useState<ProjectStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
+  const [collapsedBrands, setCollapsedBrands] = useState<Record<string, boolean>>({});
 
   const filtered = projects.filter((p) => {
     if (filter !== "ALL" && p.status !== filter) return false;
     if (search && !p.title.toLowerCase().includes(search.toLowerCase()) && !p.clientName.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  // Group by brand (clientName)
+  const brandGroups = filtered.reduce((acc, project) => {
+    const key = project.clientName;
+    if (!acc[key]) {
+      acc[key] = { clientId: project.clientId, color: project.clientColor, projects: [] };
+    }
+    acc[key].projects.push(project);
+    return acc;
+  }, {} as Record<string, { clientId: string; color: string; projects: ProjectCard[] }>);
+
+  // Sort brands alphabetically
+  const sortedBrands = Object.keys(brandGroups).sort();
+
+  const toggleBrand = (brand: string) => {
+    setCollapsedBrands((prev) => ({ ...prev, [brand]: !prev[brand] }));
+  };
 
   return (
     <div className="space-y-4">
@@ -96,7 +115,7 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
         </div>
       </div>
 
-      {/* Project Grid */}
+      {/* Brand-grouped Projects */}
       {filtered.length === 0 ? (
         <div className="brutalist-border bg-card p-8 text-center">
           <span className="material-symbols-outlined text-2xl text-on-surface/20 mb-2 block">search_off</span>
@@ -105,96 +124,140 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((project) => {
-            const dueLabel = project.deadline
-              ? new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-              : null;
-            const isOverdue = project.deadline
-              ? new Date(project.deadline) < new Date() && project.status !== "COMPLETED" && project.status !== "ARCHIVED"
-              : false;
+        <div className="space-y-3">
+          {sortedBrands.map((brandName) => {
+            const group = brandGroups[brandName];
+            const isCollapsed = collapsedBrands[brandName] ?? false;
+            const totalTasks = group.projects.reduce((sum, p) => sum + p.taskCount, 0);
 
             return (
-              <Link
-                key={project.id}
-                href={`/projects/${project.id}`}
-                className="brutalist-border bg-card hover:bg-card/80 transition-all group block relative overflow-hidden"
-              >
-                {/* Brand accent bar */}
-                <div
-                  className="absolute top-0 left-0 w-full h-1"
-                  style={{ backgroundColor: project.clientColor }}
-                />
+              <div key={brandName} className="brutalist-border bg-card overflow-hidden">
+                {/* Brand Header */}
+                <button
+                  onClick={() => toggleBrand(brandName)}
+                  className="w-full flex items-center gap-3 p-3 px-4 hover:bg-surface-container-high/50 transition-colors text-left"
+                >
+                  <span
+                    className={`material-symbols-outlined text-sm transition-transform duration-200 text-on-surface/40 ${
+                      isCollapsed ? "" : "rotate-90"
+                    }`}
+                  >
+                    chevron_right
+                  </span>
+                  <span
+                    className="w-3.5 h-3.5 flex-shrink-0 rounded-sm"
+                    style={{ backgroundColor: group.color }}
+                  />
+                  <span className="font-headline text-sm uppercase tracking-widest text-card-text flex-1">
+                    {brandName}
+                  </span>
+                  <span className="font-mono text-[9px] text-on-surface/30 uppercase tracking-widest">
+                    {group.projects.length} {group.projects.length === 1 ? "PROJECT" : "PROJECTS"} · {totalTasks} TASKS
+                  </span>
+                </button>
 
-                <div className="p-5 pt-4">
-                  {/* Top row: status + priority */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className={`px-2 py-0.5 text-[8px] font-headline uppercase tracking-widest ${statusConfig[project.status]?.color}`}>
-                      {statusConfig[project.status]?.label}
-                    </span>
-                    <span className={`px-1.5 py-0.5 text-[7px] font-headline uppercase ${priorityConfig[project.priority]?.color}`}>
-                      {priorityConfig[project.priority]?.label}
-                    </span>
-                    {isOverdue && (
-                      <span className="px-1.5 py-0.5 text-[7px] font-headline uppercase bg-red-600 text-white animate-pulse">
-                        OVERDUE
-                      </span>
-                    )}
+                {/* Project Cards — collapsible */}
+                {!isCollapsed && (
+                  <div className="border-t border-on-surface/10 p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {group.projects.map((project) => {
+                      const dueLabel = project.deadline
+                        ? new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        : null;
+                      const isOverdue = project.deadline
+                        ? new Date(project.deadline) < new Date() && project.status !== "COMPLETED" && project.status !== "ARCHIVED"
+                        : false;
+
+                      return (
+                        <Link
+                          key={project.id}
+                          href={`/projects/${project.id}`}
+                          className="brutalist-border bg-surface-container-low hover:bg-surface-container-high transition-all group block relative overflow-hidden"
+                        >
+                          {/* Priority accent */}
+                          <div className="p-4">
+                            {/* Top row: status + priority */}
+                            <div className="flex items-center gap-2 mb-2.5">
+                              <span className={`px-2 py-0.5 text-[8px] font-headline uppercase tracking-widest ${statusConfig[project.status]?.color}`}>
+                                {statusConfig[project.status]?.label}
+                              </span>
+                              <span className={`px-1.5 py-0.5 text-[7px] font-headline uppercase ${priorityConfig[project.priority]?.color}`}>
+                                {priorityConfig[project.priority]?.label}
+                              </span>
+                              {isOverdue && (
+                                <span className="px-1.5 py-0.5 text-[7px] font-headline uppercase bg-red-600 text-white animate-pulse">
+                                  OVERDUE
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="font-headline text-sm uppercase tracking-tight text-card-text mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                              {project.title}
+                            </h3>
+
+                            {/* Manager */}
+                            {project.managerName && (
+                              <p className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30 mb-3">
+                                MGR: {project.managerName}
+                              </p>
+                            )}
+
+                            {/* Progress bar */}
+                            <div className="mb-2.5">
+                              <div className="flex justify-between mb-0.5">
+                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                  PROGRESS
+                                </span>
+                                <span className="font-mono text-[8px] text-primary font-bold">
+                                  {project.progress}%
+                                </span>
+                              </div>
+                              <div className="h-1.5 bg-surface-container-high brutalist-border overflow-hidden">
+                                <div
+                                  className="h-full bg-primary transition-all duration-500"
+                                  style={{ width: `${project.progress}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Stats row */}
+                            <div className="flex items-center gap-3 text-[8px] font-mono uppercase text-on-surface/40 tracking-widest">
+                              <span className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">task</span>
+                                {project.tasksDone}/{project.taskCount}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">attach_file</span>
+                                {project.fileCount}
+                              </span>
+                              {project.tasksInProgress > 0 && (
+                                <span className="flex items-center gap-1 text-amber-400">
+                                  <span className="material-symbols-outlined text-xs">pending</span>
+                                  {project.tasksInProgress}
+                                </span>
+                              )}
+                              {dueLabel && (
+                                <span className={`ml-auto ${isOverdue ? "text-red-500 font-bold" : ""}`}>
+                                  {dueLabel}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+
+                    {/* Quick add project under this brand */}
+                    <Link
+                      href={`/projects/new?clientId=${group.clientId}`}
+                      className="brutalist-border border-dashed bg-transparent flex items-center justify-center gap-2 p-6 text-on-surface/20 hover:text-primary hover:border-primary/30 transition-colors min-h-[120px]"
+                    >
+                      <span className="material-symbols-outlined text-xl">add</span>
+                      <span className="font-headline text-[10px] uppercase tracking-widest">ADD PROJECT</span>
+                    </Link>
                   </div>
-
-                  {/* Title */}
-                  <h3 className="font-headline text-base uppercase tracking-tight text-card-text mb-1 group-hover:text-primary transition-colors line-clamp-2">
-                    {project.title}
-                  </h3>
-
-                  {/* Client */}
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mb-4">
-                    {project.clientName}
-                    {project.managerName && <> · {project.managerName}</>}
-                  </p>
-
-                  {/* Progress bar */}
-                  <div className="mb-3">
-                    <div className="flex justify-between mb-1">
-                      <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
-                        PROGRESS
-                      </span>
-                      <span className="font-mono text-[8px] text-primary font-bold">
-                        {project.progress}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-surface-container-high brutalist-border overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all duration-500"
-                        style={{ width: `${project.progress}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Stats row */}
-                  <div className="flex items-center gap-4 text-[8px] font-mono uppercase text-on-surface/40 tracking-widest">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">task</span>
-                      {project.tasksDone}/{project.taskCount}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">attach_file</span>
-                      {project.fileCount}
-                    </span>
-                    {project.tasksInProgress > 0 && (
-                      <span className="flex items-center gap-1 text-amber-400">
-                        <span className="material-symbols-outlined text-xs">pending</span>
-                        {project.tasksInProgress} IN_PROG
-                      </span>
-                    )}
-                    {dueLabel && (
-                      <span className={`ml-auto ${isOverdue ? "text-red-500 font-bold" : ""}`}>
-                        {dueLabel}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
+                )}
+              </div>
             );
           })}
         </div>

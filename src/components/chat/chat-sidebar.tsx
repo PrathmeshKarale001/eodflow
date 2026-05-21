@@ -27,6 +27,7 @@ interface ChatSidebarProps {
   channels: Channel[];
   currentUserId: string;
   canManageChannels: boolean;
+  isMobile?: boolean;
 }
 
 interface AvailableUser {
@@ -36,7 +37,7 @@ interface AvailableUser {
   department: string | null;
 }
 
-export function ChatSidebar({ channels, currentUserId, canManageChannels }: ChatSidebarProps) {
+export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobile = false }: ChatSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { unreadCounts } = useUnread();
@@ -196,12 +197,35 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels }: Chat
   };
 
   return (
-    <div className="w-full md:w-72 brutalist-border border-t-0 border-b-0 border-l-0 flex flex-col bg-card h-full flex-shrink-0">
+    <div className={`${isMobile ? 'w-full' : 'w-full md:w-72'} brutalist-border border-t-0 border-b-0 border-l-0 flex flex-col bg-card h-full flex-shrink-0`}>
       {/* Header */}
       <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted">
-        <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">
-          MESSAGES
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">
+            MESSAGES
+          </h3>
+          {/* Mobile: show new DM + new channel buttons in header */}
+          {isMobile && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleNewDM}
+                className="flex items-center gap-1 px-2 py-1 brutalist-border text-[8px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-primary hover:border-primary/30 transition-colors"
+              >
+                <span className="material-symbols-outlined text-xs">chat</span>
+                NEW_DM
+              </button>
+              {canManageChannels && (
+                <button
+                  onClick={() => setShowNewChannel(true)}
+                  className="flex items-center gap-1 px-2 py-1 brutalist-border text-[8px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-primary hover:border-primary/30 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-xs">add</span>
+                  CHANNEL
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Search */}

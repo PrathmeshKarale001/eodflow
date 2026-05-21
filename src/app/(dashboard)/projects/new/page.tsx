@@ -4,9 +4,15 @@ import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { Role } from "@prisma/client";
 
-export default async function NewProjectPage() {
+export default async function NewProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) return notFound();
+
+  const { clientId: preselectedClientId } = await searchParams;
 
   // Fetch data for dropdowns
   const [clients, managers] = await Promise.all([
@@ -21,27 +27,37 @@ export default async function NewProjectPage() {
     })
   ]);
 
+  // Resolve the pre-selected client name for display
+  const preselectedClient = preselectedClientId
+    ? clients.find((c) => c.id === preselectedClientId)
+    : null;
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
-      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+      {/* Header */}
+      <div className="brutalist-border bg-card p-5 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl md:text-5xl font-headline tracking-tighter uppercase mb-2">
-              INIT_NEW_PROJECT
+            <h1 className="text-2xl md:text-3xl font-headline tracking-tighter uppercase mb-1">
+              {preselectedClient
+                ? `NEW PROJECT — ${preselectedClient.companyName}`
+                : "INIT_NEW_PROJECT"}
             </h1>
-            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               ESTABLISH WORKSPACE PARAMETERS & BRIEF DATA
             </p>
           </div>
-          <span className="material-symbols-outlined text-[40px] text-primary">add_box</span>
+          <span className="material-symbols-outlined text-[36px] text-primary">add_box</span>
         </div>
       </div>
 
-      <div className="brutalist-border bg-card p-6 md:p-8">
-        <CreateProjectForm 
-          clients={clients} 
+      {/* Form */}
+      <div className="brutalist-border bg-card p-5 md:p-6">
+        <CreateProjectForm
+          clients={clients}
           managers={managers}
+          preselectedClientId={preselectedClientId}
         />
       </div>
     </div>

@@ -290,6 +290,34 @@ export async function getChannelMessages(channelId: string, cursor?: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Get all messages up to & including a target message (for search-to-scroll)
+// ---------------------------------------------------------------------------
+
+export async function getMessagesAroundTarget(channelId: string, targetMessageId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  // Get the target message first to know its timestamp
+  const target = await db.chatMessage.findUnique({
+    where: { id: targetMessageId },
+    select: { createdAt: true },
+  });
+
+  if (!target) return [];
+
+  // Load all messages from the channel (since these are work chats, message volume is manageable)
+  const messages = await db.chatMessage.findMany({
+    where: { channelId },
+    include: {
+      user: { select: { id: true, name: true, image: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return messages;
+}
+
+// ---------------------------------------------------------------------------
 // Get User's Channels (GROUP + DIRECT) — Cached for request-level deduping
 // ---------------------------------------------------------------------------
 

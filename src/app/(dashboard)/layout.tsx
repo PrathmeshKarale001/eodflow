@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar/sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { SearchDialog } from "@/components/search/search-dialog";
 import { MainContentContainer } from "@/components/layout/main-content-container";
+import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,27 @@ export default async function DashboardLayout({
 
   const navItems = getNavForRole(session.user.role as Role);
 
+  // Fetch Brand → Project hierarchy for sidebar tree
+  const brands = await db.client.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      companyName: true,
+      brandColor: true,
+      projects: {
+        where: { status: { not: "ARCHIVED" } },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          _count: { select: { tasks: true } },
+        },
+        orderBy: { title: "asc" },
+      },
+    },
+    orderBy: { companyName: "asc" },
+  });
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-background overflow-hidden">
       {/* Mobile Header */}
@@ -54,6 +76,7 @@ export default async function DashboardLayout({
           role: session.user.role as Role,
         }}
         navItems={navItems}
+        brands={brands}
       />
 
       {/* Main content with conditional scroll/padding */}

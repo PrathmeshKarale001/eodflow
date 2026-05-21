@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,7 +12,7 @@ const taskSchema = z.object({
   title: z.string().min(2, "Task title is required"),
   description: z.string().optional(),
   priority: z.nativeEnum(Priority),
-  assignedToId: z.string().optional(),
+  assigneeIds: z.array(z.string()).optional(),
   dueDate: z.string().optional(),
 });
 
@@ -31,24 +31,50 @@ const PRIORITY_OPTIONS = Object.values(Priority).map((p) => ({ value: p, label: 
 
 export function CreateTaskModal({ projectId, projects = [], teamMembers = [], isOpen, onClose, onSuccess }: CreateTaskModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+  const assigneeRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, control, formState: { errors }, reset } = useForm<TaskFormValues & { selectedProjectId?: string }>({
+  const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<TaskFormValues & { selectedProjectId?: string }>({
     resolver: zodResolver(taskSchema.extend({
       selectedProjectId: z.string().optional().refine((val) => projectId || val, "Project is required"),
     })),
     defaultValues: {
       priority: Priority.MEDIUM,
       selectedProjectId: projectId || "",
+      assigneeIds: [],
     },
   });
+
+  const selectedAssigneeIds = watch("assigneeIds") || [];
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (assigneeRef.current && !assigneeRef.current.contains(e.target as Node)) {
+        setAssigneeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   if (!isOpen) return null;
 
   const projectOptions = projects.map((p) => ({ value: p.id, label: p.title }));
-  const memberOptions = teamMembers.map((m) => ({
-    value: m.id,
-    label: `${m.name}${m.department ? ` (${m.department})` : ""}`,
-  }));
+
+  const filteredMembers = teamMembers.filter(
+    (m) => m.name.toLowerCase().includes(assigneeSearch.toLowerCase())
+  );
+
+  const toggleAssignee = (memberId: string) => {
+    const current = selectedAssigneeIds;
+    if (current.includes(memberId)) {
+      setValue("assigneeIds", current.filter((id) => id !== memberId));
+    } else {
+      setValue("assigneeIds", [...current, memberId]);
+    }
+  };
 
   const onSubmit = async (data: TaskFormValues & { selectedProjectId?: string }) => {
     const targetProjectId = projectId || data.selectedProjectId;
@@ -61,7 +87,7 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
         title: data.title,
         description: data.description,
         priority: data.priority,
-        assignedToId: data.assignedToId || undefined,
+        assigneeIds: data.assigneeIds?.length ? data.assigneeIds : undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
       });
       reset();
@@ -135,7 +161,7 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
             />
           </div>
 
-          {/* Priority + Due Date */}
+          {/* Priority + Due Date/Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
               <label className="font-label text-[9px] uppercase text-primary tracking-widest">PRIORITY</label>
@@ -155,30 +181,86 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">DUE_DATE</label>
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
               <input
-                type="date"
+                type="datetime-local"
                 {...register("dueDate")}
                 className="w-full h-11 bg-[var(--clr-surface-low)] brutalist-border px-3 font-mono text-[10px] uppercase tracking-widest focus:border-primary-container focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Assign To */}
-          <div className="space-y-1">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGN_TO</label>
-            <Controller
-              name="assignedToId"
-              control={control}
-              render={({ field }) => (
-                <AppSelect
-                  options={memberOptions}
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  placeholder="— UNASSIGNED —"
-                />
+          {/* Multi-Assign To */}
+          <div className="space-y-1" ref={assigneeRef}>
+            <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
+            {/* Selected Assignees Chips */}
+            <div
+              className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
+              onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
+            >
+              {selectedAssigneeIds.length === 0 ? (
+                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface/30 px-1">— SELECT ASSIGNEES —</span>
+              ) : (
+                selectedAssigneeIds.map((id) => {
+                  const member = teamMembers.find((m) => m.id === id);
+                  if (!member) return null;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-headline uppercase tracking-wider border border-primary/20"
+                    >
+                      {member.name}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggleAssignee(id); }}
+                        className="hover:text-red-500 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[10px]">close</span>
+                      </button>
+                    </span>
+                  );
+                })
               )}
-            />
+            </div>
+            {/* Dropdown */}
+            {assigneeDropdownOpen && (
+              <div className="brutalist-border bg-surface-container-lowest max-h-40 overflow-y-auto shadow-lg mt-1">
+                <div className="p-1.5 border-b border-on-surface/10">
+                  <input
+                    type="text"
+                    value={assigneeSearch}
+                    onChange={(e) => setAssigneeSearch(e.target.value)}
+                    placeholder="Search..."
+                    className="w-full bg-transparent px-2 py-1 font-body text-xs focus:outline-none"
+                    autoFocus
+                  />
+                </div>
+                {filteredMembers.map((member) => {
+                  const isSelected = selectedAssigneeIds.includes(member.id);
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-container-low transition-colors"
+                      onClick={() => toggleAssignee(member.id)}
+                    >
+                      <div className={`w-4 h-4 flex-shrink-0 brutalist-border flex items-center justify-center ${isSelected ? "bg-primary text-white" : ""}`}>
+                        {isSelected && <span className="material-symbols-outlined text-[10px]">check</span>}
+                      </div>
+                      <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
+                      {member.department && (
+                        <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto">{member.department}</span>
+                      )}
+                    </button>
+                  );
+                })}
+                {filteredMembers.length === 0 && (
+                  <div className="p-3 text-center">
+                    <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">NO_MEMBERS_FOUND</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Submit */}

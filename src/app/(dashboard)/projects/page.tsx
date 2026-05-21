@@ -44,7 +44,7 @@ export default async function ProjectsPage() {
               ],
             },
       include: {
-        client: { select: { companyName: true, brandColor: true } },
+        client: { select: { id: true, companyName: true, brandColor: true } },
         assignedManager: { select: { name: true } },
         _count: { select: { tasks: true, files: true } },
       },
@@ -78,6 +78,7 @@ export default async function ProjectsPage() {
       title: p.title,
       status: p.status,
       priority: p.priority,
+      clientId: p.client.id,
       clientName: p.client.companyName,
       clientColor: p.client.brandColor,
       managerName: p.assignedManager?.name || null,

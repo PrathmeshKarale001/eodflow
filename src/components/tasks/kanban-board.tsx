@@ -1,17 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { TaskStatus } from "@prisma/client";
+import { useState, useEffect } from "react";
+import { TaskStatus, Role } from "@prisma/client";
 import { TaskColumn } from "@/components/tasks/task-column";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 
-// ─── PERF: Lazy-load modal (only shown on button click) ─────────────────────
+// ─── PERF: Lazy-load heavy modal/drawer but prefetch eagerly ────────────────
+// Using dynamic() so the page renders instantly without waiting for these heavy
+// components. But we prefetch them immediately on mount so they're compiled
+// and ready BEFORE the user clicks.
+const TaskDetailDrawer = dynamic(
+  () => import("@/components/tasks/task-detail-drawer").then((m) => m.TaskDetailDrawer),
+  { ssr: false }
+);
 const CreateTaskModal = dynamic(
   () => import("@/components/tasks/create-task-modal").then((m) => m.CreateTaskModal),
   { ssr: false }
 );
+
+// Prefetch: trigger module compilation immediately on page load
+if (typeof window !== "undefined") {
+  import("@/components/tasks/task-detail-drawer");
+  import("@/components/tasks/create-task-modal");
+}
 
 const KANBAN_COLUMNS: TaskStatus[] = [
   TaskStatus.BACKLOG,
@@ -29,21 +41,30 @@ interface KanbanBoardProps {
   tasks: Array<{
     id: string;
     title: string;
+    description?: string | null;
     status: TaskStatus;
     priority: any;
     dueDate: Date | null;
     revisionCount: number;
+    projectId?: string;
     assignedTo: { id: string; name: string; image: string | null } | null;
+    assignees?: Array<{ id: string; name: string; image: string | null }>;
     _count: { comments: number; files: number; subtasks: number };
+    subtasks?: Array<{ id: string; title: string; isDone: boolean }>;
+    files?: any[];
   }>;
   projectId: string;
   teamMembers: Array<{ id: string; name: string; department: string | null }>;
   canCreateTask: boolean;
+  userId?: string;
+  userRole?: Role;
 }
 
-export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask, userId, userRole }: KanbanBoardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const router = useRouter();
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) : null;
 
   const handleCreateSuccess = (taskId: string) => {
     toast.success(
@@ -52,7 +73,7 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask }: Ka
           <span className="font-headline uppercase text-sm">Task Created</span>
           <button
             onClick={() => {
-              router.push(`/tasks?taskId=${taskId}`);
+              setSelectedTaskId(taskId);
               toast.dismiss(t.id);
             }}
             className="text-xs font-mono uppercase bg-on-surface text-surface px-3 py-1.5 hover:opacity-80 transition-opacity"
@@ -63,6 +84,10 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask }: Ka
       ),
       { duration: 5000 }
     );
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
   };
 
   const groupedTasks = KANBAN_COLUMNS.reduce(
@@ -101,18 +126,39 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask }: Ka
             key={status}
             status={status}
             tasks={groupedTasks[status] || []}
+            onTaskClick={handleTaskClick}
           />
         ))}
       </div>
 
-      {/* Create Modal */}
-      <CreateTaskModal
-        projectId={projectId}
-        teamMembers={teamMembers}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleCreateSuccess}
-      />
+      {/* Create Modal — lazy loaded but prefetched */}
+      {isModalOpen && (
+        <CreateTaskModal
+          projectId={projectId}
+          teamMembers={teamMembers}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
+
+      {/* Task Detail Drawer — lazy loaded but prefetched */}
+      {selectedTask && userId && userRole && (
+        <TaskDetailDrawer
+          task={{
+            ...selectedTask,
+            description: selectedTask.description ?? null,
+            projectId: selectedTask.projectId ?? projectId,
+            subtasks: selectedTask.subtasks ?? [],
+            files: selectedTask.files,
+          }}
+          userId={userId}
+          userRole={userRole}
+          isOpen={!!selectedTaskId}
+          onClose={() => setSelectedTaskId(null)}
+          teamMembers={teamMembers}
+        />
+      )}
     </div>
   );
 }

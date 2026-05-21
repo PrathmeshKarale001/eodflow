@@ -129,6 +129,7 @@ model User {
   managedProjects   Project[]      @relation("ProjectManager")
   assignedTasks     Task[]         @relation("TaskAssignee")
   createdTasks      Task[]         @relation("TaskCreator")
+  coAssignedTasks   Task[]         @relation("TaskToAssignees")  // Multiple assignees M:N
   comments          Comment[]
   timeEntries       TimeEntry[]
   uploadedFiles     File[]
@@ -326,6 +327,7 @@ model Task {
   project    Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignedTo User?         @relation("TaskAssignee", fields: [assignedToId], references: [id])
   assignedBy User?         @relation("TaskCreator", fields: [assignedById], references: [id])
+  assignees  User[]        @relation("TaskToAssignees")  // Multiple assignees M:N
   subtasks   Subtask[]
   comments   Comment[]
   files      File[]        @relation("TaskFiles")

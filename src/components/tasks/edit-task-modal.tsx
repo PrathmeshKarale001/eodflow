@@ -48,7 +48,7 @@ export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditT
       description: task.description || "",
       priority: task.priority,
       assignedToId: task.assignedToId || "",
-      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "",
       status: task.status,
     },
   });
@@ -61,7 +61,7 @@ export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditT
         description: task.description || "",
         priority: task.priority,
         assignedToId: task.assignedToId || "",
-        dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
+        dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "",
         status: task.status,
       });
     }
@@ -150,9 +150,9 @@ export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditT
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">DUE_DATE</label>
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
               <input
-                type="date"
+                type="datetime-local"
                 {...register("dueDate")}
                 className="w-full h-11 bg-[var(--clr-surface-low)] brutalist-border px-3 font-mono text-[10px] uppercase tracking-widest focus:border-primary-container focus:outline-none"
               />

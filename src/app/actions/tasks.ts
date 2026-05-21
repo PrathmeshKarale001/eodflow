@@ -17,24 +17,34 @@ export async function createTask(data: {
   description?: string;
   priority: Priority;
   assignedToId?: string;
+  assigneeIds?: string[];
   dueDate?: Date;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
 
   const userRole = session.user.role as Role;
-  const isSelfAssign = userRole === Role.EMPLOYEE && (!data.assignedToId || data.assignedToId === session.user.id);
+  // Derive lead assignee: explicit assignedToId, or first from assigneeIds array
+  const leadAssigneeId = data.assignedToId || data.assigneeIds?.[0];
+  const isSelfAssign = userRole === Role.EMPLOYEE && (!leadAssigneeId || leadAssigneeId === session.user.id);
 
   if (!hasPermission(userRole, "createTask") && !isSelfAssign) {
     throw new Error("FORBIDDEN: Insufficient permissions to create tasks.");
   }
 
   // Employees can only assign tasks to themselves
-  if (userRole === Role.EMPLOYEE && data.assignedToId && data.assignedToId !== session.user.id) {
+  if (userRole === Role.EMPLOYEE && leadAssigneeId && leadAssigneeId !== session.user.id) {
     if (!hasPermission(userRole, "assignTask")) {
       throw new Error("FORBIDDEN: Employees can only create tasks for themselves.");
     }
   }
+
+  // Build assignees connect array for M:N relation
+  const assigneeConnect = data.assigneeIds?.length
+    ? data.assigneeIds.map((id) => ({ id }))
+    : leadAssigneeId
+      ? [{ id: leadAssigneeId }]
+      : undefined;
 
   const task = await db.task.create({
     data: {
@@ -42,10 +52,11 @@ export async function createTask(data: {
       title: data.title,
       description: data.description,
       priority: data.priority,
-      assignedToId: data.assignedToId || undefined,
+      assignedToId: leadAssigneeId || undefined,
       assignedById: session.user.id,
       status: TaskStatus.BACKLOG,
       dueDate: data.dueDate,
+      ...(assigneeConnect ? { assignees: { connect: assigneeConnect } } : {}),
     },
   });
 
@@ -180,6 +191,7 @@ export async function getProjectWithTasks(projectId: string) {
       where: { projectId },
       include: {
         assignedTo: { select: { id: true, name: true, image: true } },
+        assignees: { select: { id: true, name: true, image: true } },
         _count: { select: { comments: true, files: true, subtasks: true } },
       },
       orderBy: { sortOrder: "asc" },

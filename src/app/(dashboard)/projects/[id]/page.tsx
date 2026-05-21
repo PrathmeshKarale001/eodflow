@@ -89,6 +89,8 @@ export default async function ProjectDetailPage({
           department: m.department,
         }))}
         canCreateTask={canCreateTask}
+        userId={session.user.id}
+        userRole={userRole}
       />
     </div>
   );

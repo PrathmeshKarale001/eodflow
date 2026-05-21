@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { MessageBubble } from "./message-bubble";
-import { sendMessage } from "@/app/actions/chat";
+import { sendMessage, getMessagesAroundTarget } from "@/app/actions/chat";
 import { createClient } from "@/lib/realtime";
 import { ChatInfoPanel } from "./chat-info-panel";
 import { ChatSearch } from "./chat-search";
@@ -227,12 +227,33 @@ export function ChatWindow({
           channelId={channelId}
           isOpen={showSearch}
           onClose={() => setShowSearch(false)}
-          onScrollToMessage={(id: string) => {
-            const el = document.getElementById(`msg-${id}`);
+          onScrollToMessage={async (id: string) => {
+            // Try to find the message in the DOM first
+            let el = document.getElementById(`msg-${id}`);
             if (el) {
               el.scrollIntoView({ behavior: "smooth", block: "center" });
               el.classList.add("bg-primary/10");
-              setTimeout(() => el.classList.remove("bg-primary/10"), 2000);
+              setTimeout(() => el!.classList.remove("bg-primary/10"), 2000);
+              return;
+            }
+
+            // Message not in DOM — load all messages to include the target
+            try {
+              const allMessages = await getMessagesAroundTarget(channelId, id);
+              if (allMessages.length > 0) {
+                setMessages(allMessages as Message[]);
+                // Wait for React to render the new messages, then scroll
+                setTimeout(() => {
+                  const targetEl = document.getElementById(`msg-${id}`);
+                  if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                    targetEl.classList.add("bg-primary/10");
+                    setTimeout(() => targetEl.classList.remove("bg-primary/10"), 2500);
+                  }
+                }, 100);
+              }
+            } catch {
+              // Silently fail — message may have been deleted
             }
           }}
         />

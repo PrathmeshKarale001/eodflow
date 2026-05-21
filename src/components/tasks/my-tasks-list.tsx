@@ -7,25 +7,21 @@ import toast from "react-hot-toast";
 import { TaskStatus, Priority, Role } from "@prisma/client";
 import { reassignTask } from "@/app/actions/tasks";
 
-// ─── PERF: Lazy-load heavy modal/drawer components ──────────────────────────
-// These are only rendered on user interaction (click), not on initial page load.
-// This saves ~25KB from the initial bundle.
+// ─── PERF: Lazy-load heavy modal/drawer but prefetch eagerly ────────────────
 const TaskDetailDrawer = dynamic(
   () => import("./task-detail-drawer").then((m) => m.TaskDetailDrawer),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 z-50 flex justify-end">
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="relative w-full max-w-xl bg-background brutalist-border border-l-2 border-l-primary animate-pulse" />
-      </div>
-    ),
-  }
+  { ssr: false }
 );
 const CreateTaskModal = dynamic(
   () => import("./create-task-modal").then((m) => m.CreateTaskModal),
   { ssr: false }
 );
+
+// Prefetch: trigger module compilation immediately on page load
+if (typeof window !== "undefined") {
+  import("./task-detail-drawer");
+  import("./create-task-modal");
+}
 
 const STATUS_SECTIONS: { status: TaskStatus; label: string; accent: string }[] = [
   { status: TaskStatus.BACKLOG, label: "BACKLOG", accent: "border-l-neutral-400" },

@@ -14,7 +14,7 @@ interface ChatSearchProps {
   channelId: string;
   isOpen: boolean;
   onClose: () => void;
-  onScrollToMessage?: (id: string) => void;
+  onScrollToMessage?: (id: string) => void | Promise<void>;
 }
 
 export function ChatSearch({ channelId, isOpen, onClose, onScrollToMessage }: ChatSearchProps) {
