@@ -59,7 +59,6 @@ export function ChatWindow({
   }, [messages, typingUsers]);
 
   const channelRef = useRef<any>(null);
-  const notifChannelRef = useRef<any>(null);
 
   // -----------------------------------------------------------------------
   // Subscribe to broadcast for real-time messages (server broadcasts these)
@@ -85,16 +84,9 @@ export function ChatWindow({
 
     channelRef.current = channel;
 
-    // Set up global notification channel for sending toasts to other members
-    const notifChannel = supabase.channel("chat-notifications");
-    notifChannel.subscribe();
-    notifChannelRef.current = notifChannel;
-
     return () => {
       supabase.removeChannel(channel);
-      supabase.removeChannel(notifChannel);
       channelRef.current = null;
-      notifChannelRef.current = null;
     };
   }, [channelId]);
 
@@ -174,26 +166,14 @@ export function ChatWindow({
 
       // ─── CLIENT-SIDE BROADCAST (INSTANT & 100% RELIABLE) ─────────────────
       // Send directly over sender browser's open WebSocket connection
+      // NOTE: Only broadcast to the chat channel here. The server-side
+      // broadcastChatMessage() already handles the chat-notifications channel.
+      // Sending from both client AND server caused duplicate toast notifications.
       if (channelRef.current) {
         channelRef.current.send({
           type: "broadcast",
           event: "new-message",
           payload: msg,
-        });
-      }
-
-      // Send to global notification channel for users not currently in this chat view
-      if (notifChannelRef.current) {
-        notifChannelRef.current.send({
-          type: "broadcast",
-          event: "new-notification",
-          payload: {
-            channelId,
-            messageId: msg.id,
-            content: msg.content.substring(0, 50),
-            senderName: msg.user.name,
-            senderId: msg.user.id,
-          },
         });
       }
     } catch {

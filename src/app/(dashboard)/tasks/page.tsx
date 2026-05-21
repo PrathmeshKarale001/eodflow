@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { MyTasksList } from "@/components/tasks/my-tasks-list";
 import { hasPermission } from "@/lib/permissions";
 import { Role, Prisma } from "@prisma/client";
@@ -55,44 +54,14 @@ export default async function TasksPage() {
   ]);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Page Header */}
-      <div className="brutalist-border bg-card p-4 md:p-6 relative overflow-hidden">
-        <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text leading-none">
-              {canAssign ? "ALL_TASKS" : "MY_TASKS"}
-            </h1>
-            <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-on-surface/50">
-              {canAssign ? "MANAGE & ASSIGN" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {canCreateTask && (
-              <Link
-                href="?action=new-task"
-                className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-sm">add</span>
-                NEW_TASK
-              </Link>
-            )}
-            <span className="material-symbols-outlined text-[36px] text-primary">checklist</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Task List */}
-      <MyTasksList
-        tasks={tasks}
-        userId={session.user.id}
-        userRole={userRole}
-        canAssign={canAssign}
-        teamMembers={teamMembers}
-        projects={projects}
-        canCreateTask={canCreateTask}
-      />
-    </div>
+    <MyTasksList
+      tasks={tasks}
+      userId={session.user.id}
+      userRole={userRole}
+      canAssign={canAssign}
+      teamMembers={teamMembers}
+      projects={projects}
+      canCreateTask={canCreateTask}
+    />
   );
 }

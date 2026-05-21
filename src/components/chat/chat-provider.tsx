@@ -58,6 +58,10 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Track recently seen notification IDs to deduplicate toast events
+  // (guards against edge cases where both client & server broadcast reach the listener)
+  const seenNotifIds = useRef<Set<string>>(new Set());
+
   // Subscribe to global notification channel
   useEffect(() => {
     const supabase = createClient();
@@ -66,6 +70,7 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
       .on("broadcast", { event: "new-notification" }, (payload) => {
         const data = payload.payload as {
           channelId: string;
+          messageId?: string;
           senderId: string;
           senderName: string;
           content: string;
@@ -81,6 +86,13 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
         // Check if user is even a member of this channel
         const isMember = channels.some((c) => c.id === data.channelId);
         if (!isMember) return;
+
+        // ─── DEDUP: Skip if we've already shown a toast for this message ─────
+        const dedupeKey = data.messageId || `${data.channelId}-${data.content}-${data.senderName}`;
+        if (seenNotifIds.current.has(dedupeKey)) return;
+        seenNotifIds.current.add(dedupeKey);
+        // Auto-cleanup after 10s to prevent memory leak
+        setTimeout(() => seenNotifIds.current.delete(dedupeKey), 10000);
 
         // Increment unread count
         setUnreadCounts((prev) => ({

@@ -80,6 +80,7 @@ export function MyTasksList({
   userId,
   userRole,
   canAssign = false,
+  canCreateTask = false,
   teamMembers = [],
   projects = [],
 }: MyTasksListProps) {
@@ -89,7 +90,18 @@ export function MyTasksList({
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
   const [reassigning, setReassigning] = useState(false);
 
-  const isCreateModalOpen = searchParams.get("action") === "new-task";
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Sync action=new-task from other pages to open the modal instantly
+  useEffect(() => {
+    if (searchParams.get("action") === "new-task") {
+      setIsCreateModalOpen(true);
+      // clean up URL to avoid reopening on refresh
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("action");
+      router.replace(`/tasks?${params.toString()}`);
+    }
+  }, [searchParams, router]);
   
   useEffect(() => {
     const urlTaskId = searchParams.get("taskId");
@@ -120,9 +132,7 @@ export function MyTasksList({
   }, [router]);
 
   const closeCreateModal = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("action");
-    router.push(`/tasks?${params.toString()}`);
+    setIsCreateModalOpen(false);
   };
 
   const handleCreateSuccess = (taskId: string) => {
@@ -168,7 +178,35 @@ export function MyTasksList({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Page Header */}
+      <div className="brutalist-border bg-card p-4 md:p-6 relative overflow-hidden">
+        <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text leading-none">
+              {canAssign ? "ALL_TASKS" : "MY_TASKS"}
+            </h1>
+            <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-on-surface/50">
+              {canAssign ? "MANAGE & ASSIGN" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {canCreateTask && (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">add</span>
+                NEW_TASK
+              </button>
+            )}
+            <span className="material-symbols-outlined text-[36px] text-primary">checklist</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
       {grouped.length === 0 ? (
         <div className="brutalist-border bg-card p-12 text-center">
           <span className="material-symbols-outlined text-4xl text-neutral-300 mb-3 block">task_alt</span>
@@ -360,6 +398,7 @@ export function MyTasksList({
           onSuccess={handleCreateSuccess}
         />
       )}
+      </div>
     </div>
   );
 }

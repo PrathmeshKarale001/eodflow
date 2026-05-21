@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { getAvailableDMUsers } from "@/app/actions/chat";
 
 const ICON_MAP: Record<string, string> = {
   LayoutDashboard: "space_dashboard",
@@ -51,7 +52,21 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [] }: Sideba
   const [chatSearchResults, setChatSearchResults] = useState<{ id: string; name: string; image: string | null }[]>([]);
   const [chatSearching, setChatSearching] = useState(false);
   const [chatSearchOpen, setChatSearchOpen] = useState(false);
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string; image: string | null }[] | null>(null);
   const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
+
+  // Prefetch available DM users on component mount to warm the search cache
+  useEffect(() => {
+    const initUsers = async () => {
+      try {
+        const users = await getAvailableDMUsers();
+        setAllUsers(users.map((u) => ({ id: u.id, name: u.name, image: u.image ?? null })));
+      } catch {
+        setAllUsers([]);
+      }
+    };
+    initUsers();
+  }, []);
 
   const roleLabel: Record<Role, string> = {
     SUPER_ADMIN: "DIRECTOR",
@@ -96,7 +111,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [] }: Sideba
               <input
                 type="text"
                 value={chatSearch}
-                onChange={async (e) => {
+                onChange={(e) => {
                   const val = e.target.value;
                   setChatSearch(val);
                   setChatSearchOpen(true);
@@ -104,16 +119,26 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [] }: Sideba
                     setChatSearchResults([]);
                     return;
                   }
-                  setChatSearching(true);
-                  try {
-                    const { getAvailableDMUsers } = await import("@/app/actions/chat");
-                    const users = await getAvailableDMUsers();
-                    const filtered = (users as { id: string; name: string; image?: string | null }[]).filter(
+
+                  if (allUsers) {
+                    const filtered = allUsers.filter(
                       (u) => u.name.toLowerCase().includes(val.toLowerCase()) && u.id !== user.id
                     );
-                    setChatSearchResults(filtered.slice(0, 5).map((u) => ({ id: u.id, name: u.name, image: u.image ?? null })));
-                  } catch { setChatSearchResults([]); }
-                  finally { setChatSearching(false); }
+                    setChatSearchResults(filtered.slice(0, 5));
+                  } else {
+                    setChatSearching(true);
+                    getAvailableDMUsers()
+                      .then((users) => {
+                        const mapped = users.map((u) => ({ id: u.id, name: u.name, image: u.image ?? null }));
+                        setAllUsers(mapped);
+                        const filtered = mapped.filter(
+                          (u) => u.name.toLowerCase().includes(val.toLowerCase()) && u.id !== user.id
+                        );
+                        setChatSearchResults(filtered.slice(0, 5));
+                      })
+                      .catch(() => setChatSearchResults([]))
+                      .finally(() => setChatSearching(false));
+                  }
                 }}
                 onFocus={() => setChatSearchOpen(true)}
                 placeholder="Quick chat..."
@@ -135,15 +160,12 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [] }: Sideba
                     <button
                       key={u.id}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-container-low transition-colors"
-                      onClick={async () => {
+                      onClick={() => {
                         setChatSearch("");
                         setChatSearchOpen(false);
                         setChatSearchResults([]);
-                        try {
-                          const { getOrCreateDMChannel } = await import("@/app/actions/chat");
-                          const channelId = await getOrCreateDMChannel(u.id);
-                          router.push(`/chat/${channelId}`);
-                        } catch {}
+                        // Navigate instantly — chat sidebar handles DM resolution
+                        router.push(`/chat?dm=${u.id}`);
                       }}
                     >
                       <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center bg-primary-container/30 text-[9px] font-headline font-bold text-primary uppercase overflow-hidden">
