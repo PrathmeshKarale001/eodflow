@@ -40,7 +40,7 @@ export function subscribeToProjectTasks(
         event: "*",
         schema: "public",
         table: "tasks",
-        filter: `project_id=eq.${projectId}`,
+        filter: `projectId=eq.${projectId}`,
       },
       (payload) => onUpdate(payload)
     )
@@ -65,7 +65,7 @@ export function subscribeToTaskComments(
         event: "INSERT",
         schema: "public",
         table: "comments",
-        filter: `task_id=eq.${taskId}`,
+        filter: `taskId=eq.${taskId}`,
       },
       (payload) => onNewComment(payload)
     )
@@ -90,7 +90,7 @@ export function subscribeToNotifications(
         event: "INSERT",
         schema: "public",
         table: "notifications",
-        filter: `user_id=eq.${userId}`,
+        filter: `userId=eq.${userId}`,
       },
       (payload) => onNotification(payload)
     )

@@ -50,6 +50,9 @@ export function ChatWindow({
     }
   }, [messages]);
 
+  const channelRef = useRef<any>(null);
+  const notifChannelRef = useRef<any>(null);
+
   // -----------------------------------------------------------------------
   // Subscribe to broadcast for real-time messages (server broadcasts these)
   // -----------------------------------------------------------------------
@@ -72,8 +75,18 @@ export function ChatWindow({
       })
       .subscribe();
 
+    channelRef.current = channel;
+
+    // Set up global notification channel for sending toasts to other members
+    const notifChannel = supabase.channel("chat-notifications");
+    notifChannel.subscribe();
+    notifChannelRef.current = notifChannel;
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(notifChannel);
+      channelRef.current = null;
+      notifChannelRef.current = null;
     };
   }, [channelId]);
 
@@ -108,8 +121,31 @@ export function ChatWindow({
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? (msg as Message) : m))
       );
-      // NOTE: Server-side broadcast will also send this message to all
-      // subscribers (including us), but the duplicate check above handles it.
+
+      // ─── CLIENT-SIDE BROADCAST (INSTANT & 100% RELIABLE) ─────────────────
+      // Send directly over sender browser's open WebSocket connection
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "new-message",
+          payload: msg,
+        });
+      }
+
+      // Send to global notification channel for users not currently in this chat view
+      if (notifChannelRef.current) {
+        notifChannelRef.current.send({
+          type: "broadcast",
+          event: "new-notification",
+          payload: {
+            channelId,
+            messageId: msg.id,
+            content: msg.content.substring(0, 50),
+            senderName: msg.user.name,
+            senderId: msg.user.id,
+          },
+        });
+      }
     } catch {
       // Remove optimistic message on failure
       setMessages((prev) => prev.filter((m) => m.id !== tempId));

@@ -5,6 +5,8 @@ import { TaskStatus, Role } from "@prisma/client";
 import { TaskColumn } from "@/components/tasks/task-column";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { subscribeToProjectTasks } from "@/lib/realtime";
 
 // ─── PERF: Lazy-load heavy modal/drawer but prefetch eagerly ────────────────
 // Using dynamic() so the page renders instantly without waiting for these heavy
@@ -61,8 +63,20 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask, userId, userRole }: KanbanBoardProps) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  // Subscribe to real-time project task updates
+  useEffect(() => {
+    const channel = subscribeToProjectTasks(projectId, () => {
+      router.refresh();
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [projectId, router]);
 
   const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) : null;
 
