@@ -25,6 +25,26 @@ async function getAuthenticatedUser() {
 }
 
 // ---------------------------------------------------------------------------
+// Shared include for message queries — reactions, replyTo, user
+// ---------------------------------------------------------------------------
+
+const messageInclude = {
+  user: { select: { id: true, name: true, image: true } },
+  reactions: {
+    include: { user: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" as const },
+  },
+  replyTo: {
+    select: {
+      id: true,
+      content: true,
+      isDeleted: true,
+      user: { select: { id: true, name: true } },
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Create Group Channel (Director / Manager / POC — with selective members)
 // ---------------------------------------------------------------------------
 
@@ -132,7 +152,7 @@ export async function removeChannelMember(channelId: string, userId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Get channel members (for management panel)
+// Get channel members (for management panel + @mention autocomplete)
 // ---------------------------------------------------------------------------
 
 export async function getChannelMembers(channelId: string) {
@@ -228,13 +248,14 @@ export async function getOrCreateDMChannel(otherUserId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Send Message
+// Send Message (with optional replyToId for threading)
 // ---------------------------------------------------------------------------
 
 export async function sendMessage(data: {
   channelId: string;
   content: string;
   fileUrl?: string;
+  replyToId?: string;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
@@ -245,10 +266,9 @@ export async function sendMessage(data: {
       userId: session.user.id,
       content: data.content,
       fileUrl: data.fileUrl,
+      replyToId: data.replyToId,
     },
-    include: {
-      user: { select: { id: true, name: true, image: true } },
-    },
+    include: messageInclude,
   });
 
   // Broadcast via server-side Supabase admin client (reliable, doesn't depend on browser state)
@@ -258,13 +278,120 @@ export async function sendMessage(data: {
     fileUrl: message.fileUrl,
     createdAt: message.createdAt,
     user: message.user,
+    replyTo: message.replyTo,
+    reactions: [],
+    isDeleted: false,
+    editedAt: null,
   });
 
   return message;
 }
 
 // ---------------------------------------------------------------------------
-// Get Channel Messages (paginated)
+// Edit Message (own messages only)
+// ---------------------------------------------------------------------------
+
+export async function editMessage(messageId: string, newContent: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const message = await db.chatMessage.findUnique({
+    where: { id: messageId },
+    select: { userId: true, channelId: true },
+  });
+
+  if (!message) throw new Error("Message not found");
+  if (message.userId !== session.user.id) throw new Error("Can only edit your own messages");
+
+  const updated = await db.chatMessage.update({
+    where: { id: messageId },
+    data: { content: newContent, editedAt: new Date() },
+    include: messageInclude,
+  });
+
+  return updated;
+}
+
+// ---------------------------------------------------------------------------
+// Delete Message (soft delete — own messages or admin)
+// ---------------------------------------------------------------------------
+
+export async function deleteMessage(messageId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const message = await db.chatMessage.findUnique({
+    where: { id: messageId },
+    select: { userId: true, channelId: true },
+  });
+
+  if (!message) throw new Error("Message not found");
+
+  // Allow admins to delete any message, others only their own
+  const user = await getAuthenticatedUser();
+  const isAdmin = user.role === "SUPER_ADMIN" || user.role === "ADMIN";
+  if (message.userId !== session.user.id && !isAdmin) {
+    throw new Error("Can only delete your own messages");
+  }
+
+  const updated = await db.chatMessage.update({
+    where: { id: messageId },
+    data: { isDeleted: true, content: "" },
+    include: messageInclude,
+  });
+
+  return updated;
+}
+
+// ---------------------------------------------------------------------------
+// Add Reaction
+// ---------------------------------------------------------------------------
+
+export async function addReaction(messageId: string, emoji: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const reaction = await db.chatMessageReaction.upsert({
+    where: {
+      messageId_userId_emoji: {
+        messageId,
+        userId: session.user.id,
+        emoji,
+      },
+    },
+    create: {
+      messageId,
+      userId: session.user.id,
+      emoji,
+    },
+    update: {},
+    include: { user: { select: { id: true, name: true } } },
+  });
+
+  return reaction;
+}
+
+// ---------------------------------------------------------------------------
+// Remove Reaction
+// ---------------------------------------------------------------------------
+
+export async function removeReaction(messageId: string, emoji: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  await db.chatMessageReaction.deleteMany({
+    where: {
+      messageId,
+      userId: session.user.id,
+      emoji,
+    },
+  });
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Get Channel Messages (paginated) — includes reactions + replyTo
 // ---------------------------------------------------------------------------
 
 export async function getChannelMessages(channelId: string, cursor?: string) {
@@ -273,9 +400,7 @@ export async function getChannelMessages(channelId: string, cursor?: string) {
 
   const messages = await db.chatMessage.findMany({
     where: { channelId },
-    include: {
-      user: { select: { id: true, name: true, image: true } },
-    },
+    include: messageInclude,
     orderBy: { createdAt: "asc" },
     take: 50,
     ...(cursor
@@ -308,9 +433,7 @@ export async function getMessagesAroundTarget(channelId: string, targetMessageId
   // Load all messages from the channel (since these are work chats, message volume is manageable)
   const messages = await db.chatMessage.findMany({
     where: { channelId },
-    include: {
-      user: { select: { id: true, name: true, image: true } },
-    },
+    include: messageInclude,
     orderBy: { createdAt: "asc" },
   });
 

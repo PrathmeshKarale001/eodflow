@@ -90,20 +90,25 @@ function JoinForm() {
     setCodeLoading(true);
     setError("");
 
-    const result = await validateInvitation(code.trim().toUpperCase());
-    if (result.valid && result.invitation) {
-      setInvitation(result.invitation as InvitationData);
-      setStep("set-password");
-    } else {
-      const messages: Record<string, string> = {
-        INVALID_TOKEN: "Invalid invite code. Please check and try again.",
-        DEACTIVATED: "This invite code has been revoked.",
-        EXPIRED: "This invite code has expired.",
-        MAX_USES_REACHED: "This invite code has reached its maximum uses.",
-      };
-      setError(messages[result.error!] || "Invalid code.");
+    try {
+      const result = await validateInvitation(code.trim().toUpperCase());
+      if (result.valid && result.invitation) {
+        setInvitation(result.invitation as InvitationData);
+        setStep("set-password");
+      } else {
+        const messages: Record<string, string> = {
+          INVALID_TOKEN: "Invalid invite code. Please check and try again.",
+          DEACTIVATED: "This invite code has been revoked.",
+          EXPIRED: "This invite code has expired.",
+          MAX_USES_REACHED: "This invite code has reached its maximum uses.",
+        };
+        setError(messages[result.error!] || "Invalid code.");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to validate code. Please try again.");
+    } finally {
+      setCodeLoading(false);
     }
-    setCodeLoading(false);
   }
 
   // Accept invitation (set password + create account)

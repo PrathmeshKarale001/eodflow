@@ -38,6 +38,10 @@ export async function broadcastChatMessage(
     fileUrl?: string | null;
     createdAt: Date;
     user: { id: string; name: string; image: string | null };
+    replyTo?: { id: string; content: string; isDeleted: boolean; user: { id: string; name: string } } | null;
+    reactions?: any[];
+    isDeleted?: boolean;
+    editedAt?: Date | null;
   }
 ) {
   const client = getAdminClient();

@@ -139,6 +139,7 @@ model User {
   sessions          Session[]
   chatMembers       ChatChannelMember[]
   chatMessages      ChatMessage[]
+  chatReactions     ChatMessageReaction[]
   invitations       Invitation[]
   deptChangeRequests DepartmentChangeRequest[] @relation("DeptChangeUser")
   deptChangeReviews  DepartmentChangeRequest[] @relation("DeptChangeReviewer")
@@ -580,11 +581,33 @@ model ChatMessage {
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   content   String
   fileUrl   String?
+  replyToId String?     // Reply threading — references parent message
+  replyTo   ChatMessage?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   ChatMessage[] @relation("MessageReplies")
+  editedAt  DateTime?   // Non-null = message has been edited
+  isDeleted Boolean     @default(false) // Soft delete
   createdAt DateTime    @default(now())
+
+  // Relations
+  reactions ChatMessageReaction[]
 
   @@index([channelId])
   @@index([createdAt])
   // ─── PERF: Composite index for paginated channel messages ─────────────────
   @@index([channelId, createdAt])
   @@map("chat_messages")
+}
+
+model ChatMessageReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String      // Unicode emoji, e.g. "👍", "❤️", "🔥"
+  createdAt DateTime    @default(now())
+
+  @@unique([messageId, userId, emoji]) // One reaction per emoji per user per message
+  @@index([messageId])
+  @@map("chat_message_reactions")
 }
