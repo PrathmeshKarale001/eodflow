@@ -175,37 +175,42 @@ export async function createInviteCode(data: {
 // ---------------------------------------------------------------------------
 
 export async function validateInvitation(token: string) {
-  const invitation = await db.invitation.findUnique({
-    where: { token },
-  });
+  try {
+    const invitation = await db.invitation.findUnique({
+      where: { token },
+    });
 
-  if (!invitation) {
+    if (!invitation) {
+      return { valid: false, error: "INVALID_TOKEN" as const };
+    }
+
+    if (!invitation.isActive) {
+      return { valid: false, error: "DEACTIVATED" as const };
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      return { valid: false, error: "EXPIRED" as const };
+    }
+
+    if (invitation.usedCount >= invitation.maxUses) {
+      return { valid: false, error: "MAX_USES_REACHED" as const };
+    }
+
+    return {
+      valid: true,
+      invitation: {
+        id: invitation.id,
+        type: invitation.type,
+        email: invitation.email,
+        name: invitation.name,
+        role: invitation.role,
+        department: invitation.department,
+      },
+    };
+  } catch (err) {
+    console.error("[VALIDATE_INVITATION] Database error:", err);
     return { valid: false, error: "INVALID_TOKEN" as const };
   }
-
-  if (!invitation.isActive) {
-    return { valid: false, error: "DEACTIVATED" as const };
-  }
-
-  if (invitation.expiresAt < new Date()) {
-    return { valid: false, error: "EXPIRED" as const };
-  }
-
-  if (invitation.usedCount >= invitation.maxUses) {
-    return { valid: false, error: "MAX_USES_REACHED" as const };
-  }
-
-  return {
-    valid: true,
-    invitation: {
-      id: invitation.id,
-      type: invitation.type,
-      email: invitation.email,
-      name: invitation.name,
-      role: invitation.role,
-      department: invitation.department,
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------
