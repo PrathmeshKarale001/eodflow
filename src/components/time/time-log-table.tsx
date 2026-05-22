@@ -115,7 +115,7 @@ export function TimeLogTable({ entries, showUser }: TimeLogTableProps) {
                     {entry.task?.project && (
                       <p className="font-mono text-[8px] text-on-surface/40 truncate">
                         {entry.task.project.client?.companyName && `${entry.task.project.client.companyName} · `}
-                        {entry.task.project.title}
+                        {entry.task.project?.title || "No Project"}
                       </p>
                     )}
                     {entry.notes && (

@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
         userId: data.assignedToId,
         type: "TASK_ASSIGNED",
         title: "New task assigned",
-        body: `You've been assigned "${task.title}" in ${task.project.title}`,
+        body: `You've been assigned "${task.title}" in ${task.project?.title || "a project"}`,
         linkUrl: `/tasks?id=${task.id}`,
       },
     });

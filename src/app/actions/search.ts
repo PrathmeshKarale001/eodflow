@@ -72,7 +72,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       id: task.id,
       type: "task",
       title: task.title,
-      subtitle: `${task.project.title} — ${task.status.replace(/_/g, " ")}`,
+      subtitle: `${task.project?.title || "No Project"} — ${task.status.replace(/_/g, " ")}`,
       href: `/projects/${task.projectId}`,
     });
   }

@@ -13,7 +13,7 @@ import { broadcastTaskNotification } from "@/lib/realtime-server";
 // ---------------------------------------------------------------------------
 
 export async function createTask(data: {
-  projectId: string;
+  projectId?: string;
   title: string;
   description?: string;
   priority: Priority;
@@ -49,7 +49,7 @@ export async function createTask(data: {
 
   const task = await db.task.create({
     data: {
-      projectId: data.projectId,
+      ...(data.projectId ? { projectId: data.projectId } : {}),
       title: data.title,
       description: data.description,
       priority: data.priority,
@@ -65,14 +65,15 @@ export async function createTask(data: {
   await db.activityLog.create({
     data: {
       userId: session.user.id,
-      projectId: data.projectId,
+      ...(data.projectId ? { projectId: data.projectId } : {}),
       taskId: task.id,
       action: "CREATED",
       metadata: { title: data.title, priority: data.priority },
     },
   });
 
-  revalidatePath(`/projects/${data.projectId}`);
+  if (data.projectId) revalidatePath(`/projects/${data.projectId}`);
+  revalidatePath("/tasks");
   // ─── PERF: Invalidate Redis caches affected by new task ────────────────────
   cacheDelete(CacheKeys.DASHBOARD_COUNTS, CacheKeys.PROJECTS_STATUS_COUNTS).catch(() => {});
 
@@ -81,7 +82,7 @@ export async function createTask(data: {
     type: "TASK_CREATED",
     taskId: task.id,
     taskTitle: data.title,
-    projectId: data.projectId,
+    projectId: data.projectId || "",
     actorName: session.user.name || "Someone",
     actorId: session.user.id,
     assigneeIds: data.assigneeIds || (leadAssigneeId ? [leadAssigneeId] : []),
@@ -131,7 +132,7 @@ export async function updateTaskStatus(data: {
 
   const task = await db.task.findUnique({
     where: { id: data.taskId },
-    select: { id: true, status: true, projectId: true, assignedToId: true, revisionCount: true },
+    select: { id: true, status: true, projectId: true, assignedToId: true, revisionCount: true, startedAt: true },
   });
 
   if (!task) throw new Error("Task not found");
@@ -164,11 +165,22 @@ export async function updateTaskStatus(data: {
   // Increment revision count on revision transitions
   const isRevision = data.status === TaskStatus.REVISION || data.status === TaskStatus.CLIENT_REVISION;
 
+  // ─── TIME TRACKING: Auto-set startedAt / completedAt ──────────────────────
+  const isStarting = data.status === TaskStatus.IN_PROGRESS;
+  const isCompleting = data.status === TaskStatus.DONE || data.status === TaskStatus.APPROVED;
+  const wasCompleted = oldStatus === TaskStatus.DONE || oldStatus === TaskStatus.APPROVED;
+
   const updatedTask = await db.task.update({
     where: { id: data.taskId },
     data: {
       status: data.status,
       ...(isRevision ? { revisionCount: { increment: 1 } } : {}),
+      // Set startedAt on first move to IN_PROGRESS (don't overwrite)
+      ...(isStarting && !task.startedAt ? { startedAt: new Date() } : {}),
+      // Set completedAt when task is marked DONE/APPROVED
+      ...(isCompleting ? { completedAt: new Date() } : {}),
+      // Clear completedAt if task is moved back from DONE/APPROVED
+      ...(wasCompleted && !isCompleting ? { completedAt: null } : {}),
     },
   });
 
@@ -486,7 +498,12 @@ export async function markTaskDone(taskId: string) {
 
   const updatedTask = await db.task.update({
     where: { id: taskId },
-    data: { status: TaskStatus.DONE },
+    data: {
+      status: TaskStatus.DONE,
+      completedAt: new Date(),
+      // Set startedAt if it was never set (task went straight to DONE)
+      ...(!task.startedAt ? { startedAt: task.createdAt } : {}),
+    },
   });
 
   // ─── PERF: Fire-and-forget — don't block response on logging/notifications ──
@@ -502,7 +519,7 @@ export async function markTaskDone(taskId: string) {
               userId: m.id,
               type: "TASK_STATUS_CHANGED" as const,
               title: `Task completed: ${task.title}`,
-              body: `${session.user.name || "An employee"} marked a task as DONE in ${task.project.title}`,
+              body: `${session.user.name || "An employee"} marked a task as DONE in ${task.project?.title || "a project"}`,
               linkUrl: `/tasks`,
             })),
           })

@@ -257,7 +257,7 @@ export function MyTasksList({
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                               {task.project && (
                                 <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
-                                  {task.project.title}
+                                  {task.project?.title || "No Project"}
                                 </span>
                               )}
                               {task.assignedTo && (
@@ -390,7 +390,6 @@ export function MyTasksList({
       {/* Global Create Task Modal */}
       {isCreateModalOpen && (
         <CreateTaskModal
-          projectId={projects[0]?.id}
           projects={projects}
           teamMembers={teamMembers}
           isOpen={isCreateModalOpen}

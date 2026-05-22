@@ -37,7 +37,7 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
 
   const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<TaskFormValues & { selectedProjectId?: string }>({
     resolver: zodResolver(taskSchema.extend({
-      selectedProjectId: z.string().optional().refine((val) => projectId || val, "Project is required"),
+      selectedProjectId: z.string().optional(),
     })),
     defaultValues: {
       priority: Priority.MEDIUM,
@@ -77,13 +77,12 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
   };
 
   const onSubmit = async (data: TaskFormValues & { selectedProjectId?: string }) => {
-    const targetProjectId = projectId || data.selectedProjectId;
-    if (!targetProjectId) return;
+    const targetProjectId = projectId || data.selectedProjectId || undefined;
 
     setIsSubmitting(true);
     try {
       const task = await createTask({
-        projectId: targetProjectId,
+        ...(targetProjectId ? { projectId: targetProjectId } : {}),
         title: data.title,
         description: data.description,
         priority: data.priority,
@@ -119,7 +118,7 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
           {/* Project Selector */}
           {!projectId && (
             <div className="space-y-1">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">SELECT_PROJECT</label>
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">PROJECT <span className="text-on-surface/30">(OPTIONAL)</span></label>
               <Controller
                 name="selectedProjectId"
                 control={control}

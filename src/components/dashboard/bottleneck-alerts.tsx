@@ -73,7 +73,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
                     <span>•</span>
                     <span>{task.assignedTo?.name || "UNASSIGNED"}</span>
                     <span>•</span>
-                    <span>{task.project.title}</span>
+                    <span>{task.project?.title || "No Project"}</span>
                   </div>
                 </div>
               );

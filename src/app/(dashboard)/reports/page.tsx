@@ -67,7 +67,7 @@ export default async function ReportsPage() {
           select: { status: true },
           where: {
             status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
-            updatedAt: { gte: startOfMonth },
+            completedAt: { gte: startOfMonth },
           },
         },
       },
@@ -87,14 +87,14 @@ export default async function ReportsPage() {
     db.task.count({
       where: {
         status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
-        updatedAt: { gte: startOfWeek },
+        completedAt: { gte: startOfWeek },
       },
     }),
     // Completed this month
     db.task.count({
       where: {
         status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
-        updatedAt: { gte: startOfMonth },
+        completedAt: { gte: startOfMonth },
       },
     }),
     // Total time logged this week (in minutes)
@@ -190,7 +190,9 @@ export default async function ReportsPage() {
               id: true,
               status: true,
               dueDate: true,
-              updatedAt: true,
+              completedAt: true,
+              createdAt: true,
+              startedAt: true,
               revisionCount: true,
             }
           },
@@ -227,7 +229,7 @@ export default async function ReportsPage() {
     managementTasksReport = managementEmployeeTasks.map((t) => {
       const isCompleted = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
       const dueDate = t.dueDate ? new Date(t.dueDate) : null;
-      const completedAt = isCompleted ? new Date(t.updatedAt) : null;
+      const completedAt = t.completedAt ? new Date(t.completedAt) : (isCompleted ? new Date(t.updatedAt) : null);
       
       let isOverdue = false;
       let overdueDays = 0;
@@ -247,7 +249,7 @@ export default async function ReportsPage() {
       return {
         id: t.id,
         title: t.title,
-        projectTitle: t.project.title,
+        projectTitle: t.project?.title || "No Project",
         assigneeName: t.assignedTo?.name || "Unassigned",
         assigneeDept: t.assignedTo?.department || null,
         creatorName: t.assignedBy?.name || "System",
@@ -279,7 +281,7 @@ export default async function ReportsPage() {
           if (!t.dueDate) return false;
           const isCompleted = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
           if (isCompleted) {
-            return new Date(t.updatedAt) > new Date(t.dueDate);
+            return new Date(t.completedAt || t.dueDate) > new Date(t.dueDate);
           } else {
             return new Date() > new Date(t.dueDate);
           }
