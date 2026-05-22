@@ -13,7 +13,7 @@ function getResend() {
   return _resend;
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "EOD Flow <noreply@eodflow.com>";
+const FROM_EMAIL = process.env.EMAIL_FROM || process.env.FROM_EMAIL || "EOD Flow <noreply@eodflow.com>";
 
 // ---------------------------------------------------------------------------
 // Core send function (fire-and-forget)
