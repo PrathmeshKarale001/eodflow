@@ -48,7 +48,7 @@ interface KanbanBoardProps {
     priority: any;
     dueDate: Date | null;
     revisionCount: number;
-    projectId?: string;
+    projectId?: string | null;
     assignedTo: { id: string; name: string; image: string | null } | null;
     assignees?: Array<{ id: string; name: string; image: string | null }>;
     _count: { comments: number; files: number; subtasks: number };
