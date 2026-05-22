@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
 import { validateInvitation, acceptInvitation } from "@/app/actions/invitations";
 
@@ -168,7 +169,18 @@ function JoinForm() {
   const canEditDept = invitation?.type === "CODE" || !invitation?.department;
 
   return (
-    <div className="flex items-center justify-center min-h-[100dvh] px-4 py-8 sm:py-12">
+    <div className="flex items-center justify-center min-h-[100dvh] px-4 py-8 sm:py-12 relative">
+      {/* Floating Login Link */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          href="/login"
+          className="flex items-center gap-2 font-headline text-[10px] uppercase text-on-surface/40 hover:text-white transition-all tracking-widest border border-on-surface/10 px-4 py-2 hover:border-primary"
+        >
+          <span className="material-symbols-outlined text-xs">arrow_back</span>
+          LOGIN_TERMINAL
+        </Link>
+      </div>
+
       <div className={`w-full ${step === "set-password" && invitation ? "max-w-3xl" : "max-w-md"} brutalist-border bg-surface-container-lowest p-5 sm:p-8 flex flex-col relative z-10 box-border transition-all duration-300`}>
 
         {/* Decorative ID */}
@@ -243,12 +255,20 @@ function JoinForm() {
               <span className="material-symbols-outlined text-[18px]">verified</span>
             </button>
 
-            <div className="border-t border-on-surface/10 pt-4 text-center">
+            <div className="border-t border-on-surface/10 pt-4 text-center space-y-4">
               <p className="text-[10px] font-label text-on-surface/30 uppercase tracking-widest">
                 Got a link instead? Check your email for a direct invite.
               </p>
+              <Link
+                href="/login"
+                className="flex items-center justify-center gap-2 brutalist-border py-2.5 text-[10px] font-headline uppercase text-on-surface/60 hover:text-white hover:border-primary transition-all tracking-widest"
+              >
+                <span className="material-symbols-outlined text-[14px]">login</span>
+                ALREADY_REGISTERED? LOGIN
+              </Link>
             </div>
           </form>
+
         )}
 
         {/* ── SET PASSWORD (shared by both LINK and CODE) ─────────── */}
