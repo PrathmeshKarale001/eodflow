@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm run clean && next dev --turbopack",
     "clean": "node -e \"['tsconfig.tsbuildinfo','.next'].forEach(p=>{try{require('fs').rmSync(p,{recursive:true,force:true})}catch{}})\"",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
