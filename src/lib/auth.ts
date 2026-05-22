@@ -6,9 +6,23 @@ import { cache } from "react";
 
 // Build the base URL from available env vars
 // Vercel auto-sets VERCEL_URL (without protocol) on every deployment
+// and VERCEL=1 when running inside Vercel's environment.
 const getBaseURL = () => {
-  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  const isVercel = !!process.env.VERCEL;
+  const betterAuthUrl = process.env.BETTER_AUTH_URL;
+
+  // On Vercel, ignore localhost BETTER_AUTH_URL (stale env var)
+  if (isVercel) {
+    if (betterAuthUrl && !betterAuthUrl.includes("localhost")) {
+      return betterAuthUrl; // e.g. https://flow.eod.media
+    }
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`;
+    }
+  }
+
+  // Local development
+  if (betterAuthUrl) return betterAuthUrl;
   return "http://localhost:3000";
 };
 
@@ -16,11 +30,18 @@ export const authApi = betterAuth({
   baseURL: getBaseURL(),
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: [
+    // Local dev — include all common ports Next.js falls back to
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    // Production domains
     "https://flow.eod.media",
     "https://eod-flow.vercel.app",
     "https://*.vercel.app",
+    // Dynamic: Vercel auto-sets VERCEL_URL on every deployment
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    // Dynamic: Ensure the configured base URL is always trusted
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
   ],
   database: prismaAdapter(db, {
     provider: "postgresql",
