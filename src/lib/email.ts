@@ -5,7 +5,13 @@
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend && process.env.RESEND_API_KEY) {
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "EOD Flow <noreply@eodflow.com>";
 
@@ -22,7 +28,8 @@ async function sendEmail({
   subject: string;
   html: string;
 }) {
-  if (!process.env.RESEND_API_KEY) {
+  const resend = getResend();
+  if (!resend) {
     console.warn("[EMAIL] RESEND_API_KEY not set, skipping email");
     return null;
   }
