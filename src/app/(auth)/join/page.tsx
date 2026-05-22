@@ -455,13 +455,76 @@ function JoinForm() {
 }
 
 // ---------------------------------------------------------------------------
+// Error Boundary (catches client-side errors and prevents ugly production msgs)
+// ---------------------------------------------------------------------------
+
+class JoinErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: string | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error: error.message || "Something went wrong." };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex items-center justify-center min-h-[100dvh] px-4">
+          <div className="w-full max-w-md brutalist-border bg-surface-container-lowest p-8 text-center space-y-4">
+            <span className="material-symbols-outlined text-4xl text-error">error</span>
+            <h2 className="font-headline text-xl uppercase text-white">Connection Error</h2>
+            <p className="font-mono text-[10px] uppercase text-on-surface/50 tracking-widest">
+              {this.state.error}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-primary-container text-white px-6 py-3 font-headline uppercase text-sm font-bold hover:bg-card hover:text-black transition-all mono-clip"
+            >
+              RETRY
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Loading Fallback
+// ---------------------------------------------------------------------------
+
+function JoinLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[100dvh] px-4">
+      <div className="w-full max-w-md brutalist-border bg-surface-container-lowest p-8">
+        <span className="text-primary font-label text-[10px] font-bold uppercase block mb-4">ACCESS_TERMINAL</span>
+        <div className="h-8 w-48 bg-on-surface/10 animate-pulse mb-4" />
+        <div className="h-4 w-64 bg-on-surface/5 animate-pulse mb-8" />
+        <div className="h-12 w-full bg-on-surface/5 animate-pulse mb-4" />
+        <div className="h-12 w-full bg-primary/20 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page Export
 // ---------------------------------------------------------------------------
 
+import React from "react";
+
 export default function JoinPage() {
   return (
-    <Suspense>
-      <JoinForm />
-    </Suspense>
+    <JoinErrorBoundary>
+      <Suspense fallback={<JoinLoading />}>
+        <JoinForm />
+      </Suspense>
+    </JoinErrorBoundary>
   );
 }
