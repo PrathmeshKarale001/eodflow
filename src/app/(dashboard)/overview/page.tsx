@@ -199,7 +199,13 @@ export default async function OverviewPage() {
   // ─── EMPLOYEE (default) ─────────────────────────────────────────────────────
   const [myTasks, todayTime, weeklyTime, recentComments] = await Promise.all([
     db.task.findMany({
-      where: { assignedToId: userId, status: { notIn: [TaskStatus.APPROVED] } },
+      where: {
+        OR: [
+          { assignedToId: userId },
+          { assignedById: userId },
+        ],
+        status: { notIn: [TaskStatus.APPROVED] },
+      },
       include: { project: { select: { title: true } } },
       orderBy: [{ dueDate: "asc" }, { priority: "asc" }],
       take: 30,
