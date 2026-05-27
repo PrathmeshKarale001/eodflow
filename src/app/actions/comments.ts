@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { notify, notifyMany } from "@/lib/notify";
 import { hasPermission } from "@/lib/permissions";
 import { Role } from "@prisma/client";
 
@@ -61,14 +62,13 @@ export async function addComment(data: {
 
   // Notify task assignee (if not self)
   if (task?.assignedToId && task.assignedToId !== session.user.id) {
-    await db.notification.create({
-      data: {
-        userId: task.assignedToId,
-        type: "COMMENT_ADDED",
-        title: `New comment on "${task.title}"`,
-        body: data.content.substring(0, 120),
-        linkUrl: `/projects/${task.projectId}`,
-      },
+    await notify({
+      userId: task.assignedToId,
+      type: "COMMENT_ADDED",
+      title: `New comment on "${task.title}"`,
+      body: data.content.substring(0, 120),
+      linkUrl: `/tasks?id=${data.taskId}`,
+      tag: `comment-${data.taskId}`,
     });
   }
 
@@ -99,7 +99,16 @@ export async function addComment(data: {
       }));
 
     if (notificationData.length > 0) {
-      await db.notification.createMany({ data: notificationData });
+      await notifyMany(
+        notificationData.map((n) => n.userId),
+        {
+          type: "MENTION",
+          title: `${session.user.name} mentioned you`,
+          body: `In "${task?.title || "a task"}": ${data.content.substring(0, 100)}`,
+          linkUrl: `/tasks?id=${data.taskId}`,
+          tag: `mention-${data.taskId}`,
+        }
+      );
     }
   }
 

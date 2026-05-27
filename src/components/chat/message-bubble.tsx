@@ -75,11 +75,11 @@ function getFileName(url: string): string {
 function renderContentWithLinks(text: string) {
   const urlRegex = /(https?:\/\/[^\s<]+)/g;
   const parts = text.split(urlRegex);
+  // Non-global regex for testing individual parts (avoids lastIndex bug)
+  const urlTest = /^https?:\/\/[^\s<]+$/;
 
   return parts.map((part, i) => {
-    if (urlRegex.test(part)) {
-      // Reset lastIndex since we used test()
-      urlRegex.lastIndex = 0;
+    if (urlTest.test(part)) {
       const displayUrl = part.length > 50 ? part.substring(0, 47) + "..." : part;
       return (
         <a

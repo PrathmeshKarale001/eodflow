@@ -19,8 +19,8 @@ export default async function TasksPage() {
     ? {}
     : { OR: [{ assignedToId: session.user.id }, { assignedById: session.user.id }] };
 
-  // ─── PERF: All 3 queries are independent → run in parallel ────────────────
-  const [tasks, teamMembers, projects] = await Promise.all([
+  // ─── PERF: All queries are independent → run in parallel ────────────────
+  const [tasks, teamMembers, projects, brands] = await Promise.all([
     db.task.findMany({
       where: tasksWhereClause,
       include: {
@@ -43,12 +43,20 @@ export default async function TasksPage() {
           orderBy: { name: "asc" },
         })
       : Promise.resolve([]),
-    // Fetch projects for Task Creation selector
+    // Fetch projects for Task Creation selector (with clientId for brand filtering)
     canCreateTask
       ? db.project.findMany({
           where: { status: { not: "COMPLETED" } },
-          select: { id: true, title: true },
+          select: { id: true, title: true, clientId: true },
           orderBy: { title: "asc" },
+        })
+      : Promise.resolve([]),
+    // Fetch brands for brand selector
+    canCreateTask
+      ? db.client.findMany({
+          where: { isActive: true },
+          select: { id: true, companyName: true },
+          orderBy: { companyName: "asc" },
         })
       : Promise.resolve([]),
   ]);
@@ -61,6 +69,7 @@ export default async function TasksPage() {
       canAssign={canAssign}
       teamMembers={teamMembers}
       projects={projects}
+      brands={brands}
       canCreateTask={canCreateTask}
     />
   );

@@ -25,14 +25,13 @@ if (typeof window !== "undefined") {
 }
 
 const STATUS_SECTIONS: { status: TaskStatus; label: string; accent: string }[] = [
-  { status: TaskStatus.BACKLOG, label: "BACKLOG", accent: "border-l-neutral-400" },
   { status: TaskStatus.TODO, label: "TODO", accent: "border-l-blue-500" },
   { status: TaskStatus.IN_PROGRESS, label: "IN_PROGRESS", accent: "border-l-amber-500" },
   { status: TaskStatus.IN_REVIEW, label: "IN_REVIEW", accent: "border-l-purple-500" },
   { status: TaskStatus.REVISION, label: "REVISION", accent: "border-l-red-500" },
-  { status: TaskStatus.CLIENT_REVISION, label: "CLIENT_REVISION", accent: "border-l-orange-500" },
-  { status: TaskStatus.DONE, label: "DONE", accent: "border-l-green-700" },
   { status: TaskStatus.APPROVED, label: "APPROVED", accent: "border-l-green-500" },
+  { status: TaskStatus.DONE, label: "DONE", accent: "border-l-green-700" },
+  { status: TaskStatus.BACKLOG, label: "BACKLOG", accent: "border-l-neutral-400" },
 ];
 
 const PRIORITY_CHIP: Record<string, string> = {
@@ -58,7 +57,8 @@ interface TaskType {
   priority: Priority;
   dueDate: Date | null;
   revisionCount: number;
-  projectId: string;
+  projectId: string | null;
+  assignedById?: string | null;
   assignedTo: { id: string; name: string; image: string | null } | null;
   project?: { id: string; title: string } | null;
   _count: { files: number };
@@ -72,7 +72,8 @@ interface MyTasksListProps {
   canAssign?: boolean;
   canCreateTask?: boolean;
   teamMembers?: TeamMember[];
-  projects?: Array<{ id: string; title: string }>;
+  projects?: Array<{ id: string; title: string; clientId?: string | null }>;
+  brands?: Array<{ id: string; companyName: string }>;
 }
 
 export function MyTasksList({
@@ -83,6 +84,7 @@ export function MyTasksList({
   canCreateTask = false,
   teamMembers = [],
   projects = [],
+  brands = [],
 }: MyTasksListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -391,6 +393,7 @@ export function MyTasksList({
       {isCreateModalOpen && (
         <CreateTaskModal
           projects={projects}
+          brands={brands}
           teamMembers={teamMembers}
           isOpen={isCreateModalOpen}
           onClose={closeCreateModal}

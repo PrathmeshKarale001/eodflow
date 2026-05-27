@@ -15,7 +15,7 @@ export default async function NewProjectPage({
   const { clientId: preselectedClientId } = await searchParams;
 
   // Fetch data for dropdowns
-  const [clients, managers] = await Promise.all([
+  const [clients, managers, teamMembers] = await Promise.all([
     db.client.findMany({
       select: { id: true, companyName: true },
       orderBy: { companyName: "asc" }
@@ -24,7 +24,12 @@ export default async function NewProjectPage({
       where: { role: { in: [Role.SUPER_ADMIN, Role.ADMIN] }, isActive: true },
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" }
-    })
+    }),
+    db.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, department: true },
+      orderBy: { name: "asc" }
+    }),
   ]);
 
   // Resolve the pre-selected client name for display
@@ -57,6 +62,7 @@ export default async function NewProjectPage({
         <CreateProjectForm
           clients={clients}
           managers={managers}
+          teamMembers={teamMembers}
           preselectedClientId={preselectedClientId}
         />
       </div>

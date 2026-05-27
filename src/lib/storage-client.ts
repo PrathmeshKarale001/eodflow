@@ -11,15 +11,34 @@ export async function uploadFile(
   formData.append("file", file);
   formData.append("pathPrefix", pathPrefix);
 
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  });
+  // Use AbortController for timeout (60s for large files)
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60_000);
 
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.error || "Upload failed");
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      // If redirected to login page (HTML response), it's an auth issue
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("text/html") || res.redirected) {
+        throw new Error("Session expired. Please refresh the page and try again.");
+      }
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Upload failed (HTTP ${res.status})`);
+    }
+
+    return res.json();
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      throw new Error("Upload timed out. The file may be too large.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return res.json();
 }

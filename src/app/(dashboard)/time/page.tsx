@@ -47,10 +47,11 @@ export default async function TimePage() {
             </p>
             <TimeTrackerWidget
               initialRunningTimer={runningTimer as any}
+              tasks={myTasks as any}
             />
-            {!runningTimer && (
+            {!runningTimer && myTasks.length === 0 && (
               <p className="font-mono text-[8px] text-on-surface/30 mt-2 text-center uppercase">
-                Open a task and use the timer there, or log manually below
+                No active tasks assigned to you
               </p>
             )}
           </div>

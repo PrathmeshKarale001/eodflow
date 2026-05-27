@@ -20,12 +20,22 @@ let _r2: S3Client | null = null;
 
 function getR2(): S3Client {
   if (!_r2) {
+    const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+    const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
+
+    if (!accountId || !accessKeyId || !secretAccessKey) {
+      throw new Error(
+        "R2 storage not configured. Missing CLOUDFLARE_R2_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY_ID, or CLOUDFLARE_R2_SECRET_ACCESS_KEY."
+      );
+    }
+
     _r2 = new S3Client({
       region: "auto",
-      endpoint: `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+        accessKeyId,
+        secretAccessKey,
       },
     });
   }
@@ -71,14 +81,23 @@ export async function uploadBuffer(
   filePath: string,
   contentType: string
 ): Promise<{ path: string; url: string }> {
-  await getR2().send(
-    new PutObjectCommand({
-      Bucket: BUCKET,
-      Key: filePath,
-      Body: buffer,
-      ContentType: contentType,
-    })
-  );
+  if (!PUBLIC_URL) {
+    throw new Error("R2 storage not configured. Missing CLOUDFLARE_R2_PUBLIC_URL.");
+  }
+
+  try {
+    await getR2().send(
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: filePath,
+        Body: buffer,
+        ContentType: contentType,
+      })
+    );
+  } catch (err: any) {
+    console.error("[R2] Upload failed:", err.message, { filePath, contentType, bufferSize: buffer.length });
+    throw new Error(`Storage upload failed: ${err.message}`);
+  }
 
   return {
     path: filePath,

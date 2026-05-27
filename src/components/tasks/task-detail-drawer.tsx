@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect, startTransition } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { getTaskFiles } from "@/app/actions/tasks";
 import { TaskStatus, Priority } from "@prisma/client";
-import { submitForReview, createTaskFileRecord } from "@/app/actions/task-submissions";
-import { updateTaskStatus, deleteTask, markTaskDone } from "@/app/actions/tasks";
+import { createTaskFileRecord } from "@/app/actions/task-submissions";
+import { updateTaskStatus, deleteTask } from "@/app/actions/tasks";
 import { deleteFile, uploadNewVersion } from "@/app/actions/files";
 import { uploadFile } from "@/lib/storage-client";
 import { hasPermission } from "@/lib/permissions";
@@ -50,6 +50,44 @@ const PRIORITY_COLORS: Record<string, string> = {
   LOW: "bg-surface-container-highest text-outline",
 };
 
+// ─── Status transition config for action buttons ─────────────────────────────
+// Employee flow:  TODO → IN_PROGRESS → IN_REVIEW (notifies manager)
+// Manager flow:   IN_REVIEW → APPROVED or REVISION
+// After REVISION: Employee reworks → IN_PROGRESS → IN_REVIEW again
+// Finalize:       Manager: APPROVED → DONE
+const STATUS_ACTIONS: Record<TaskStatus, Array<{
+  targetStatus: TaskStatus;
+  label: string;
+  icon: string;
+  color: string; // tailwind classes
+  roles: Role[]; // who can perform this action
+}>> = {
+  [TaskStatus.BACKLOG]: [
+    { targetStatus: TaskStatus.TODO, label: "MOVE_TO_TODO", icon: "playlist_add", color: "bg-blue-600 text-white shadow-[4px_4px_0px_#1e3a5f]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+  ],
+  [TaskStatus.TODO]: [
+    { targetStatus: TaskStatus.IN_PROGRESS, label: "START_WORK", icon: "play_arrow", color: "bg-[#00FF41]/20 text-[#00FF41] border border-[#00FF41]/30 shadow-[4px_4px_0px_#008000]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+  ],
+  [TaskStatus.IN_PROGRESS]: [
+    { targetStatus: TaskStatus.IN_REVIEW, label: "SUBMIT_FOR_REVIEW", icon: "send", color: "bg-[#180065] text-white shadow-[4px_4px_0px_#5847d2]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+  ],
+  [TaskStatus.IN_REVIEW]: [
+    // Manager actions: approve directly or send back for revision
+    { targetStatus: TaskStatus.APPROVED, label: "APPROVE", icon: "check_circle", color: "bg-green-600 text-white shadow-[4px_4px_0px_#14532d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+    { targetStatus: TaskStatus.REVISION, label: "SEND_TO_REVISION", icon: "undo", color: "bg-red-600 text-white shadow-[4px_4px_0px_#7f1d1d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+  ],
+  [TaskStatus.REVISION]: [
+    // Employee reworks and restarts
+    { targetStatus: TaskStatus.IN_PROGRESS, label: "REWORK_STARTED", icon: "play_arrow", color: "bg-[#00FF41]/20 text-[#00FF41] border border-[#00FF41]/30 shadow-[4px_4px_0px_#008000]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+  ],
+  [TaskStatus.CLIENT_APPROVAL]: [],
+  [TaskStatus.CLIENT_REVISION]: [],
+  [TaskStatus.APPROVED]: [
+    { targetStatus: TaskStatus.DONE, label: "FINALIZE_TASK", icon: "task_alt", color: "bg-success text-white shadow-[4px_4px_0px_#15803d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+  ],
+  [TaskStatus.DONE]: [],
+};
+
 interface TaskDetailDrawerProps {
   task: {
     id: string;
@@ -59,7 +97,8 @@ interface TaskDetailDrawerProps {
     priority: Priority;
     dueDate: Date | null;
     revisionCount: number;
-    projectId: string;
+    projectId: string | null;
+    assignedById?: string | null;
     assignedTo: { id: string; name: string } | null;
     files?: Array<{
       id: string;
@@ -88,7 +127,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isMarkingDone, setIsMarkingDone] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("details");
@@ -97,6 +136,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [upgradingFileId, setUpgradingFileId] = useState<string | null>(null);
   const [isUpgradingVersion, setIsUpgradingVersion] = useState(false);
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
 
   // ─── PERF: Load files on-demand when drawer opens ──────────────────────────
   useEffect(() => {
@@ -171,12 +211,9 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   }, [upgradingFileId, task.id]);
 
   const isAssignee = task.assignedTo?.id === userId;
-  const canSubmit = isAssignee && (
-    task.status === TaskStatus.IN_PROGRESS || 
-    task.status === TaskStatus.REVISION || 
-    task.status === TaskStatus.CLIENT_REVISION
-  );
-  const canStartWork = isAssignee && task.status === TaskStatus.TODO;
+  const isCreator = task.assignedById === userId;
+  const isOwner = isAssignee || isCreator; // Can manage own task
+  const isManager = userRole === Role.SUPER_ADMIN || userRole === Role.ADMIN;
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -225,44 +262,27 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     await handleUploadFiles(Array.from(e.target.files));
   };
 
-  const handleSubmitForReview = () => {
-    setIsSubmitting(true);
-    startTransition(async () => {
-      try {
-        await submitForReview(task.id);
-        onClose();
-      } catch (error: any) {
-        const { toast } = await import("react-hot-toast");
-        toast.error(error?.message || "Failed to submit for review.", { duration: 5000 });
-      } finally {
-        setIsSubmitting(false);
-      }
-    });
-  };
+  // ─── Universal status transition handler ──────────────────────────────────
+  const handleStatusTransition = async (targetStatus: TaskStatus, label: string) => {
+    const confirmMessages: Partial<Record<TaskStatus, string>> = {
+      [TaskStatus.REVISION]: "Send this task back for revision?",
+      [TaskStatus.DONE]: "Finalize this task? This cannot be undone.",
+      [TaskStatus.CLIENT_APPROVAL]: "Send to client for approval?",
+    };
+    const msg = confirmMessages[targetStatus];
+    if (msg && !confirm(msg)) return;
 
-  const handleStartWork = () => {
-    startTransition(async () => {
-      try {
-        await updateTaskStatus({ taskId: task.id, status: TaskStatus.IN_PROGRESS });
-        onClose();
-      } catch (error: any) {
-        const { toast } = await import("react-hot-toast");
-        toast.error(error?.message || "Failed to start work.", { duration: 5000 });
-      }
-    });
-  };
-
-  const handleMarkDone = async () => {
-    if (!confirm("Is this task finalized? This will notify management.")) return;
-    setIsMarkingDone(true);
+    setIsTransitioning(true);
     try {
-      await markTaskDone(task.id);
+      await updateTaskStatus({ taskId: task.id, status: targetStatus });
+      const { toast } = await import("react-hot-toast");
+      toast.success(`Task moved to ${targetStatus.replace(/_/g, " ")}`, { duration: 3000 });
       onClose();
     } catch (error: any) {
       const { toast } = await import("react-hot-toast");
-      toast.error(error?.message || "Failed to mark done.", { duration: 5000 });
+      toast.error(error?.message || `Failed: ${label}`, { duration: 5000 });
     } finally {
-      setIsMarkingDone(false);
+      setIsTransitioning(false);
     }
   };
 
@@ -280,9 +300,40 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     }
   };
 
-  const canManage = hasPermission(userRole, "editAnyTask") || (isAssignee && hasPermission(userRole, "editOwnTask"));
-  const canDelete = hasPermission(userRole, "deleteTask");
-  const canMarkStatusDone = task.status !== TaskStatus.DONE;
+  const canManage = hasPermission(userRole, "editAnyTask") || (isOwner && hasPermission(userRole, "editOwnTask"));
+  const canDelete = isManager || isOwner; // Admins or own task owner
+
+  const handleSendReminder = async () => {
+    if (!task.assignedTo?.id) return;
+    setIsSendingReminder(true);
+    try {
+      const res = await fetch("/api/push/remind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetUserId: task.assignedTo.id,
+          taskId: task.id,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to send reminder");
+      const { toast } = await import("react-hot-toast");
+      toast.success(`Reminder sent to ${task.assignedTo.name}`, { duration: 3000 });
+    } catch (err: any) {
+      const { toast } = await import("react-hot-toast");
+      toast.error(err?.message || "Failed to send reminder.", { duration: 5000 });
+    } finally {
+      setIsSendingReminder(false);
+    }
+  };
+
+  // Compute available status actions for the current user + task state
+  const availableActions = (STATUS_ACTIONS[task.status] || []).filter((action) => {
+    // Check role permission
+    if (!action.roles.includes(userRole)) return false;
+    // Employees can only transition their own tasks
+    if (userRole === Role.EMPLOYEE && !isAssignee) return false;
+    return true;
+  });
 
   if (!isOpen) return null;
 
@@ -648,40 +699,39 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
           )}
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 sm:p-5 border-t-2 border-on-surface/10 bg-surface-container-lowest flex-shrink-0 flex flex-col gap-3">
-          {canStartWork ? (
-            <button
-              onClick={handleStartWork}
-              className="w-full flex items-center justify-center gap-2 mono-clip bg-[#00FF41]/20 text-[#00FF41] border border-[#00FF41]/30 px-6 py-4 font-headline text-sm uppercase shadow-[4px_4px_0px_#008000] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#008000] transition-all"
-            >
-              <span className="material-symbols-outlined text-base">play_arrow</span>
-              INITIALIZE_WORK
-            </button>
-          ) : null}
+        {/* Footer Actions — Role-aware status transitions */}
+        {availableActions.length > 0 && (
+          <div className="p-4 sm:p-5 border-t-2 border-on-surface/10 bg-surface-container-lowest flex-shrink-0 flex flex-col gap-3">
+            {task.status !== TaskStatus.DONE && (
+              <p className="font-label text-[8px] uppercase tracking-widest text-outline text-center">
+                {isManager ? "MANAGEMENT_ACTIONS" : "YOUR_ACTIONS"} — CURRENT: {task.status.replace(/_/g, " ")}
+              </p>
+            )}
+            {availableActions.map((action) => (
+              <button
+                key={action.targetStatus}
+                onClick={() => handleStatusTransition(action.targetStatus, action.label)}
+                disabled={isTransitioning}
+                className={`w-full flex items-center justify-center gap-2 mono-clip px-6 py-4 font-headline text-sm uppercase hover:translate-y-[1px] hover:shadow-none transition-all disabled:opacity-50 ${action.color}`}
+              >
+                <span className="material-symbols-outlined text-base">{action.icon}</span>
+                {isTransitioning ? "PROCESSING..." : action.label}
+              </button>
+            ))}
 
-          {canSubmit ? (
-            <button
-              onClick={handleSubmitForReview}
-              disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 mono-clip bg-[#180065] text-white px-6 py-4 font-headline text-sm uppercase shadow-[4px_4px_0px_#5847d2] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#5847d2] transition-all disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-base">send</span>
-              {isSubmitting ? "TRANSMITTING..." : "SUBMIT_FOR_REVIEW"}
-            </button>
-          ) : null}
-
-          {canMarkStatusDone ? (
-            <button
-              onClick={handleMarkDone}
-              disabled={isMarkingDone}
-              className="w-full flex items-center justify-center gap-2 mono-clip bg-success text-white px-6 py-4 font-headline text-sm uppercase shadow-[4px_4px_0px_#15803d] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#15803d] transition-all disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-base">check_circle</span>
-              {isMarkingDone ? "MARKING..." : "MARK_AS_FINAL"}
-            </button>
-          ) : null}
-        </div>
+            {/* Send Reminder — managers/admins only */}
+            {isManager && task.assignedTo && task.status !== TaskStatus.DONE && (
+              <button
+                onClick={handleSendReminder}
+                disabled={isSendingReminder}
+                className="w-full flex items-center justify-center gap-2 brutalist-border px-6 py-3 font-headline text-xs uppercase tracking-widest text-on-surface hover:bg-card-muted transition-colors disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-base">notifications_active</span>
+                {isSendingReminder ? "SENDING..." : `SEND REMINDER → ${task.assignedTo.name}`}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Edit Modal */}
         {isEditModalOpen && (

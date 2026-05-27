@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,7 +20,8 @@ type TaskFormValues = z.infer<typeof taskSchema>;
 
 interface CreateTaskModalProps {
   projectId?: string;
-  projects?: Array<{ id: string; title: string }>;
+  projects?: Array<{ id: string; title: string; clientId?: string | null }>;
+  brands?: Array<{ id: string; companyName: string }>;
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
   isOpen: boolean;
   onClose: () => void;
@@ -29,10 +30,11 @@ interface CreateTaskModalProps {
 
 const PRIORITY_OPTIONS = Object.values(Priority).map((p) => ({ value: p, label: p }));
 
-export function CreateTaskModal({ projectId, projects = [], teamMembers = [], isOpen, onClose, onSuccess }: CreateTaskModalProps) {
+export function CreateTaskModal({ projectId, projects = [], brands = [], teamMembers = [], isOpen, onClose, onSuccess }: CreateTaskModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
   const [assigneeSearch, setAssigneeSearch] = useState("");
+  const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const assigneeRef = useRef<HTMLDivElement>(null);
 
   const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<TaskFormValues & { selectedProjectId?: string }>({
@@ -48,6 +50,15 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
 
   const selectedAssigneeIds = watch("assigneeIds") || [];
 
+  // Filter projects by selected brand
+  const filteredProjects = useMemo(() => {
+    if (!selectedBrandId) return projects;
+    return projects.filter((p) => p.clientId === selectedBrandId);
+  }, [projects, selectedBrandId]);
+
+  const projectOptions = filteredProjects.map((p) => ({ value: p.id, label: p.title }));
+  const brandOptions = brands.map((b) => ({ value: b.id, label: b.companyName }));
+
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -60,8 +71,6 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
   }, []);
 
   if (!isOpen) return null;
-
-  const projectOptions = projects.map((p) => ({ value: p.id, label: p.title }));
 
   const filteredMembers = teamMembers.filter(
     (m) => m.name.toLowerCase().includes(assigneeSearch.toLowerCase())
@@ -90,6 +99,7 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
       });
       reset();
+      setSelectedBrandId("");
       onClose();
       onSuccess?.(task.id);
     } catch (error: any) {
@@ -101,8 +111,8 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="brutalist-border bg-card w-full max-w-lg mx-4 shadow-[4px_4px_0px_#180065] animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-8">
+      <div className="brutalist-border bg-card w-full max-w-lg mx-4 shadow-[4px_4px_0px_#180065] animate-in zoom-in-95 duration-300 my-auto">
         {/* Modal Header */}
         <div className="p-4 brutalist-border border-t-0 border-x-0 flex items-center justify-between bg-[#180065] text-white relative overflow-hidden">
           <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
@@ -112,28 +122,45 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
           </button>
         </div>
 
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5">
+        {/* Modal Body — scrollable */}
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5 max-h-[75vh] overflow-y-auto">
 
-          {/* Project Selector */}
+          {/* Brand + Project Selectors (only when no pre-set projectId) */}
           {!projectId && (
-            <div className="space-y-1">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">PROJECT <span className="text-on-surface/30">(OPTIONAL)</span></label>
-              <Controller
-                name="selectedProjectId"
-                control={control}
-                render={({ field }) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Brand Selector */}
+              {brands.length > 0 && (
+                <div className="space-y-1">
+                  <label className="font-label text-[9px] uppercase text-primary tracking-widest">BRAND <span className="text-on-surface/30">(OPTIONAL)</span></label>
                   <AppSelect
-                    options={projectOptions}
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    placeholder="— SELECT PROJECT —"
+                    options={brandOptions}
+                    value={selectedBrandId}
+                    onChange={(val) => {
+                      setSelectedBrandId(val);
+                      // Reset project when brand changes
+                      setValue("selectedProjectId", "");
+                    }}
+                    placeholder="— SELECT BRAND —"
                   />
-                )}
-              />
-              {errors.selectedProjectId && (
-                <p className="text-red-500 text-[9px] font-mono uppercase">{errors.selectedProjectId.message as string}</p>
+                </div>
               )}
+
+              {/* Project Selector */}
+              <div className="space-y-1">
+                <label className="font-label text-[9px] uppercase text-primary tracking-widest">PROJECT <span className="text-on-surface/30">(OPTIONAL)</span></label>
+                <Controller
+                  name="selectedProjectId"
+                  control={control}
+                  render={({ field }) => (
+                    <AppSelect
+                      options={projectOptions}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      placeholder="— SELECT PROJECT —"
+                    />
+                  )}
+                />
+              </div>
             </div>
           )}
 
@@ -190,7 +217,7 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
           </div>
 
           {/* Multi-Assign To */}
-          <div className="space-y-1" ref={assigneeRef}>
+          <div className="space-y-1 relative" ref={assigneeRef}>
             <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
             {/* Selected Assignees Chips */}
             <div
@@ -221,10 +248,10 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
                 })
               )}
             </div>
-            {/* Dropdown */}
+            {/* Dropdown — constrained height, scrollable, sticky search */}
             {assigneeDropdownOpen && (
-              <div className="brutalist-border bg-surface-container-lowest max-h-40 overflow-y-auto shadow-lg mt-1">
-                <div className="p-1.5 border-b border-on-surface/10">
+              <div className="brutalist-border bg-surface-container-lowest max-h-48 overflow-y-auto shadow-lg mt-1 z-20 relative">
+                <div className="p-1.5 border-b border-on-surface/10 sticky top-0 bg-surface-container-lowest z-10">
                   <input
                     type="text"
                     value={assigneeSearch}
@@ -248,7 +275,7 @@ export function CreateTaskModal({ projectId, projects = [], teamMembers = [], is
                       </div>
                       <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
                       {member.department && (
-                        <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto">{member.department}</span>
+                        <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
                       )}
                     </button>
                   );

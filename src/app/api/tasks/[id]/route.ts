@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { notify } from "@/lib/notify";
 import { hasPermission } from "@/lib/permissions";
 import type { Role, TaskStatus } from "@prisma/client";
 import { z } from "zod";
@@ -140,39 +141,36 @@ export async function PATCH(
   }
 
   // Auto-notifications based on status changes
-  if (data.status === "IN_REVIEW" && existingTask.project.assignedManagerId) {
-    await db.notification.create({
-      data: {
-        userId: existingTask.project.assignedManagerId,
-        type: "APPROVAL_REQUESTED",
-        title: "Task ready for review",
-        body: `"${updatedTask.title}" has been submitted for review`,
-        linkUrl: `/tasks?id=${id}`,
-      },
+  if (data.status === "IN_REVIEW" && existingTask.project?.assignedManagerId) {
+    await notify({
+      userId: existingTask.project.assignedManagerId,
+      type: "APPROVAL_REQUESTED",
+      title: "Task ready for review",
+      body: `"${updatedTask.title}" has been submitted for review`,
+      linkUrl: `/tasks?id=${id}`,
+      tag: `review-${id}`,
     });
   }
 
-  if (data.status === "CLIENT_APPROVAL" && existingTask.project.client.pocAdminId) {
-    await db.notification.create({
-      data: {
-        userId: existingTask.project.client.pocAdminId,
-        type: "APPROVAL_REQUESTED",
-        title: "Ready for client approval",
-        body: `"${updatedTask.title}" passed internal review`,
-        linkUrl: `/tasks?id=${id}`,
-      },
+  if (data.status === "CLIENT_APPROVAL" && existingTask.project?.client?.pocAdminId) {
+    await notify({
+      userId: existingTask.project.client.pocAdminId,
+      type: "APPROVAL_REQUESTED",
+      title: "Ready for client approval",
+      body: `"${updatedTask.title}" passed internal review`,
+      linkUrl: `/tasks?id=${id}`,
+      tag: `client-approval-${id}`,
     });
   }
 
   if ((data.status === "REVISION" || data.status === "CLIENT_REVISION") && existingTask.assignedToId) {
-    await db.notification.create({
-      data: {
-        userId: existingTask.assignedToId,
-        type: "REVISION_REQUESTED",
-        title: "Revision requested",
-        body: `"${updatedTask.title}" needs changes`,
-        linkUrl: `/tasks?id=${id}`,
-      },
+    await notify({
+      userId: existingTask.assignedToId,
+      type: "REVISION_REQUESTED",
+      title: "Revision requested",
+      body: `"${updatedTask.title}" needs changes`,
+      linkUrl: `/tasks?id=${id}`,
+      tag: `revision-${id}`,
     });
   }
 

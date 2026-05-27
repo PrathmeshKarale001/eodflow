@@ -7,6 +7,8 @@ import { SearchDialog } from "@/components/search/search-dialog";
 import { MainContentContainer } from "@/components/layout/main-content-container";
 import { ChatProvider } from "@/components/chat/chat-provider";
 import { ChatToastContainer } from "@/components/chat/chat-toast";
+import { RealtimeSync } from "@/components/realtime-sync";
+import { PushNotificationPrompt } from "@/components/push-notification-prompt";
 import { getUserChannels } from "@/app/actions/chat";
 import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
@@ -97,12 +99,18 @@ export default async function DashboardLayout({
           {children}
         </MainContentContainer>
 
+        {/* Global realtime sync — auto-refresh all pages on task events */}
+        <RealtimeSync />
+
         {/* Global Search */}
         <SearchDialog />
       </div>
 
       {/* Global chat toast notifications — visible on all dashboard pages */}
       <ChatToastContainer />
+
+      {/* Push notification opt-in prompt */}
+      <PushNotificationPrompt />
     </ChatProvider>
   );
 }

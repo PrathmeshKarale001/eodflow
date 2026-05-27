@@ -143,6 +143,7 @@ model User {
   invitations       Invitation[]
   deptChangeRequests DepartmentChangeRequest[] @relation("DeptChangeUser")
   deptChangeReviews  DepartmentChangeRequest[] @relation("DeptChangeReviewer")
+  pushSubscriptions  PushSubscription[]
 
   @@map("users")
 }
@@ -520,6 +521,25 @@ model Notification {
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+// =============================================================================
+// WEB PUSH SUBSCRIPTIONS
+// =============================================================================
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String   @unique  // Browser push endpoint URL
+  p256dh     String             // Encryption key
+  auth       String             // Auth secret
+  userAgent  String?            // Device info for debugging
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 // =============================================================================

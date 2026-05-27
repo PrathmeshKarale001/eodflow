@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { notify } from "@/lib/notify";
 import { hasPermission } from "@/lib/permissions";
 import { Priority, TaskStatus, Role } from "@prisma/client";
 import { cacheDelete, CacheKeys } from "@/lib/cache";
@@ -55,7 +56,7 @@ export async function createTask(data: {
       priority: data.priority,
       assignedToId: leadAssigneeId || undefined,
       assignedById: session.user.id,
-      status: TaskStatus.BACKLOG,
+      status: TaskStatus.TODO,
       dueDate: data.dueDate,
       ...(assigneeConnect ? { assignees: { connect: assigneeConnect } } : {}),
     },
@@ -88,6 +89,20 @@ export async function createTask(data: {
     assigneeIds: data.assigneeIds || (leadAssigneeId ? [leadAssigneeId] : []),
   }).catch(() => {});
 
+  // Notify assigned employee(s) that work has been assigned
+  const assigneesToNotify = (data.assigneeIds || (leadAssigneeId ? [leadAssigneeId] : []))
+    .filter((id) => id !== session.user.id); // Don't notify yourself
+  if (assigneesToNotify.length > 0) {
+    const { notifyMany } = await import("@/lib/notify");
+    notifyMany(assigneesToNotify, {
+      type: "TASK_ASSIGNED",
+      title: `New task assigned: ${data.title}`,
+      body: `${session.user.name || "Manager"} assigned you a new task`,
+      linkUrl: `/tasks?id=${task.id}`,
+      tag: `task-assigned-${task.id}`,
+    }).catch(() => {});
+  }
+
   return task;
 }
 
@@ -99,10 +114,10 @@ const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   [TaskStatus.BACKLOG]: [TaskStatus.TODO],
   [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS],
   [TaskStatus.IN_PROGRESS]: [TaskStatus.IN_REVIEW],
-  [TaskStatus.IN_REVIEW]: [TaskStatus.REVISION, TaskStatus.CLIENT_APPROVAL],
+  [TaskStatus.IN_REVIEW]: [TaskStatus.REVISION, TaskStatus.APPROVED],
   [TaskStatus.REVISION]: [TaskStatus.IN_PROGRESS],
-  [TaskStatus.CLIENT_APPROVAL]: [TaskStatus.APPROVED, TaskStatus.CLIENT_REVISION],
-  [TaskStatus.CLIENT_REVISION]: [TaskStatus.IN_PROGRESS],
+  [TaskStatus.CLIENT_APPROVAL]: [TaskStatus.APPROVED], // legacy — kept for existing data
+  [TaskStatus.CLIENT_REVISION]: [TaskStatus.IN_PROGRESS], // legacy — kept for existing data
   [TaskStatus.APPROVED]: [TaskStatus.DONE],
   [TaskStatus.DONE]: [],
 };
@@ -113,6 +128,7 @@ const STATUS_ROLE_RESTRICTIONS: Partial<Record<TaskStatus, Role[]>> = {
   [TaskStatus.APPROVED]: [Role.SUPER_ADMIN, Role.ADMIN],
   [TaskStatus.REVISION]: [Role.SUPER_ADMIN, Role.ADMIN],
   [TaskStatus.CLIENT_REVISION]: [Role.SUPER_ADMIN, Role.ADMIN],
+  [TaskStatus.DONE]: [Role.SUPER_ADMIN, Role.ADMIN],
 };
 
 function isValidTransition(from: TaskStatus, to: TaskStatus): boolean {
@@ -194,7 +210,7 @@ export async function updateTaskStatus(data: {
     },
   });
 
-  revalidatePath(`/projects/${task.projectId}`);
+  if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
 
   // Broadcast task status change notification
@@ -202,13 +218,56 @@ export async function updateTaskStatus(data: {
     type: "TASK_STATUS_CHANGED",
     taskId: data.taskId,
     taskTitle: "Task",
-    projectId: task.projectId,
+    projectId: task.projectId || "",
     actorName: session.user.name || "Someone",
     actorId: session.user.id,
     assigneeIds: task.assignedToId ? [task.assignedToId] : [],
     oldStatus: oldStatus,
     newStatus: data.status,
   }).catch(() => {});
+
+  // ─── Push notifications for critical status changes ───────────────────────
+  // Employee submits for review → notify the project manager
+  if (data.status === TaskStatus.IN_REVIEW && task.projectId) {
+    const project = await db.project.findUnique({
+      where: { id: task.projectId },
+      select: { assignedManagerId: true },
+    });
+    if (project?.assignedManagerId && project.assignedManagerId !== session.user.id) {
+      notify({
+        userId: project.assignedManagerId,
+        type: "APPROVAL_REQUESTED",
+        title: "Task ready for review",
+        body: `"${updatedTask.title}" submitted by ${session.user.name || "an employee"}`,
+        linkUrl: `/tasks?id=${data.taskId}`,
+        tag: `review-${data.taskId}`,
+      }).catch(() => {});
+    }
+  }
+
+  // Manager sends revision → notify the assignee
+  if ((data.status === TaskStatus.REVISION || data.status === TaskStatus.CLIENT_REVISION) && task.assignedToId && task.assignedToId !== session.user.id) {
+    notify({
+      userId: task.assignedToId,
+      type: "REVISION_REQUESTED",
+      title: "Revision requested",
+      body: `Your task needs changes — ${session.user.name || "Manager"}`,
+      linkUrl: `/tasks?id=${data.taskId}`,
+      tag: `revision-${data.taskId}`,
+    }).catch(() => {});
+  }
+
+  // Manager approves → notify the assignee
+  if (data.status === TaskStatus.APPROVED && task.assignedToId && task.assignedToId !== session.user.id) {
+    notify({
+      userId: task.assignedToId,
+      type: "TASK_STATUS_CHANGED",
+      title: "Task approved! ✓",
+      body: `"${updatedTask.title}" has been approved`,
+      linkUrl: `/tasks?id=${data.taskId}`,
+      tag: `approved-${data.taskId}`,
+    }).catch(() => {});
+  }
 
   return updatedTask;
 }
@@ -301,18 +360,17 @@ export async function reassignTask(taskId: string, newAssigneeId: string) {
         },
       },
     }),
-    db.notification.create({
-      data: {
-        userId: newAssigneeId,
-        type: "TASK_ASSIGNED",
-        title: `You've been assigned: ${task.title}`,
-        body: `Assigned by ${session.user.name || "a team member"}`,
-        linkUrl: `/tasks`,
-      },
+    notify({
+      userId: newAssigneeId,
+      type: "TASK_ASSIGNED",
+      title: `You've been assigned: ${task.title}`,
+      body: `Assigned by ${session.user.name || "a team member"}`,
+      linkUrl: `/tasks`,
+      tag: `task-assigned-${taskId}`,
     }),
   ]);
 
-  revalidatePath(`/projects/${task.projectId}`);
+  if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
 
   // Broadcast task assignment notification
@@ -320,7 +378,7 @@ export async function reassignTask(taskId: string, newAssigneeId: string) {
     type: "TASK_CREATED",
     taskId,
     taskTitle: task.title,
-    projectId: task.projectId,
+    projectId: task.projectId || "",
     actorName: session.user.name || "Someone",
     actorId: session.user.id,
     assigneeIds: [newAssigneeId],
@@ -371,16 +429,17 @@ export async function deleteTask(taskId: string) {
 
   const task = await db.task.findUnique({
     where: { id: taskId },
-    select: { id: true, assignedToId: true, projectId: true, title: true },
+    select: { id: true, assignedToId: true, assignedById: true, projectId: true, title: true },
   });
 
   if (!task) throw new Error("Task not found");
 
   const userRole = session.user.role as Role;
   const isAssignee = task.assignedToId === session.user.id;
+  const isCreator = task.assignedById === session.user.id;
 
-  // Decision logic: Admins/Super Admins or the Assignee can delete
-  if (!isAssignee && !hasPermission(userRole, "editAnyTask")) {
+  // Decision logic: Admins/Super Admins, the Assignee, or the Creator can delete
+  if (!isAssignee && !isCreator && !hasPermission(userRole, "editAnyTask")) {
     throw new Error("FORBIDDEN: Insufficient permissions to delete this task.");
   }
 
@@ -456,7 +515,7 @@ export async function updateTask(taskId: string, data: {
     },
   });
 
-  revalidatePath(`/projects/${task.projectId}`);
+  if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
 
   // Broadcast task update notification
@@ -464,7 +523,7 @@ export async function updateTask(taskId: string, data: {
     type: data.status ? "TASK_STATUS_CHANGED" : "TASK_CREATED",
     taskId,
     taskTitle: updatedTask.title,
-    projectId: task.projectId,
+    projectId: task.projectId || "",
     actorName: session.user.name || "Someone",
     actorId: session.user.id,
     assigneeIds: updatedTask.assignedToId ? [updatedTask.assignedToId] : [],
@@ -537,7 +596,7 @@ export async function markTaskDone(taskId: string) {
     }),
   ]);
 
-  revalidatePath(`/projects/${task.projectId}`);
+  if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");
 
   // Broadcast task completion notification
@@ -545,7 +604,7 @@ export async function markTaskDone(taskId: string) {
     type: "TASK_STATUS_CHANGED",
     taskId,
     taskTitle: task.title,
-    projectId: task.projectId,
+    projectId: task.projectId || "",
     actorName: session.user.name || "Someone",
     actorId: session.user.id,
     assigneeIds: task.assignedToId ? [task.assignedToId] : [],

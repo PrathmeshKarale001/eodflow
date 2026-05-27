@@ -59,6 +59,7 @@ export default async function ProjectsPage() {
   // Build a lookup: projectId → { done, inProgress }
   const statusMap = new Map<string, { done: number; inProgress: number }>();
   for (const row of taskStatusCounts) {
+    if (!row.projectId) continue; // Skip tasks without a project
     const entry = statusMap.get(row.projectId) ?? { done: 0, inProgress: 0 };
     if (row.status === "DONE" || row.status === "APPROVED") {
       entry.done += row._count.id;

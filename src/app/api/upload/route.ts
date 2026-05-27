@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadBuffer } from "@/lib/storage";
 
+// App Router route segment config — raise body limit to 100MB
+export const maxDuration = 60; // seconds (for large uploads on Vercel)
+
 export async function POST(req: NextRequest) {
   // 1. Validate session
   const session = await auth();
@@ -52,8 +55,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-// Max 100MB (R2 supports up to 5GB per upload)
-export const config = {
-  api: { bodyParser: false },
-};

@@ -12,7 +12,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // This eliminates the 2-4 second self-fetch cold start on Vercel.
 // ---------------------------------------------------------------------------
 
-const PUBLIC_PATHS = ["/", "/login", "/join", "/api/auth", "/api/debug-auth", "/api/debug-invitations"];
+const PUBLIC_PATHS = ["/", "/login", "/join"];
 
 // Must match the cookiePrefix set in auth.ts advanced config
 // In production HTTPS, browser prefixes cookies with __Secure-
@@ -28,6 +28,11 @@ export function middleware(req: NextRequest) {
 
   // Allow public paths
   if (PUBLIC_PATHS.some((path) => path === "/" ? pathname === "/" : pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // Skip ALL API routes — they have their own auth() checks
+  if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 

@@ -41,7 +41,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,7 +144,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
   }, [showMentions, mentionUsers, mentionIndex, insertMention]);
 
   const handleSubmit = () => {
-    if (!newComment.trim() && !attachedFile) return;
+    if (!newComment.trim() && attachedFiles.length === 0) return;
 
     setIsSending(true);
     const content = newComment;
@@ -152,29 +152,40 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
 
     startTransition(async () => {
       try {
-        let uploadedUrl = undefined;
-        let uploadedName = undefined;
-
-        if (attachedFile) {
+        // Upload all files sequentially, posting one comment per file
+        if (attachedFiles.length > 0) {
           setIsUploadingFile(true);
           const { uploadFile } = await import("@/lib/storage-client");
-          const res = await uploadFile(attachedFile, `comments/tasks/${taskId}/${currentUserId}`);
-          uploadedUrl = res.url;
-          uploadedName = attachedFile.name;
-        }
 
-        await addComment({
-          taskId,
-          content: content || `Attached file: ${attachedFile?.name}`,
-          parentId,
-          fileUrl: uploadedUrl,
-          fileName: uploadedName,
-        });
+          for (let i = 0; i < attachedFiles.length; i++) {
+            const file = attachedFiles[i];
+            const res = await uploadFile(file, `comments/tasks/${taskId}/${currentUserId}`);
+            // First file gets the text content, rest are file-only comments
+            const commentContent = i === 0
+              ? (content || `Attached file: ${file.name}`)
+              : `Attached file: ${file.name}`;
+
+            await addComment({
+              taskId,
+              content: commentContent,
+              parentId,
+              fileUrl: res.url,
+              fileName: file.name,
+            });
+          }
+        } else {
+          // Text-only comment
+          await addComment({
+            taskId,
+            content,
+            parentId,
+          });
+        }
 
         const updated = await getTaskComments(taskId);
         setComments(updated);
         setNewComment("");
-        setAttachedFile(null);
+        setAttachedFiles([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
         setReplyTo(null);
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -208,6 +219,10 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -302,22 +317,23 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
           </div>
         )}
 
-        {/* Attached file display */}
-        {attachedFile && (
-          <div className="px-4 py-2 bg-surface-container-highest border-t border-on-surface/20 flex items-center justify-between font-mono text-[9px] uppercase tracking-wider">
-            <span className="flex items-center gap-1.5 text-primary">
-              <span className="material-symbols-outlined text-sm">attachment</span>
-              {attachedFile.name} ({(attachedFile.size / 1024).toFixed(1)} KB)
-            </span>
-            <button
-              onClick={() => {
-                setAttachedFile(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }}
-              className="text-on-surface/60 hover:text-red-500 transition-colors"
-            >
-              <span className="material-symbols-outlined text-xs">close</span>
-            </button>
+        {/* Attached files display — multiple */}
+        {attachedFiles.length > 0 && (
+          <div className="px-4 py-2 bg-surface-container-highest border-t border-on-surface/20 space-y-1">
+            {attachedFiles.map((file, idx) => (
+              <div key={idx} className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 text-primary truncate">
+                  <span className="material-symbols-outlined text-sm">attachment</span>
+                  {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                </span>
+                <button
+                  onClick={() => removeFile(idx)}
+                  className="text-on-surface/60 hover:text-red-500 transition-colors flex-shrink-0 ml-2"
+                >
+                  <span className="material-symbols-outlined text-xs">close</span>
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -335,26 +351,34 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isSending || isUploadingFile}
-            className="flex h-10 w-10 items-center justify-center brutalist-border bg-card text-on-surface hover:bg-neutral-200 transition-colors disabled:opacity-50"
-            title="Attach file"
+            className="flex h-10 w-10 items-center justify-center brutalist-border bg-card text-on-surface hover:bg-neutral-200 transition-colors disabled:opacity-50 relative"
+            title="Attach files"
           >
             <span className="material-symbols-outlined text-base">attach_file</span>
+            {attachedFiles.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-on-primary text-[8px] font-bold w-4 h-4 flex items-center justify-center">
+                {attachedFiles.length}
+              </span>
+            )}
           </button>
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setAttachedFile(file);
+              const files = e.target.files;
+              if (files && files.length > 0) {
+                setAttachedFiles((prev) => [...prev, ...Array.from(files)]);
+              }
             }}
           />
           <button
             onClick={handleSubmit}
-            disabled={isSending || isUploadingFile || (!newComment.trim() && !attachedFile)}
+            disabled={isSending || isUploadingFile || (!newComment.trim() && attachedFiles.length === 0)}
             className="mono-clip bg-primary text-on-primary px-4 py-2 h-10 font-headline text-[10px] uppercase shadow-[3px_3px_0px_var(--clr-shadow)] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_var(--clr-shadow)] transition-all disabled:opacity-50 flex items-center justify-center"
           >
-            {isSending ? "..." : "SEND"}
+            {isUploadingFile ? "UPLOADING..." : isSending ? "..." : "SEND"}
           </button>
         </div>
       </div>
@@ -363,20 +387,44 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
 }
 
 // ---------------------------------------------------------------------------
-// Render @mentions as highlighted spans
+// Render @mentions as highlighted + URLs as clickable links
 // ---------------------------------------------------------------------------
 
 function renderContent(content: string) {
-  const parts = content.split(/(@\w+)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("@")) {
+  // First split by URLs
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  const urlParts = content.split(urlRegex);
+
+  return urlParts.map((part, i) => {
+    // Check if this part is a URL
+    if (urlRegex.test(part)) {
+      urlRegex.lastIndex = 0;
+      const displayUrl = part.length > 50 ? part.substring(0, 47) + "..." : part;
       return (
-        <span key={i} className="font-headline text-primary text-xs cursor-pointer hover:underline">
-          {part}
-        </span>
+        <a
+          key={`url-${i}`}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2 hover:text-primary/70 transition-colors break-all"
+        >
+          {displayUrl}
+        </a>
       );
     }
-    return <span key={i}>{part}</span>;
+
+    // For non-URL parts, handle @mentions
+    const mentionParts = part.split(/(@\w+)/g);
+    return mentionParts.map((mp, j) => {
+      if (mp.startsWith("@")) {
+        return (
+          <span key={`mention-${i}-${j}`} className="font-headline text-primary text-xs cursor-pointer hover:underline">
+            {mp}
+          </span>
+        );
+      }
+      return <span key={`text-${i}-${j}`}>{mp}</span>;
+    });
   });
 }
 
@@ -449,7 +497,7 @@ function CommentBubble({
                 onClick={() => onDelete(comment.id)}
                 className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-red-500 transition-colors"
               >
-                DELETE
+              DELETE
               </button>
             ) : null}
           </div>

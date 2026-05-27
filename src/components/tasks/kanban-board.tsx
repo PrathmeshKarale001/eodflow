@@ -33,8 +33,6 @@ const KANBAN_COLUMNS: TaskStatus[] = [
   TaskStatus.IN_PROGRESS,
   TaskStatus.IN_REVIEW,
   TaskStatus.REVISION,
-  TaskStatus.CLIENT_REVISION,
-  TaskStatus.CLIENT_APPROVAL,
   TaskStatus.APPROVED,
   TaskStatus.DONE,
 ];
@@ -49,6 +47,7 @@ interface KanbanBoardProps {
     dueDate: Date | null;
     revisionCount: number;
     projectId?: string | null;
+    assignedById?: string | null;
     assignedTo: { id: string; name: string; image: string | null } | null;
     assignees?: Array<{ id: string; name: string; image: string | null }>;
     _count: { comments: number; files: number; subtasks: number };

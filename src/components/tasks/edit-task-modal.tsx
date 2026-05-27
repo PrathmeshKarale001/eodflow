@@ -28,7 +28,7 @@ interface EditTaskModalProps {
     assignedToId: string | null;
     dueDate: Date | null;
     status: TaskStatus;
-    projectId: string;
+    projectId: string | null;
   };
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
   isOpen: boolean;

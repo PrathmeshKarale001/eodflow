@@ -131,13 +131,25 @@ self.addEventListener("push", (event) => {
   if (!event.data) return;
   try {
     const data = event.data.json();
+    const options = {
+      body: data.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: data.tag || "eod-flow-" + Date.now(),
+      data: { url: data.url || "/overview" },
+      // Vibration pattern for mobile (buzz-pause-buzz)
+      vibrate: [200, 100, 200],
+      // Keep notification visible until user interacts (critical for reminders)
+      requireInteraction: true,
+      timestamp: data.timestamp || Date.now(),
+      actions: [
+        { action: "open", title: "OPEN" },
+        { action: "dismiss", title: "DISMISS" },
+      ],
+    };
+
     event.waitUntil(
-      self.registration.showNotification(data.title || "EOD Flow", {
-        body: data.body || "",
-        icon: "/icon-192.png",
-        badge: "/icon-192.png",
-        data: { url: data.url || "/overview" },
-      })
+      self.registration.showNotification(data.title || "EOD Flow", options)
     );
   } catch {
     // Silently fail for malformed push data
@@ -146,12 +158,22 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
+  if (event.action === "dismiss") return;
+
   const url = event.notification.data?.url || "/overview";
+
   event.waitUntil(
-    self.clients.matchAll({ type: "window" }).then((clients) => {
-      // Focus existing tab or open new
-      const existing = clients.find((c) => c.url.includes(url));
-      if (existing) return existing.focus();
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      // Focus existing tab if one is open with the app
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.focus();
+          client.navigate(url);
+          return;
+        }
+      }
+      // Otherwise open a new tab
       return self.clients.openWindow(url);
     })
   );
