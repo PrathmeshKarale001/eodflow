@@ -234,12 +234,12 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id, userId]);
 
-  const handleUploadFiles = async (files: File[]) => {
+  const handleUploadFiles = async (fileList: File[]) => {
     setIsUploading(true);
     try {
-      for (const file of files) {
+      for (const file of fileList) {
         const { url } = await uploadFile(file, `tasks/${task.id}/${userId}`);
-        await createTaskFileRecord({
+        const record = await createTaskFileRecord({
           taskId: task.id,
           uploadedById: userId,
           filename: file.name,
@@ -248,7 +248,26 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
           mimeType: file.type,
           fileSize: file.size,
         });
+
+        // Immediately add to local state so the file shows without refresh
+        setFiles((prev) => [
+          {
+            id: record.id,
+            filename: record.filename,
+            fileUrl: record.fileUrl,
+            mimeType: record.mimeType,
+            fileSize: record.fileSize,
+            createdAt: new Date(record.createdAt),
+            uploadedById: userId,
+            uploadedBy: { name: "You" },
+            version: record.version ?? 1,
+            parentFileId: record.parentFileId ?? null,
+          },
+          ...prev,
+        ]);
       }
+      const { toast } = await import("react-hot-toast");
+      toast.success(`${fileList.length} file${fileList.length > 1 ? "s" : ""} uploaded.`);
     } catch (error: any) {
       const { toast } = await import("react-hot-toast");
       toast.error(error?.message || "Upload failed.", { duration: 5000 });
