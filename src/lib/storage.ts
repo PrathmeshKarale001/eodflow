@@ -18,7 +18,7 @@ import {
 
 let _r2: S3Client | null = null;
 
-function getR2(): S3Client {
+export function getR2Client(): S3Client {
   if (!_r2) {
     const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
     const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
@@ -42,8 +42,12 @@ function getR2(): S3Client {
   return _r2;
 }
 
-const BUCKET = process.env.CLOUDFLARE_R2_BUCKET_NAME || "eod-flow-storage";
-const PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL!;
+export const R2_BUCKET = process.env.CLOUDFLARE_R2_BUCKET_NAME || "eod-flow-storage";
+export const R2_PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL!;
+
+// Internal aliases for backward compatibility
+const BUCKET = R2_BUCKET;
+const PUBLIC_URL = R2_PUBLIC_URL;
 
 // ---------------------------------------------------------------------------
 // Upload a file to R2
@@ -57,7 +61,7 @@ export async function uploadFile(
   const filePath = `${pathPrefix}/${Date.now()}_${safeFileName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  await getR2().send(
+  await getR2Client().send(
     new PutObjectCommand({
       Bucket: BUCKET,
       Key: filePath,
@@ -86,7 +90,7 @@ export async function uploadBuffer(
   }
 
   try {
-    await getR2().send(
+    await getR2Client().send(
       new PutObjectCommand({
         Bucket: BUCKET,
         Key: filePath,
@@ -119,7 +123,7 @@ export function getFileUrl(path: string): string {
 
 export async function deleteStorageFile(filePath: string): Promise<void> {
   try {
-    await getR2().send(
+    await getR2Client().send(
       new DeleteObjectCommand({
         Bucket: BUCKET,
         Key: filePath,

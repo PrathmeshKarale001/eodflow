@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { uploadFileRecord } from "@/app/actions/files";
+import { uploadFile } from "@/lib/storage-client";
 import { AppSelect } from "@/components/ui/app-select";
 
 interface FileUploadModalProps {
@@ -73,24 +74,8 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
             pathPrefix = `general/${userId}`;  
           }
 
-          // Upload via server-side API route — uses service role key, bypasses RLS.
-          // Direct client-side Supabase uploads fail because the app uses NextAuth
-          // (not Supabase Auth), so the anon client has no authenticated session.
-          const form = new FormData();
-          form.append("file", file);
-          form.append("pathPrefix", pathPrefix);
-
-          const res = await fetch("/api/upload", {
-            method: "POST",
-            body: form,
-          });
-
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({ error: res.statusText }));
-            throw new Error(body.error ?? `HTTP ${res.status}`);
-          }
-
-          const { url } = await res.json();
+          // Upload via presigned URL (direct to R2, bypasses Vercel 4.5MB limit)
+          const { url } = await uploadFile(file, pathPrefix);
 
           setUploadingFiles((prev) =>
             prev.map((f, j) => (j === idx ? { ...f, progress: 70 } : f))
