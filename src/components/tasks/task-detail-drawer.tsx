@@ -100,6 +100,7 @@ interface TaskDetailDrawerProps {
     projectId: string | null;
     assignedById?: string | null;
     assignedTo: { id: string; name: string } | null;
+    assignedBy?: { id: string; name: string } | null;
     files?: Array<{
       id: string;
       filename: string;
@@ -421,6 +422,9 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {task.assignedTo && (
                 <p className="font-label text-[9px] text-outline uppercase tracking-widest mt-1.5">
                   ASSIGNED → <span className="text-primary font-bold">{task.assignedTo.name}</span>
+                  {task.assignedBy && (
+                    <span className="text-outline/60 ml-2">BY <span className="text-on-surface/60 font-bold">{task.assignedBy.name}</span></span>
+                  )}
                 </p>
               )}
             </div>
@@ -471,7 +475,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {task.description ? (
                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                   <h3 className="font-label text-[9px] uppercase tracking-widest text-outline mb-2.5">DESCRIPTION</h3>
-                  <p className="font-body text-sm text-foreground/80 leading-relaxed border-l-3 border-primary pl-4 py-1">{task.description}</p>
+                  <p className="font-body text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap border-l-3 border-primary pl-4 py-1">{task.description}</p>
                 </div>
               ) : null}
 

@@ -60,6 +60,7 @@ interface TaskType {
   projectId: string | null;
   assignedById?: string | null;
   assignedTo: { id: string; name: string; image: string | null } | null;
+  assignedBy?: { id: string; name: string } | null;
   project?: { id: string; title: string } | null;
   _count: { files: number };
   subtasks: Array<{ id: string; title: string; isDone: boolean }>;
@@ -267,9 +268,27 @@ export function MyTasksList({
                                   → {task.assignedTo.name}
                                 </span>
                               )}
+                              {task.assignedBy && (
+                                <span className="font-mono text-[8px] uppercase text-on-surface/30 tracking-widest">
+                                  BY {task.assignedBy.name}
+                                </span>
+                              )}
                               {!task.assignedTo && (
                                 <span className="font-mono text-[8px] uppercase text-error/60 tracking-widest">
                                   UNASSIGNED
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {/* For non-admins: show who assigned this task */}
+                          {!canAssign && task.assignedBy && task.assignedBy.id !== userId && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                BY {task.assignedBy.name}
+                              </span>
+                              {task.project && (
+                                <span className="font-mono text-[8px] uppercase text-on-surface/30 tracking-widest">
+                                  • {task.project.title}
                                 </span>
                               )}
                             </div>

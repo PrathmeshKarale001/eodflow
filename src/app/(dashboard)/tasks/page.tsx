@@ -25,6 +25,7 @@ export default async function TasksPage() {
       where: tasksWhereClause,
       include: {
         assignedTo: { select: { id: true, name: true, image: true } },
+        assignedBy: { select: { id: true, name: true } },
         assignees: { select: { id: true, name: true, image: true } },
         project: { select: { id: true, title: true } },
         _count: { select: { files: true } },

@@ -462,7 +462,7 @@ function CommentBubble({
             <span className="font-headline text-[10px] uppercase tracking-widest text-on-surface">{comment.user.name}</span>
             <span className="font-mono text-[8px] text-on-surface/40">{formatTime(comment.createdAt)}</span>
           </div>
-          <p className="font-body text-sm text-on-surface/80 leading-relaxed">{renderContent(comment.content)}</p>
+          <p className="font-body text-sm text-on-surface/80 leading-relaxed whitespace-pre-wrap">{renderContent(comment.content)}</p>
           
           {comment.fileUrl && (
             <div className="mt-2 flex">

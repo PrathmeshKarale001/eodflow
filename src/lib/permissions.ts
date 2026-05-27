@@ -147,7 +147,7 @@ export const ROUTE_ACCESS: Record<string, Role[]> = {
   "/files": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/chat": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/profile": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
-  "/time": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
+
   "/calendar": [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE],
   "/reports": [Role.SUPER_ADMIN, Role.ADMIN],
   "/settings": [Role.SUPER_ADMIN, Role.ADMIN],
@@ -169,7 +169,7 @@ export const SIDEBAR_NAV: NavItem[] = [
   { label: "Overview", href: "/overview", icon: "LayoutDashboard", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   { label: "My tasks", href: "/tasks", icon: "CheckSquare", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   { label: "Calendar", href: "/calendar", icon: "CalendarDays", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
-  { label: "Time Tracker", href: "/time", icon: "Timer", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+
   { label: "Projects", href: "/projects", icon: "FolderKanban", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   { label: "Clients", href: "/clients", icon: "Building2", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   { label: "Files", href: "/files", icon: "FileStack", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
