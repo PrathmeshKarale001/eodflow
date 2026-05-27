@@ -6,8 +6,8 @@
 //   • Network-first for navigation (HTML pages)
 // =============================================================================
 
-const CACHE_NAME = "eod-flow-v3";
-const STATIC_CACHE = "eod-flow-static-v1";
+const CACHE_NAME = "eod-flow-v4";
+const STATIC_CACHE = "eod-flow-static-v2";
 const OFFLINE_URL = "/offline";
 
 // App shell files to pre-cache
@@ -45,14 +45,19 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // Skip non-GET requests (uploads, form submissions, etc.) — let browser handle
   if (request.method !== "GET") return;
 
   // Skip cross-origin requests (Google Fonts, analytics, etc.)
   if (url.origin !== self.location.origin) return;
 
-  // Skip auth routes (never cache auth flows)
-  if (url.pathname.startsWith("/api/auth/") || url.pathname.startsWith("/auth/")) {
+  // Skip auth and upload routes (never cache these)
+  if (
+    url.pathname.startsWith("/api/auth/") ||
+    url.pathname.startsWith("/auth/") ||
+    url.pathname.startsWith("/api/upload") ||
+    url.pathname.startsWith("/api/push/")
+  ) {
     return;
   }
 
@@ -74,24 +79,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ─── Strategy 2: Stale-while-revalidate for API responses ────────────────
+  // ─── Strategy 2: Network-first for API responses ─────────────────────────
+  // Changed from stale-while-revalidate to network-first to prevent
+  // serving stale cached API responses that cause data inconsistencies
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
-      caches.open(CACHE_NAME).then((cache) =>
-        cache.match(request).then((cached) => {
-          const networkFetch = fetch(request)
-            .then((response) => {
-              if (response.status === 200) {
-                cache.put(request, response.clone());
-              }
-              return response;
-            })
-            .catch(() => cached || new Response("{}", { status: 503, headers: { "Content-Type": "application/json" } }));
-
-          // Return cached immediately, update in background
-          return cached || networkFetch;
+      fetch(request)
+        .then((response) => {
+          if (response.status === 200) {
+            const cloned = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
+          }
+          return response;
         })
-      )
+        .catch(() =>
+          caches.match(request).then((cached) =>
+            cached || new Response("{}", { status: 503, headers: { "Content-Type": "application/json" } })
+          )
+        )
     );
     return;
   }

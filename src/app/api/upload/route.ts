@@ -1,16 +1,24 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authApi } from "@/lib/auth";
 import { uploadBuffer } from "@/lib/storage";
 
 // App Router route segment config — raise body limit to 100MB
 export const maxDuration = 60; // seconds (for large uploads on Vercel)
 
 export async function POST(req: NextRequest) {
-  // 1. Validate session
-  const session = await auth();
-  if (!session?.user?.id) {
+  // 1. Validate session — use authApi directly (not the cached auth() wrapper)
+  //    The React cache() wrapper can fail in Route Handlers for non-SUPER_ADMIN roles
+  try {
+    const sessionData = await authApi.api.getSession({
+      headers: req.headers,
+    });
+    if (!sessionData?.user?.id) {
+      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    }
+  } catch (authErr) {
+    console.error("[UPLOAD] Auth error:", authErr);
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 

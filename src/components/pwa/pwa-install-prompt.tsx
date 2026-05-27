@@ -15,8 +15,12 @@ export function PWAInstallPrompt() {
     // Register service worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register("/sw.js")
-        .then(() => console.log("[PWA] Service worker registered"))
+        .register("/sw.js", { updateViaCache: "none" })
+        .then((reg) => {
+          console.log("[PWA] Service worker registered");
+          // Force check for updates immediately
+          reg.update().catch(() => {});
+        })
         .catch((err) => console.warn("[PWA] SW registration failed:", err));
     }
 
