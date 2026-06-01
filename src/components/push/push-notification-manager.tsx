@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 /**
  * PushNotificationManager — Full Web Push subscription flow.
@@ -20,6 +20,76 @@ export function PushNotificationManager() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [showPrompt, setShowPrompt] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+  const subscriptionAttempted = useRef(false);
+
+  /**
+   * Convert a base64 URL-safe VAPID key to a Uint8Array for PushManager.subscribe()
+   */
+  const urlBase64ToUint8Array = useCallback((base64String: string): Uint8Array => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }, []);
+
+  /**
+   * Ensure a push subscription exists and is saved server-side.
+   * Called both after fresh permission grant and on page load (if already granted).
+   */
+  const ensurePushSubscription = useCallback(async () => {
+    if (subscriptionAttempted.current) return;
+    subscriptionAttempted.current = true;
+
+    try {
+      // 1. Get VAPID public key from server
+      const keyRes = await fetch("/api/push/subscribe");
+      if (!keyRes.ok) {
+        console.warn("[PUSH] Failed to fetch VAPID key:", keyRes.status);
+        return;
+      }
+      const { vapidPublicKey } = await keyRes.json();
+
+      if (!vapidPublicKey) {
+        console.warn("[PUSH] No VAPID public key configured on server");
+        return;
+      }
+
+      // 2. Wait for service worker to be ready
+      const registration = await navigator.serviceWorker.ready;
+
+      // 3. Check for existing subscription
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        // 4. Create new subscription
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+        });
+        console.log("[PUSH] New subscription created");
+      }
+
+      // 5. Send subscription to server for storage
+      const saveRes = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: subscription.toJSON() }),
+      });
+
+      if (saveRes.ok) {
+        console.log("[PUSH] Subscription saved successfully");
+      } else {
+        console.error("[PUSH] Failed to save subscription:", saveRes.status);
+      }
+    } catch (err) {
+      console.error("[PUSH] Subscription failed:", err);
+      subscriptionAttempted.current = false; // Allow retry on next load
+    }
+  }, [urlBase64ToUint8Array]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -43,63 +113,7 @@ export function PushNotificationManager() {
       const timer = setTimeout(() => setShowPrompt(true), 10000);
       return () => clearTimeout(timer);
     }
-  }, []);
-
-  /**
-   * Convert a base64 URL-safe VAPID key to a Uint8Array for PushManager.subscribe()
-   */
-  const urlBase64ToUint8Array = useCallback((base64String: string): Uint8Array => {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }, []);
-
-  /**
-   * Ensure a push subscription exists and is saved server-side.
-   * Called both after fresh permission grant and on page load (if already granted).
-   */
-  const ensurePushSubscription = useCallback(async () => {
-    try {
-      // 1. Get VAPID public key from server
-      const keyRes = await fetch("/api/push/subscribe");
-      const { vapidPublicKey } = await keyRes.json();
-
-      if (!vapidPublicKey) {
-        console.warn("[PUSH] No VAPID public key configured on server");
-        return;
-      }
-
-      // 2. Get service worker registration
-      const registration = await navigator.serviceWorker.ready;
-
-      // 3. Check for existing subscription
-      let subscription = await registration.pushManager.getSubscription();
-
-      if (!subscription) {
-        // 4. Create new subscription
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-        });
-      }
-
-      // 5. Send subscription to server for storage
-      await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscription: subscription.toJSON() }),
-      });
-
-      console.log("[PUSH] Subscription saved successfully");
-    } catch (err) {
-      console.error("[PUSH] Subscription failed:", err);
-    }
-  }, [urlBase64ToUint8Array]);
+  }, [ensurePushSubscription]);
 
   const requestPermission = async () => {
     if (typeof window === "undefined") return;
@@ -113,6 +127,7 @@ export function PushNotificationManager() {
       setShowPrompt(false);
 
       if (result === "granted") {
+        subscriptionAttempted.current = false; // Reset so ensurePush runs
         await ensurePushSubscription();
       }
     } catch (err) {

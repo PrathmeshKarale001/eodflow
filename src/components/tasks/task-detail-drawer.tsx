@@ -9,6 +9,7 @@ import { deleteFile, uploadNewVersion } from "@/app/actions/files";
 import { uploadFile } from "@/lib/storage-client";
 import { hasPermission } from "@/lib/permissions";
 import { Role } from "@prisma/client";
+import { reassignTask } from "@/app/actions/tasks";
 import dynamic from "next/dynamic";
 
 // ─── PERF: Lazy-load tab content and edit modal ────────────────────────────
@@ -138,6 +139,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [isUpgradingVersion, setIsUpgradingVersion] = useState(false);
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [isSelfAssigning, setIsSelfAssigning] = useState(false);
 
   // ─── PERF: Load files on-demand when drawer opens ──────────────────────────
   useEffect(() => {
@@ -354,6 +356,25 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     if (userRole === Role.EMPLOYEE && !isAssignee) return false;
     return true;
   });
+
+  // Employee can self-assign if task is unassigned or assigned to someone else
+  const canSelfAssign = userRole === Role.EMPLOYEE && !isAssignee;
+
+  // Handler for self-assignment
+  const handleSelfAssign = async () => {
+    setIsSelfAssigning(true);
+    try {
+      await reassignTask(task.id, userId);
+      const { toast } = await import("react-hot-toast");
+      toast.success("Task assigned to you!", { duration: 3000 });
+      onClose(); // Close and refresh to show updated assignment
+    } catch (error: any) {
+      const { toast } = await import("react-hot-toast");
+      toast.error(error?.message || "Failed to assign task.", { duration: 5000 });
+    } finally {
+      setIsSelfAssigning(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -723,13 +744,26 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
         </div>
 
         {/* Footer Actions — Role-aware status transitions */}
-        {availableActions.length > 0 && (
+        {(availableActions.length > 0 || canSelfAssign) && (
           <div className="p-4 sm:p-5 border-t-2 border-on-surface/10 bg-surface-container-lowest flex-shrink-0 flex flex-col gap-3">
             {task.status !== TaskStatus.DONE && (
               <p className="font-label text-[8px] uppercase tracking-widest text-outline text-center">
                 {isManager ? "MANAGEMENT_ACTIONS" : "YOUR_ACTIONS"} — CURRENT: {task.status.replace(/_/g, " ")}
               </p>
             )}
+
+            {/* Self-assign button for employees */}
+            {canSelfAssign && (
+              <button
+                onClick={handleSelfAssign}
+                disabled={isSelfAssigning}
+                className="w-full flex items-center justify-center gap-2 mono-clip px-6 py-4 font-headline text-sm uppercase hover:translate-y-[1px] hover:shadow-none transition-all disabled:opacity-50 bg-primary-container text-white shadow-[4px_4px_0px_#3b1f8e]"
+              >
+                <span className="material-symbols-outlined text-base">person_add</span>
+                {isSelfAssigning ? "ASSIGNING..." : "ASSIGN_TO_ME"}
+              </button>
+            )}
+
             {availableActions.map((action) => (
               <button
                 key={action.targetStatus}

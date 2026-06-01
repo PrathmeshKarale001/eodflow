@@ -85,7 +85,27 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <ClientUtilities />
-          <Toaster position="bottom-right" />
+          <Toaster
+            position="bottom-right"
+            containerStyle={{ zIndex: 99999 }}
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#1a1a2e',
+                color: '#e0e0e0',
+                border: '1px solid rgba(255,255,255,0.1)',
+                fontSize: '13px',
+                fontFamily: 'var(--font-sans)',
+              },
+              success: {
+                iconTheme: { primary: '#00FF41', secondary: '#0a0a0a' },
+              },
+              error: {
+                iconTheme: { primary: '#ff4444', secondary: '#0a0a0a' },
+                duration: 5000,
+              },
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>
