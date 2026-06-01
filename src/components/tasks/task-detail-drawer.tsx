@@ -807,8 +807,9 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
         {/* Edit Modal */}
         {isEditModalOpen && (
           <EditTaskModal
-            task={{ ...task, assignedToId: task.assignedTo?.id || null }}
+            task={{ ...task, assignedToId: task.assignedTo?.id || null, assignedById: task.assignedBy?.id || null }}
             teamMembers={teamMembers}
+            userRole={userRole}
             isOpen={isEditModalOpen}
             onClose={() => {
               setIsEditModalOpen(false);

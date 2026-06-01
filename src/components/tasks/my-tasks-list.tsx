@@ -92,6 +92,7 @@ export function MyTasksList({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
   const [reassigning, setReassigning] = useState(false);
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -335,49 +336,87 @@ export function MyTasksList({
                       </div>
                     </div>
 
-                    {/* Inline Assignment Dropdown */}
+                    {/* Inline Assignment Dropdown — Multi-select for managers */}
                     {canAssign && assigningTaskId === task.id && (
                       <div className="px-4 md:px-5 pb-3 animate-in slide-in-from-top-2 duration-200">
                         <div className="brutalist-border bg-surface-container-lowest p-4 md:p-3 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-headline text-[9px] uppercase tracking-widest text-on-surface/60">
-                              ASSIGN_TO →
+                              ASSIGN_TO → {selectedAssignees.length > 0 && (
+                                <span className="text-primary">{selectedAssignees.length} SELECTED</span>
+                              )}
                             </span>
-                            <button
-                              onClick={() => setAssigningTaskId(null)}
-                              className="material-symbols-outlined text-xs text-on-surface/40 hover:text-error p-1"
-                            >
-                              close
-                            </button>
+                            <div className="flex items-center gap-2">
+                              {selectedAssignees.length > 0 && (
+                                <button
+                                  onClick={() => {
+                                    // Assign primary (first) + fire off all at once
+                                    const primary = selectedAssignees[0];
+                                    handleReassign(task.id, primary);
+                                    // Assign additional co-assignees
+                                    selectedAssignees.slice(1).forEach((id) => {
+                                      reassignTask(task.id, id).catch(() => {});
+                                    });
+                                    setSelectedAssignees([]);
+                                  }}
+                                  disabled={reassigning}
+                                  className="flex items-center gap-1 px-3 py-1 bg-primary text-on-primary font-headline text-[8px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+                                >
+                                  <span className="material-symbols-outlined text-xs">check</span>
+                                  CONFIRM
+                                </button>
+                              )}
+                              <button
+                                onClick={() => { setAssigningTaskId(null); setSelectedAssignees([]); }}
+                                className="material-symbols-outlined text-xs text-on-surface/40 hover:text-error p-1"
+                              >
+                                close
+                              </button>
+                            </div>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-60 sm:max-h-40 overflow-y-auto pr-1">
-                            {teamMembers.map((member) => (
-                              <button
-                                key={member.id}
-                                disabled={reassigning || member.id === task.assignedTo?.id}
-                                onClick={() => handleReassign(task.id, member.id)}
-                                className={`flex items-center gap-2 px-3 py-2 brutalist-border text-left transition-colors ${
-                                  member.id === task.assignedTo?.id
-                                    ? "bg-primary/10 border-primary/30 opacity-60 cursor-default"
-                                    : "hover:bg-primary/10 hover:border-primary/30"
-                                }`}
-                              >
-                                <div className="h-6 w-6 flex items-center justify-center bg-surface-container-high text-[9px] font-headline font-bold uppercase flex-shrink-0">
-                                  {member.name.charAt(0)}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="font-headline text-[10px] uppercase tracking-wider truncate text-on-surface">
-                                    {member.name}
-                                  </p>
-                                  <p className="font-mono text-[7px] uppercase text-on-surface/40">
-                                    {member.role} · {member.department || "—"}
-                                  </p>
-                                </div>
-                                {member.id === task.assignedTo?.id && (
-                                  <span className="material-symbols-outlined text-xs text-primary ml-auto flex-shrink-0">check</span>
-                                )}
-                              </button>
-                            ))}
+                            {teamMembers.map((member) => {
+                              const isSelected = selectedAssignees.includes(member.id);
+                              const isCurrent = member.id === task.assignedTo?.id;
+                              return (
+                                <button
+                                  key={member.id}
+                                  disabled={reassigning}
+                                  onClick={() => {
+                                    if (isCurrent) return;
+                                    setSelectedAssignees((prev) =>
+                                      prev.includes(member.id)
+                                        ? prev.filter((id) => id !== member.id)
+                                        : [...prev, member.id]
+                                    );
+                                  }}
+                                  className={`flex items-center gap-2 px-3 py-2 brutalist-border text-left transition-colors ${
+                                    isCurrent
+                                      ? "bg-primary/10 border-primary/30 opacity-60 cursor-default"
+                                      : isSelected
+                                      ? "bg-primary/20 border-primary/50 ring-1 ring-primary/30"
+                                      : "hover:bg-primary/10 hover:border-primary/30"
+                                  }`}
+                                >
+                                  <div className={`h-6 w-6 flex items-center justify-center text-[9px] font-headline font-bold uppercase flex-shrink-0 ${
+                                    isSelected ? "bg-primary text-on-primary" : "bg-surface-container-high"
+                                  }`}>
+                                    {isSelected ? "✓" : member.name.charAt(0)}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-headline text-[10px] uppercase tracking-wider truncate text-on-surface">
+                                      {member.name}
+                                    </p>
+                                    <p className="font-mono text-[7px] uppercase text-on-surface/40">
+                                      {member.role} · {member.department || "—"}
+                                    </p>
+                                  </div>
+                                  {isCurrent && (
+                                    <span className="material-symbols-outlined text-xs text-primary ml-auto flex-shrink-0">check</span>
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
                           {reassigning && (
                             <div className="flex items-center gap-2 text-primary">

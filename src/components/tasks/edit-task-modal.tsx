@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { updateTask } from "@/app/actions/tasks";
-import { Priority, TaskStatus } from "@prisma/client";
+import { Priority, TaskStatus, Role } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
 
 const taskSchema = z.object({
@@ -13,6 +13,7 @@ const taskSchema = z.object({
   description: z.string().optional(),
   priority: z.nativeEnum(Priority),
   assignedToId: z.string().optional(),
+  assignedById: z.string().optional(),
   dueDate: z.string().optional(),
   status: z.nativeEnum(TaskStatus),
 });
@@ -26,11 +27,13 @@ interface EditTaskModalProps {
     description: string | null;
     priority: Priority;
     assignedToId: string | null;
+    assignedById?: string | null;
     dueDate: Date | null;
     status: TaskStatus;
     projectId: string | null;
   };
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
+  userRole?: Role;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -38,8 +41,10 @@ interface EditTaskModalProps {
 const PRIORITY_OPTIONS = Object.values(Priority).map((p) => ({ value: p, label: p }));
 const STATUS_OPTIONS = Object.values(TaskStatus).map((s) => ({ value: s, label: s }));
 
-export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditTaskModalProps) {
+export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClose }: EditTaskModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isDirector = userRole === Role.SUPER_ADMIN;
 
   const { register, handleSubmit, control, formState: { errors }, reset } = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -48,6 +53,7 @@ export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditT
       description: task.description || "",
       priority: task.priority,
       assignedToId: task.assignedToId || "",
+      assignedById: task.assignedById || "",
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "",
       status: task.status,
     },
@@ -61,6 +67,7 @@ export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditT
         description: task.description || "",
         priority: task.priority,
         assignedToId: task.assignedToId || "",
+        assignedById: task.assignedById || "",
         dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "",
         status: task.status,
       });
@@ -82,6 +89,7 @@ export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditT
         description: data.description,
         priority: data.priority,
         assignedToId: data.assignedToId || undefined,
+        assignedById: isDirector ? (data.assignedById || undefined) : undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         status: data.status,
       });
@@ -195,6 +203,28 @@ export function EditTaskModal({ task, teamMembers = [], isOpen, onClose }: EditT
               />
             </div>
           </div>
+
+          {/* Assigned By — Director only */}
+          {isDirector && (
+            <div className="space-y-1.5">
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+                ASSIGNED_BY <span className="text-error/60">(DIRECTOR_ONLY)</span>
+              </label>
+              <Controller
+                name="assignedById"
+                control={control}
+                render={({ field }) => (
+                  <AppSelect
+                    options={memberOptions}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="— SELECT ASSIGNER —"
+                    className="h-11"
+                  />
+                )}
+              />
+            </div>
+          )}
 
           {/* Submit */}
           <div className="flex gap-3 pt-2 brutalist-border border-b-0 border-x-0">

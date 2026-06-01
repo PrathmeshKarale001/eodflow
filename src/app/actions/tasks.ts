@@ -469,6 +469,7 @@ export async function updateTask(taskId: string, data: {
   description?: string;
   priority?: Priority;
   assignedToId?: string;
+  assignedById?: string;
   dueDate?: Date;
   status?: TaskStatus;
 }) {
@@ -501,6 +502,7 @@ export async function updateTask(taskId: string, data: {
     data: {
       ...data,
       assignedToId: data.assignedToId === "" ? null : data.assignedToId,
+      assignedById: data.assignedById === "" ? null : data.assignedById,
     },
   });
 
