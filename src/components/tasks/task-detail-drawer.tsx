@@ -10,6 +10,7 @@ import { uploadFile } from "@/lib/storage-client";
 import { hasPermission } from "@/lib/permissions";
 import { Role } from "@prisma/client";
 import { reassignTask } from "@/app/actions/tasks";
+import { toggleSubtask } from "@/app/actions/subtasks";
 import dynamic from "next/dynamic";
 
 // ─── PERF: Lazy-load tab content and edit modal ────────────────────────────
@@ -140,6 +141,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [isSendingReminder, setIsSendingReminder] = useState(false);
   const [isSelfAssigning, setIsSelfAssigning] = useState(false);
+  const [localSubtasks, setLocalSubtasks] = useState(task.subtasks);
 
   // ─── PERF: Load files on-demand when drawer opens ──────────────────────────
   useEffect(() => {
@@ -487,7 +489,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 <div className="brutalist-border p-3 bg-surface-container-lowest">
                   <span className="font-label text-[8px] sm:text-[9px] text-outline uppercase tracking-widest block mb-1">PROGRESS</span>
                   <span className="font-headline text-xs sm:text-sm text-foreground">
-                    {task.subtasks.filter(s => s.isDone).length}/{task.subtasks.length} DONE
+                    {localSubtasks.filter(s => s.isDone).length}/{localSubtasks.length} DONE
                   </span>
                 </div>
               </div>
@@ -507,11 +509,23 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                     SUBTASKS CHECKLIST
                   </h3>
                   <ul className="space-y-2">
-                    {task.subtasks.map((sub) => (
+                    {localSubtasks.map((sub) => (
                       <li key={sub.id} className="flex items-center gap-3 font-label text-[10px] sm:text-[11px] uppercase tracking-wide group">
-                        <span className={`w-5 h-5 brutalist-border flex items-center justify-center text-[10px] transition-colors ${sub.isDone ? "bg-primary text-white border-primary" : "bg-card hover:border-primary"}`}>
+                        <button
+                          onClick={async () => {
+                            // Optimistic update
+                            setLocalSubtasks(prev => prev.map(s => s.id === sub.id ? { ...s, isDone: !s.isDone } : s));
+                            try {
+                              await toggleSubtask(sub.id);
+                            } catch {
+                              // Revert on error
+                              setLocalSubtasks(prev => prev.map(s => s.id === sub.id ? { ...s, isDone: !s.isDone } : s));
+                            }
+                          }}
+                          className={`w-5 h-5 brutalist-border flex items-center justify-center text-[10px] transition-colors cursor-pointer ${sub.isDone ? "bg-primary text-white border-primary" : "bg-card hover:border-primary hover:bg-primary/10"}`}
+                        >
                           {sub.isDone ? "✓" : ""}
-                        </span>
+                        </button>
                         <span className={sub.isDone ? "line-through text-outline/50" : "text-foreground group-hover:text-primary transition-colors"}>{sub.title}</span>
                       </li>
                     ))}

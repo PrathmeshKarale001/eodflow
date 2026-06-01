@@ -218,9 +218,15 @@ export function MessageBubble({
 
   return (
     <div
-      className={`group flex gap-2 ${isOwn ? "flex-row-reverse" : ""}`}
+      className={`group relative flex gap-2 pt-9 -mt-9 ${isOwn ? "flex-row-reverse" : ""}`}
       onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => { setShowActions(false); setShowReactionPicker(false); }}
+      onMouseLeave={(e) => {
+        // Don't hide if cursor moved to the actions bar (which is absolutely positioned)
+        const related = e.relatedTarget as HTMLElement | null;
+        if (related && e.currentTarget.contains(related)) return;
+        setShowActions(false);
+        setShowReactionPicker(false);
+      }}
     >
       {/* Avatar */}
       <div
