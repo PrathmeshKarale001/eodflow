@@ -27,7 +27,13 @@ export default async function TasksPage() {
         assignedTo: { select: { id: true, name: true, image: true } },
         assignedBy: { select: { id: true, name: true } },
         assignees: { select: { id: true, name: true, image: true } },
-        project: { select: { id: true, title: true } },
+        project: {
+          select: {
+            id: true,
+            title: true,
+            client: { select: { id: true, companyName: true, brandColor: true } },
+          },
+        },
         _count: { select: { files: true } },
         subtasks: {
           select: { id: true, title: true, isDone: true },
@@ -36,14 +42,18 @@ export default async function TasksPage() {
       },
       orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
     }),
-    // Fetch team members for assignment dropdown (admins only)
+    // Fetch team members for assignment dropdown (admins get all active, employees get managers to select assigner)
     canAssign
       ? db.user.findMany({
           where: { isActive: true },
           select: { id: true, name: true, role: true, department: true, image: true },
           orderBy: { name: "asc" },
         })
-      : Promise.resolve([]),
+      : db.user.findMany({
+          where: { isActive: true, role: { in: [Role.SUPER_ADMIN, Role.ADMIN] } },
+          select: { id: true, name: true, role: true, department: true, image: true },
+          orderBy: { name: "asc" },
+        }),
     // Fetch projects for Task Creation selector (with clientId for brand filtering)
     canCreateTask
       ? db.project.findMany({

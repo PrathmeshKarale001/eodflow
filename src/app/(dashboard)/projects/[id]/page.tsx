@@ -87,6 +87,7 @@ export default async function ProjectDetailPage({
           id: m.id,
           name: m.name,
           department: m.department,
+          role: m.role,
         }))}
         canCreateTask={canCreateTask}
         userId={session.user.id}

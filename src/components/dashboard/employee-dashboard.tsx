@@ -38,7 +38,7 @@ interface MyTask {
   status: string;
   priority: string;
   dueDate: Date | null;
-  project: { title: string };
+  project: { title: string } | null;
 }
 
 interface Props {
@@ -133,7 +133,7 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority] ?? "bg-gray-400"}`} />
                     <div className="flex-1 min-w-0">
                       <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
-                      <p className="font-mono text-[8px] text-on-surface/40 truncate">{t.project.title}</p>
+                      <p className="font-mono text-[8px] text-on-surface/40 truncate">{t.project?.title ?? "No Project"}</p>
                     </div>
                     <span className={`font-mono text-[8px] px-1.5 py-0.5 ${STATUS_COLOR[t.status] ?? ""}`}>
                       {t.status.replace(/_/g, " ")}

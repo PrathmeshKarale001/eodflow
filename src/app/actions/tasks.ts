@@ -21,6 +21,7 @@ export async function createTask(data: {
   assignedToId?: string;
   assigneeIds?: string[];
   dueDate?: Date;
+  assignedById?: string;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
@@ -55,7 +56,7 @@ export async function createTask(data: {
       description: data.description,
       priority: data.priority,
       assignedToId: leadAssigneeId || undefined,
-      assignedById: session.user.id,
+      assignedById: data.assignedById || session.user.id,
       status: TaskStatus.TODO,
       dueDate: data.dueDate,
       ...(assigneeConnect ? { assignees: { connect: assigneeConnect } } : {}),

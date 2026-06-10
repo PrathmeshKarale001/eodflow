@@ -18,7 +18,7 @@ interface BottleneckAlertsProps {
     status: TaskStatus;
     updatedAt: Date;
     assignedTo: { name: string } | null;
-    project: { title: string };
+    project: { title: string } | null;
   }>;
   activities: Array<{
     id: string;
@@ -106,7 +106,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
                     ) : null}
                   </span>
                 </div>
-                <span className="font-mono text-[8px] text-on-surface/40 flex-shrink-0">{timeAgo}</span>
+                <span className="font-mono text-[8px] text-on-surface/40 flex-shrink-0" suppressHydrationWarning>{timeAgo}</span>
               </div>
             );
           })}

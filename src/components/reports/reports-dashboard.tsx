@@ -93,6 +93,9 @@ export function ReportsDashboard({
 }: ReportsDashboardProps) {
   const [activeTab, setActiveTab] = useState<"DASHBOARD" | "TEAM_AUDIT" | "TASK_AUDIT">("DASHBOARD");
   const [taskFilter, setTaskFilter] = useState<"ALL" | "ONGOING" | "OVERDUE" | "REVISIONS">("ALL");
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [personTaskFilter, setPersonTaskFilter] = useState<"ALL" | "DONE" | "PENDING" | "REVISIONS" | "OVERDUE">("ALL");
 
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -138,118 +141,91 @@ export function ReportsDashboard({
       {activeTab === "DASHBOARD" && (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPICard
-              label="COMPLETION_RATE"
-              value={`${completionRate}%`}
-              sub={`${completedTasks}/${totalTasks} tasks`}
-              icon="donut_large"
-              accent="text-green-400"
-            />
-            <KPICard
-              label="OVERDUE"
-              value={String(overdueTasks)}
-              sub="tasks past deadline"
-              icon="warning"
-              accent={overdueTasks > 0 ? "text-red-500" : "text-green-400"}
-            />
-            <KPICard
-              label="THIS_WEEK"
-              value={String(weeklyCompletions)}
-              sub="tasks completed"
-              icon="event_available"
-              accent="text-blue-400"
-            />
-            <KPICard
-              label="HOURS_LOGGED"
-              value={totalHoursThisWeek.toFixed(1)}
-              sub="this week"
-              icon="schedule"
-              accent="text-amber-400"
-            />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <KPICard label="COMPLETION" value={`${completionRate}%`} sub={`${completedTasks}/${totalTasks} tasks`} icon="donut_large" accent={completionRate >= 70 ? "text-green-400" : completionRate >= 40 ? "text-amber-400" : "text-red-400"} />
+            <KPICard label="OVERDUE" value={String(overdueTasks)} sub="past deadline" icon="warning" accent={overdueTasks > 0 ? "text-red-500" : "text-green-400"} />
+            <KPICard label="IN_PROGRESS" value={String(taskStatusCounts["IN_PROGRESS"] || 0)} sub="actively working" icon="pending_actions" accent="text-amber-400" />
+            <KPICard label="THIS_WEEK" value={String(weeklyCompletions)} sub="completed" icon="event_available" accent="text-blue-400" />
+            <KPICard label="HOURS_LOGGED" value={totalHoursThisWeek.toFixed(1)} sub="this week" icon="schedule" accent="text-purple-400" />
           </div>
 
-          {/* Task Status Breakdown */}
+          {/* Task Pipeline */}
           <div className="brutalist-border bg-card p-5">
-            <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">
-              TASK_STATUS_DISTRIBUTION
-            </h3>
-
-            {/* Stacked bar */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">TASK PIPELINE</h3>
+              <span className="font-mono text-[9px] text-on-surface/40 uppercase">{totalTasks} total</span>
+            </div>
             {totalTasks > 0 && (
-              <div className="h-4 brutalist-border flex overflow-hidden mb-4">
+              <div className="h-7 brutalist-border flex overflow-hidden mb-4">
                 {Object.entries(taskStatusCounts)
                   .sort(([a], [b]) => {
-                    const order = ["TODO", "IN_PROGRESS", "IN_REVIEW", "REVISION", "CLIENT_REVISION", "DONE", "APPROVED"];
+                    const order = ["TODO", "IN_PROGRESS", "IN_REVIEW", "REVISION", "CLIENT_APPROVAL", "CLIENT_REVISION", "DONE", "APPROVED", "BACKLOG"];
                     return order.indexOf(a) - order.indexOf(b);
                   })
-                  .map(([status, count]) => (
-                    <div
-                      key={status}
-                      className={`${TASK_STATUS_COLORS[status] || "bg-neutral-500"} h-full transition-all`}
-                      style={{ width: `${(count / totalTasks) * 100}%` }}
-                      title={`${status}: ${count}`}
-                    />
-                  ))}
+                  .map(([status, count]) => {
+                    const pct = (count / totalTasks) * 100;
+                    if (pct < 1) return null;
+                    return (
+                      <div key={status} className={`${TASK_STATUS_COLORS[status] || "bg-neutral-500"} h-full transition-all relative group cursor-default`} style={{ width: `${pct}%` }} title={`${status}: ${count}`}>
+                        {pct > 6 && <span className="absolute inset-0 flex items-center justify-center font-mono text-[8px] text-white/90 font-bold">{count}</span>}
+                      </div>
+                    );
+                  })}
               </div>
             )}
-
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3">
-              {Object.entries(taskStatusCounts).map(([status, count]) => (
-                <div key={status} className="flex items-center gap-1.5">
-                  <div className={`w-2 h-2 ${TASK_STATUS_COLORS[status] || "bg-neutral-500"}`} />
-                  <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/50">
-                    {status.replace(/_/g, " ")}
-                  </span>
-                  <span className="font-mono text-[8px] text-primary font-bold">{count}</span>
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-x-4 gap-y-2">
+              {Object.entries(taskStatusCounts)
+                .sort(([a], [b]) => {
+                  const order = ["TODO", "IN_PROGRESS", "IN_REVIEW", "REVISION", "CLIENT_APPROVAL", "CLIENT_REVISION", "DONE", "APPROVED", "BACKLOG"];
+                  return order.indexOf(a) - order.indexOf(b);
+                })
+                .map(([status, count]) => (
+                <div key={status} className="flex items-center gap-2">
+                  <div className={`w-2.5 h-2.5 flex-shrink-0 ${TASK_STATUS_COLORS[status] || "bg-neutral-500"}`} />
+                  <div className="min-w-0">
+                    <span className="font-mono text-[8px] uppercase tracking-wider text-on-surface/50 block truncate">{status.replace(/_/g, " ")}</span>
+                    <span className="font-mono text-[10px] text-card-text font-bold">{count}</span>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Project Progress */}
+            {/* Project Health */}
             <div className="brutalist-border bg-card p-5">
-              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">
-                PROJECT_PROGRESS
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">PROJECT HEALTH</h3>
+                <span className="font-mono text-[9px] text-on-surface/40 uppercase">{projectProgress.length} active</span>
+              </div>
               <div className="space-y-3">
                 {projectProgress.length === 0 ? (
-                  <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-4">
-                    NO_ACTIVE_PROJECTS
-                  </p>
+                  <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-8">NO ACTIVE PROJECTS</p>
                 ) : (
                   projectProgress.map((p) => {
                     const isOverdue = p.deadline && new Date(p.deadline) < new Date() && p.status !== "COMPLETED";
+                    const daysLeft = p.deadline ? Math.ceil((new Date(p.deadline).getTime() - new Date().getTime()) / 864e5) : null;
+                    const isAtRisk = !isOverdue && daysLeft !== null && daysLeft < 7 && p.progress < 80;
+                    const barColor = isOverdue ? "bg-red-500" : isAtRisk ? "bg-amber-400" : "bg-primary";
                     return (
-                      <Link
-                        key={p.id}
-                        href={`/projects/${p.id}`}
-                        className="block group"
-                      >
-                        <div className="flex items-center justify-between mb-1">
+                      <Link key={p.id} href={`/projects/${p.id}`} className="block group">
+                        <div className="flex items-start justify-between mb-1.5 gap-2">
                           <div className="min-w-0 flex-1">
-                            <span className="font-headline text-[10px] uppercase tracking-wider text-card-text group-hover:text-primary transition-colors truncate block">
-                              {p.title}
-                            </span>
-                            <span className="font-mono text-[8px] uppercase text-on-surface/30 tracking-widest">
-                              {p.clientName}
-                              {p.deadline && (
-                                <> · {new Date(p.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
-                              )}
-                              {isOverdue && <span className="text-red-500 ml-1">OVERDUE</span>}
-                            </span>
+                            <span className="font-headline text-[11px] uppercase tracking-wider text-card-text group-hover:text-primary transition-colors truncate block">{p.title}</span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="font-mono text-[8px] text-on-surface/30 uppercase">{p.clientName}</span>
+                              {p.deadline && <span className="font-mono text-[8px] text-on-surface/30">· {new Date(p.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</span>}
+                              {isOverdue && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-red-500/15 text-red-400 font-bold">OVERDUE</span>}
+                              {isAtRisk && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-amber-500/15 text-amber-400 font-bold">AT RISK</span>}
+                            </div>
                           </div>
-                          <span className="font-mono text-[9px] text-primary font-bold ml-2">
-                            {p.progress}%
-                          </span>
+                          <div className="text-right flex-shrink-0">
+                            <span className="font-headline text-sm text-primary">{p.progress}%</span>
+                            <span className="font-mono text-[8px] text-on-surface/30 block">{p.completedCount}/{p.taskCount}</span>
+                          </div>
                         </div>
-                        <div className="h-1 bg-surface-container-high overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-500 ${isOverdue ? "bg-red-500" : "bg-primary"}`}
-                            style={{ width: `${p.progress}%` }}
-                          />
+                        <div className="h-1.5 bg-surface-container-high overflow-hidden rounded-sm">
+                          <div className={`h-full transition-all duration-700 ${barColor}`} style={{ width: `${p.progress}%` }} />
                         </div>
                       </Link>
                     );
@@ -258,46 +234,41 @@ export function ReportsDashboard({
               </div>
             </div>
 
-            {/* Team Performance */}
+            {/* Team Leaderboard */}
             <div className="brutalist-border bg-card p-5">
-              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">
-                TEAM_PERFORMANCE
-                <span className="font-mono text-[8px] text-on-surface/30 ml-2">THIS MONTH</span>
-              </h3>
-              <div className="space-y-2">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">TEAM LEADERBOARD</h3>
+                <span className="font-mono text-[9px] text-on-surface/40 uppercase">This Month</span>
+              </div>
+              <div className="space-y-1">
                 {teamPerformance.length === 0 ? (
-                  <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-4">
-                    NO_TEAM_DATA
-                  </p>
+                  <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-8">NO TEAM DATA</p>
                 ) : (
                   teamPerformance
                     .sort((a, b) => b.completedThisMonth - a.completedThisMonth)
                     .slice(0, 10)
-                    .map((m) => (
-                      <div key={m.id} className="flex items-center gap-3 py-1.5">
-                        <div className="h-6 w-6 flex items-center justify-center bg-surface-container-high text-[9px] font-headline font-bold uppercase flex-shrink-0">
-                          {m.name.charAt(0)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline justify-between">
-                            <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">
-                              {m.name}
-                            </span>
-                            <span className="font-mono text-[8px] text-on-surface/40 ml-2 flex-shrink-0">
-                              {m.department || "—"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-0.5">
-                            <span className="font-mono text-[8px] text-on-surface/40 uppercase tracking-widest">
-                              {m.totalTasks} assigned
-                            </span>
-                            <span className="font-mono text-[8px] text-green-400 font-bold uppercase tracking-widest">
-                              {m.completedThisMonth} done
-                            </span>
+                    .map((m, idx) => {
+                      const ratio = m.totalTasks > 0 ? Math.round((m.completedThisMonth / m.totalTasks) * 100) : 0;
+                      return (
+                        <div key={m.id} className="flex items-center gap-3 py-2 hover:bg-surface-container-lowest/50 transition-colors px-1 -mx-1">
+                          <span className={`w-5 h-5 flex items-center justify-center font-headline text-[9px] font-bold flex-shrink-0 ${idx < 3 ? "bg-primary/20 text-primary" : "bg-surface-container-high text-on-surface/40"}`}>{idx + 1}</span>
+                          <div className="h-7 w-7 flex items-center justify-center bg-surface-container-high text-[10px] font-headline font-bold uppercase flex-shrink-0">{m.name.charAt(0)}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-baseline justify-between">
+                              <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">{m.name}</span>
+                              <span className="font-mono text-[8px] text-on-surface/30 ml-2 flex-shrink-0">{m.department || "—"}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <div className="flex-1 h-1 bg-surface-container-high overflow-hidden rounded-sm">
+                                <div className="h-full bg-green-500/70 transition-all duration-500" style={{ width: `${ratio}%` }} />
+                              </div>
+                              <span className="font-mono text-[8px] text-green-400 font-bold flex-shrink-0">{m.completedThisMonth}</span>
+                              <span className="font-mono text-[8px] text-on-surface/25 flex-shrink-0">/ {m.totalTasks}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                 )}
               </div>
             </div>
@@ -305,42 +276,39 @@ export function ReportsDashboard({
 
           {/* Monthly Stats + Recent Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Project status counts */}
+            {/* Project Status */}
             <div className="brutalist-border bg-card p-5">
-              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">
-                PROJECT_STATUS
-              </h3>
+              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">PROJECT STATUS</h3>
               <div className="space-y-2">
-                {Object.entries(projectStatusCounts).map(([status, count]) => (
-                  <div key={status} className="flex items-center justify-between">
-                    <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/50">
-                      {status.replace(/_/g, " ")}
-                    </span>
-                    <span className="font-headline text-sm text-card-text">{count}</span>
-                  </div>
-                ))}
+                {Object.entries(projectStatusCounts).map(([status, count]) => {
+                  const colors: Record<string, string> = { ACTIVE: "text-green-400", DRAFT: "text-blue-400", COMPLETED: "text-purple-400", ARCHIVED: "text-on-surface/30", ON_HOLD: "text-amber-400" };
+                  return (
+                    <div key={status} className="flex items-center justify-between py-1.5">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/50">{status.replace(/_/g, " ")}</span>
+                      <span className={`font-headline text-lg ${colors[status] || "text-card-text"}`}>{count}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Monthly overview */}
+            {/* Monthly Velocity */}
             <div className="brutalist-border bg-card p-5">
-              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">
-                MONTHLY_OVERVIEW
-              </h3>
+              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">MONTHLY VELOCITY</h3>
               <div className="space-y-4">
-                <div className="text-center py-2">
-                  <span className="font-headline text-4xl text-primary">{monthlyCompletions}</span>
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mt-1">
-                    TASKS COMPLETED THIS MONTH
-                  </p>
+                <div className="text-center py-3">
+                  <span className="font-headline text-5xl text-primary">{monthlyCompletions}</span>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mt-1">Tasks This Month</p>
                 </div>
-                <div className="brutalist-border bg-surface-container-lowest p-3 flex items-center justify-between">
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40">
-                    WEEKLY AVG
-                  </span>
-                  <span className="font-headline text-sm text-card-text">
-                    {(monthlyCompletions / 4).toFixed(1)}
-                  </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
+                    <span className="font-headline text-lg text-card-text block">{(monthlyCompletions / 4).toFixed(1)}</span>
+                    <span className="font-mono text-[8px] text-on-surface/40 uppercase">Weekly Avg</span>
+                  </div>
+                  <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
+                    <span className="font-headline text-lg text-card-text block">{weeklyCompletions}</span>
+                    <span className="font-mono text-[8px] text-on-surface/40 uppercase">This Week</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -388,14 +356,275 @@ export function ReportsDashboard({
         </>
       )}
 
-      {/* ── View 2: Team Performance Audit ── */}
-      {activeTab === "TEAM_AUDIT" && (
+      {/* ── View 2: Executive Team Performance (Enhanced) ── */}
+      {activeTab === "TEAM_AUDIT" && (() => {
+        const employees = teamPerformanceReport.filter((u: any) => u.type === "employee");
+        const managers = teamPerformanceReport.filter((u: any) => u.type === "manager");
+        const avgProperlyRate = employees.length > 0 ? Math.round(employees.reduce((s: number, e: any) => s + e.doneProperlyRate, 0) / employees.length) : 100;
+        const avgOverdueRate = employees.length > 0 ? Math.round(employees.reduce((s: number, e: any) => s + e.overdueRate, 0) / employees.length) : 0;
+        const totalCompleted = employees.reduce((s: number, e: any) => s + e.completedCount, 0);
+        const totalOngoing = employees.reduce((s: number, e: any) => s + e.ongoingCount, 0);
+
+        const selectedPerson = teamPerformanceReport.find((u: any) => u.id === selectedPersonId) || null;
+
+        const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—";
+
+        const PRIORITY_CHIP: Record<string, string> = {
+          URGENT: "bg-red-600 text-white",
+          HIGH: "bg-orange-500 text-white",
+          MEDIUM: "bg-blue-500/80 text-white",
+          LOW: "bg-neutral-400 text-white",
+        };
+
+        const togglePerson = (id: string) => {
+          if (selectedPersonId === id) {
+            setSelectedPersonId(null);
+            setPersonTaskFilter("ALL");
+          } else {
+            setSelectedPersonId(id);
+            setPersonTaskFilter("ALL");
+          }
+        };
+
+        // Filter tasks for the selected person
+        const getFilteredTasks = (tasks: any[]) => {
+          if (!tasks) return [];
+          return tasks.filter((t: any) => {
+            if (personTaskFilter === "DONE") return t.status === "DONE" || t.status === "APPROVED";
+            if (personTaskFilter === "PENDING") return t.status !== "DONE" && t.status !== "APPROVED";
+            if (personTaskFilter === "REVISIONS") return t.revisionCount > 0;
+            if (personTaskFilter === "OVERDUE") return t.isOverdue;
+            return true;
+          });
+        };
+
+        // Render the person detail panel
+        const renderPersonPanel = (person: any, isManager = false) => {
+          const tasks = person.tasks || [];
+          const createdTasks = person.createdTasksList || [];
+          const allTasks = isManager ? [...tasks, ...createdTasks] : tasks;
+
+          const totalAssigned = tasks.length;
+          const doneCount = tasks.filter((t: any) => t.status === "DONE" || t.status === "APPROVED").length;
+          const pendingCount = tasks.filter((t: any) => t.status !== "DONE" && t.status !== "APPROVED").length;
+          const revisionCount = tasks.filter((t: any) => t.revisionCount > 0).length;
+          const overdueCount = tasks.filter((t: any) => t.isOverdue).length;
+          const createdCount = createdTasks.length;
+
+          const filteredTasks = getFilteredTasks(personTaskFilter === "ALL" && isManager ? allTasks : tasks);
+
+          const statChips = [
+            { label: "ASSIGNED", value: totalAssigned, color: "bg-blue-500/15 text-blue-400", icon: "assignment" },
+            { label: "COMPLETED", value: doneCount, color: "bg-green-500/15 text-green-400", icon: "check_circle" },
+            { label: "PENDING", value: pendingCount, color: "bg-amber-500/15 text-amber-400", icon: "pending" },
+            { label: "REVISIONS", value: revisionCount, color: "bg-orange-500/15 text-orange-400", icon: "replay" },
+            { label: "OVERDUE", value: overdueCount, color: overdueCount > 0 ? "bg-red-500/15 text-red-400" : "bg-green-500/15 text-green-400", icon: overdueCount > 0 ? "warning" : "check" },
+            ...(isManager ? [{ label: "CREATED_BY_THEM", value: createdCount, color: "bg-purple-500/15 text-purple-400", icon: "add_task" }] : []),
+          ];
+
+          return (
+            <div className="animate-in slide-in-from-top-2 duration-300 border-t-2 border-primary/30">
+              {/* Summary Stat Chips */}
+              <div className="p-4 bg-surface-container-lowest">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 flex items-center justify-center bg-primary text-on-primary font-headline text-sm font-bold uppercase">
+                      {person.name.charAt(0)}
+                    </div>
+                    <div>
+                      <span className="font-headline text-sm uppercase tracking-wider text-card-text block">{person.name}</span>
+                      <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40">
+                        {person.department || person.role?.replace("_", " ") || "—"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPersonId(null)}
+                    className="p-1 hover:bg-surface-container-high transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm text-on-surface/40">close</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                  {statChips.map((chip) => (
+                    <div key={chip.label} className={`${chip.color} px-3 py-2 text-center`}>
+                      <span className="material-symbols-outlined text-sm block mb-0.5">{chip.icon}</span>
+                      <span className="font-headline text-lg block">{chip.value}</span>
+                      <span className="font-mono text-[7px] uppercase tracking-widest block">{chip.label.replace(/_/g, " ")}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex flex-wrap gap-1 px-4 py-2 bg-surface-container-low border-y border-on-surface/5">
+                {(["ALL", "DONE", "PENDING", "REVISIONS", "OVERDUE"] as const).map((f) => {
+                  const counts: Record<string, number> = {
+                    ALL: isManager ? allTasks.length : tasks.length,
+                    DONE: doneCount,
+                    PENDING: pendingCount,
+                    REVISIONS: revisionCount,
+                    OVERDUE: overdueCount,
+                  };
+                  return (
+                    <button
+                      key={f}
+                      onClick={() => setPersonTaskFilter(f)}
+                      className={`px-3 py-1 font-mono text-[8px] uppercase tracking-wider transition-all duration-150 border brutalist-border ${
+                        personTaskFilter === f
+                          ? "bg-primary text-white"
+                          : "bg-card text-on-surface/60 hover:bg-surface-container-high"
+                      }`}
+                    >
+                      {f} ({counts[f]})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Task List */}
+              {filteredTasks.length === 0 ? (
+                <div className="px-4 py-8 text-center">
+                  <span className="material-symbols-outlined text-2xl text-on-surface/20 block mb-2">search_off</span>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30">NO TASKS MATCH THIS FILTER</p>
+                </div>
+              ) : (
+                <>
+                  {/* Desktop Task Table */}
+                  <div className="hidden md:block overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table className="w-full text-left font-mono text-[10px] border-collapse">
+                      <thead className="sticky top-0 z-10">
+                        <tr className="bg-surface-container-low border-b border-on-surface/10 uppercase text-on-surface/40 text-[8px]">
+                          <th className="px-3 py-2 font-headline">Task</th>
+                          <th className="px-3 py-2 font-headline">Project</th>
+                          <th className="px-3 py-2 font-headline text-center">Status</th>
+                          <th className="px-3 py-2 font-headline text-center">Priority</th>
+                          <th className="px-3 py-2 font-headline">{isManager ? "Assignee" : "Assigned By"}</th>
+                          <th className="px-3 py-2 font-headline text-center">Created</th>
+                          <th className="px-3 py-2 font-headline text-center">Started</th>
+                          <th className="px-3 py-2 font-headline text-center">Due</th>
+                          <th className="px-3 py-2 font-headline text-center">Completed</th>
+                          <th className="px-3 py-2 font-headline text-center">Rev</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-on-surface/5">
+                        {filteredTasks.map((t: any) => {
+                          const isDone = t.status === "DONE" || t.status === "APPROVED";
+                          return (
+                            <tr key={t.id} className={`hover:bg-surface-container-lowest/50 transition-colors ${isDone ? "opacity-60" : ""}`}>
+                              <td className="px-3 py-2.5 max-w-[200px]">
+                                <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate block">{t.title}</span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="text-on-surface/50 uppercase truncate block max-w-[120px]">{t.projectTitle}</span>
+                              </td>
+                              <td className="px-3 py-2.5 text-center">
+                                <span className={`inline-block px-2 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
+                                  {t.status.replace(/_/g, " ")}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-center">
+                                <span className={`inline-block px-1.5 py-0.5 text-[7px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>
+                                  {t.priority}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-on-surface/50 uppercase">
+                                {isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}
+                              </td>
+                              <td className="px-3 py-2.5 text-center text-on-surface/60">{fmtDate(t.createdAt)}</td>
+                              <td className="px-3 py-2.5 text-center">
+                                {t.startedAt ? <span className="text-blue-400">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
+                              </td>
+                              <td className="px-3 py-2.5 text-center">
+                                {t.dueDate
+                                  ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-on-surface/60"}>{fmtDate(t.dueDate)}</span>
+                                  : <span className="text-on-surface/20">—</span>
+                                }
+                              </td>
+                              <td className="px-3 py-2.5 text-center">
+                                {isDone
+                                  ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-green-400 font-bold"}>{fmtDate(t.completedAt)}</span>
+                                  : <span className="text-on-surface/20">Pending</span>
+                                }
+                              </td>
+                              <td className="px-3 py-2.5 text-center">
+                                {t.revisionCount > 0
+                                  ? <span className="text-amber-400 font-bold">{t.revisionCount}</span>
+                                  : <span className="text-green-400/50">0</span>
+                                }
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Task Cards */}
+                  <div className="md:hidden max-h-[500px] overflow-y-auto divide-y divide-on-surface/5">
+                    {filteredTasks.map((t: any) => {
+                      const isDone = t.status === "DONE" || t.status === "APPROVED";
+                      return (
+                        <div key={t.id} className={`p-3 space-y-2 ${isDone ? "opacity-60" : ""}`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <span className="font-headline text-[10px] uppercase tracking-wider text-card-text block truncate">{t.title}</span>
+                              <span className="font-mono text-[8px] text-on-surface/40 uppercase">{t.projectTitle}</span>
+                            </div>
+                            <span className={`px-1.5 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
+                              {t.status.replace(/_/g, " ")}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-4 gap-1.5 text-center font-mono text-[8px] uppercase brutalist-border bg-surface-container-lowest p-2">
+                            <div>
+                              <span className="text-on-surface/30 block">Created</span>
+                              <span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span>
+                            </div>
+                            <div>
+                              <span className="text-on-surface/30 block">Started</span>
+                              {t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
+                            </div>
+                            <div>
+                              <span className="text-on-surface/30 block">Due</span>
+                              {t.dueDate ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span> : <span className="text-on-surface/20">—</span>}
+                            </div>
+                            <div>
+                              <span className="text-on-surface/30 block">Done</span>
+                              {isDone ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">—</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 text-[8px] font-mono uppercase text-on-surface/40">
+                            <span className={`px-1 py-0.5 ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
+                            <span>{isManager && t.assigneeName ? `→ ${t.assigneeName}` : `BY ${t.assignerName || "—"}`}</span>
+                            {t.revisionCount > 0 && <span className="text-amber-400 font-bold">{t.revisionCount} rev</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        };
+
+        return (
         <div className="space-y-6">
+          {/* Team KPI Summary */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPICard label="TEAM_SIZE" value={String(employees.length)} sub="active employees" icon="groups" accent="text-blue-400" />
+            <KPICard label="QUALITY_SCORE" value={`${avgProperlyRate}%`} sub="avg done-properly rate" icon="verified" accent={avgProperlyRate >= 80 ? "text-green-400" : avgProperlyRate >= 60 ? "text-amber-400" : "text-red-500"} />
+            <KPICard label="OVERDUE_RATE" value={`${avgOverdueRate}%`} sub="avg across team" icon="event_busy" accent={avgOverdueRate < 15 ? "text-green-400" : avgOverdueRate < 30 ? "text-amber-400" : "text-red-500"} />
+            <KPICard label="THROUGHPUT" value={String(totalCompleted)} sub={`completed / ${totalOngoing} active`} icon="trending_up" accent="text-green-400" />
+          </div>
+
           {/* Employee Performance Audit Table */}
           <div className="brutalist-border bg-card p-5">
-            <h3 className="font-headline text-sm uppercase tracking-[0.2em] text-card-text mb-4">
-              EMPLOYEE PERFORMANCE AUDIT
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-headline text-sm uppercase tracking-[0.2em] text-card-text">EMPLOYEE PERFORMANCE AUDIT</h3>
+              <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">CLICK ROW TO EXPAND</span>
+            </div>
             {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left font-mono text-xs border-collapse">
@@ -428,20 +657,35 @@ export function ReportsDashboard({
                           ? "text-amber-400"
                           : "text-red-500 font-bold";
 
+                      const isSelected = selectedPersonId === emp.id;
+
                       return (
-                        <tr key={emp.id} className="hover:bg-surface-container-low transition-colors">
-                          <td className="py-3 font-bold text-card-text uppercase">{emp.name}</td>
-                          <td className="py-3 uppercase text-on-surface/60">{emp.department || "—"}</td>
-                          <td className="py-3 text-center">{emp.ongoingCount}</td>
-                          <td className="py-3 text-center">{emp.completedCount}</td>
-                          <td className={`py-3 text-center ${properlyRateColor}`}>
-                            {emp.doneProperlyRate}%
-                            <span className="text-[9px] block text-on-surface/30 uppercase tracking-tighter">
-                              {emp.totalRevisions} revisions
-                            </span>
+                        <tr key={emp.id} className="group" style={{ verticalAlign: "top" }}>
+                          <td colSpan={7} className="p-0">
+                            <div
+                              onClick={() => togglePerson(emp.id)}
+                              className={`px-0 py-3 flex items-center cursor-pointer transition-colors ${
+                                isSelected ? "bg-primary/5" : "hover:bg-surface-container-low"
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 w-full">
+                                <span className={`material-symbols-outlined text-xs text-on-surface/30 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`}>chevron_right</span>
+                                <span className="font-bold text-card-text uppercase flex-1" style={{ minWidth: 0 }}>{emp.name}</span>
+                                <span className="uppercase text-on-surface/60 w-24 text-left">{emp.department || "—"}</span>
+                                <span className="text-center w-20">{emp.ongoingCount}</span>
+                                <span className="text-center w-24">{emp.completedCount}</span>
+                                <span className={`text-center w-28 ${properlyRateColor}`}>
+                                  {emp.doneProperlyRate}%
+                                  <span className="text-[9px] block text-on-surface/30 uppercase tracking-tighter">
+                                    {emp.totalRevisions} revisions
+                                  </span>
+                                </span>
+                                <span className={`text-center w-20 ${overdueColor}`}>{emp.overdueRate}%</span>
+                                <span className="text-right font-bold text-primary w-20">{emp.hoursLogged.toFixed(1)} hrs</span>
+                              </div>
+                            </div>
+                            {isSelected && renderPersonPanel(emp, false)}
                           </td>
-                          <td className={`py-3 text-center ${overdueColor}`}>{emp.overdueRate}%</td>
-                          <td className="py-3 text-right font-bold text-primary">{emp.hoursLogged.toFixed(1)} hrs</td>
                         </tr>
                       );
                     })}
@@ -468,35 +712,48 @@ export function ReportsDashboard({
                       ? "text-amber-400"
                       : "text-red-500 font-bold";
 
-                  return (
-                    <div key={emp.id} className="brutalist-border bg-surface-container-lowest p-4 space-y-3 font-mono text-xs">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <span className="font-headline font-bold text-card-text block uppercase leading-snug">
-                            {emp.name}
-                          </span>
-                          <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
-                            {emp.department || "—"}
-                          </span>
-                        </div>
-                        <span className="text-primary font-bold">{emp.hoursLogged.toFixed(1)} hrs</span>
-                      </div>
+                  const isSelected = selectedPersonId === emp.id;
 
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-on-surface/5 text-[9px] uppercase">
-                        <div>
-                          <span className="text-on-surface/40 block">ACTIVE / DONE</span>
-                          <span className="text-foreground font-bold">{emp.ongoingCount} / {emp.completedCount}</span>
+                  return (
+                    <div key={emp.id} className={`brutalist-border overflow-hidden ${isSelected ? "border-primary/30" : ""}`}>
+                      <div
+                        onClick={() => togglePerson(emp.id)}
+                        className={`bg-surface-container-lowest p-4 space-y-3 font-mono text-xs cursor-pointer transition-colors ${
+                          isSelected ? "bg-primary/5" : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`material-symbols-outlined text-sm text-on-surface/30 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`}>chevron_right</span>
+                            <div>
+                              <span className="font-headline font-bold text-card-text block uppercase leading-snug">
+                                {emp.name}
+                              </span>
+                              <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
+                                {emp.department || "—"}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-primary font-bold">{emp.hoursLogged.toFixed(1)} hrs</span>
                         </div>
-                        <div>
-                          <span className="text-on-surface/40 block">PROPERLY RATE</span>
-                          <span className={properlyRateColor}>{emp.doneProperlyRate}%</span>
-                          <span className="text-[7px] text-on-surface/30 block">({emp.totalRevisions} revisions)</span>
-                        </div>
-                        <div>
-                          <span className="text-on-surface/40 block">OVERDUE RATE</span>
-                          <span className={overdueColor}>{emp.overdueRate}%</span>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-on-surface/5 text-[9px] uppercase">
+                          <div>
+                            <span className="text-on-surface/40 block">ACTIVE / DONE</span>
+                            <span className="text-foreground font-bold">{emp.ongoingCount} / {emp.completedCount}</span>
+                          </div>
+                          <div>
+                            <span className="text-on-surface/40 block">PROPERLY RATE</span>
+                            <span className={properlyRateColor}>{emp.doneProperlyRate}%</span>
+                            <span className="text-[7px] text-on-surface/30 block">({emp.totalRevisions} revisions)</span>
+                          </div>
+                          <div>
+                            <span className="text-on-surface/40 block">OVERDUE RATE</span>
+                            <span className={overdueColor}>{emp.overdueRate}%</span>
+                          </div>
                         </div>
                       </div>
+                      {isSelected && renderPersonPanel(emp, false)}
                     </div>
                   );
                 })}
@@ -505,9 +762,12 @@ export function ReportsDashboard({
 
           {/* Manager & POC Oversight Table */}
           <div className="brutalist-border bg-card p-5">
-            <h3 className="font-headline text-sm uppercase tracking-[0.2em] text-card-text mb-4">
-              MANAGEMENT & POC OVERSIGHT ACTIVITY
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-headline text-sm uppercase tracking-[0.2em] text-card-text">
+                MANAGEMENT & POC OVERSIGHT ACTIVITY
+              </h3>
+              <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">CLICK ROW TO EXPAND</span>
+            </div>
             
             {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
@@ -525,16 +785,32 @@ export function ReportsDashboard({
                 <tbody className="divide-y divide-on-surface/5">
                   {teamPerformanceReport
                     .filter((u: any) => u.type === "manager")
-                    .map((mgr: any) => (
-                      <tr key={mgr.id} className="hover:bg-surface-container-low transition-colors">
-                        <td className="py-3 font-bold text-card-text uppercase">{mgr.name}</td>
-                        <td className="py-3 text-on-surface/60 text-[10px] uppercase font-bold">{mgr.role.replace("_", " ")}</td>
-                        <td className="py-3 text-center">{mgr.projectsManaged}</td>
-                        <td className="py-3 text-center">{mgr.tasksCreated}</td>
-                        <td className="py-3 text-center text-amber-400 font-bold">{mgr.reviewsPerformed}</td>
-                        <td className="py-3 text-right font-bold text-primary">{mgr.hoursLogged.toFixed(1)} hrs</td>
-                      </tr>
-                    ))}
+                    .map((mgr: any) => {
+                      const isSelected = selectedPersonId === mgr.id;
+                      return (
+                        <tr key={mgr.id} style={{ verticalAlign: "top" }}>
+                          <td colSpan={6} className="p-0">
+                            <div
+                              onClick={() => togglePerson(mgr.id)}
+                              className={`px-0 py-3 flex items-center cursor-pointer transition-colors ${
+                                isSelected ? "bg-primary/5" : "hover:bg-surface-container-low"
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 w-full">
+                                <span className={`material-symbols-outlined text-xs text-on-surface/30 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`}>chevron_right</span>
+                                <span className="font-bold text-card-text uppercase flex-1" style={{ minWidth: 0 }}>{mgr.name}</span>
+                                <span className="text-on-surface/60 text-[10px] uppercase font-bold w-24">{mgr.role.replace("_", " ")}</span>
+                                <span className="text-center w-28">{mgr.projectsManaged}</span>
+                                <span className="text-center w-24">{mgr.tasksCreated}</span>
+                                <span className="text-center text-amber-400 font-bold w-28">{mgr.reviewsPerformed}</span>
+                                <span className="text-right font-bold text-primary w-20">{mgr.hoursLogged.toFixed(1)} hrs</span>
+                              </div>
+                            </div>
+                            {isSelected && renderPersonPanel(mgr, true)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -543,296 +819,192 @@ export function ReportsDashboard({
             <div className="grid grid-cols-1 gap-3 md:hidden">
               {teamPerformanceReport
                 .filter((u: any) => u.type === "manager")
-                .map((mgr: any) => (
-                  <div key={mgr.id} className="brutalist-border bg-surface-container-lowest p-4 space-y-3 font-mono text-xs">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="font-headline font-bold text-card-text block uppercase leading-snug">
-                          {mgr.name}
-                        </span>
-                        <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
-                          {mgr.role.replace("_", " ")}
-                        </span>
-                      </div>
-                      <span className="text-primary font-bold">{mgr.hoursLogged.toFixed(1)} hrs</span>
-                    </div>
+                .map((mgr: any) => {
+                  const isSelected = selectedPersonId === mgr.id;
+                  return (
+                    <div key={mgr.id} className={`brutalist-border overflow-hidden ${isSelected ? "border-primary/30" : ""}`}>
+                      <div
+                        onClick={() => togglePerson(mgr.id)}
+                        className={`bg-surface-container-lowest p-4 space-y-3 font-mono text-xs cursor-pointer transition-colors ${
+                          isSelected ? "bg-primary/5" : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`material-symbols-outlined text-sm text-on-surface/30 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`}>chevron_right</span>
+                            <div>
+                              <span className="font-headline font-bold text-card-text block uppercase leading-snug">
+                                {mgr.name}
+                              </span>
+                              <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
+                                {mgr.role.replace("_", " ")}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-primary font-bold">{mgr.hoursLogged.toFixed(1)} hrs</span>
+                        </div>
 
-                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-on-surface/5 text-[9px] uppercase text-center">
-                      <div className="border-r border-on-surface/5 last:border-0 pr-1">
-                        <span className="text-on-surface/40 block">PROJECTS</span>
-                        <span className="text-foreground font-bold">{mgr.projectsManaged}</span>
+                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-on-surface/5 text-[9px] uppercase text-center">
+                          <div className="border-r border-on-surface/5 last:border-0 pr-1">
+                            <span className="text-on-surface/40 block">PROJECTS</span>
+                            <span className="text-foreground font-bold">{mgr.projectsManaged}</span>
+                          </div>
+                          <div className="border-r border-on-surface/5 last:border-0 px-1">
+                            <span className="text-on-surface/40 block">TASKS</span>
+                            <span className="text-foreground font-bold">{mgr.tasksCreated}</span>
+                          </div>
+                          <div className="pl-1">
+                            <span className="text-on-surface/40 block">REVIEWS</span>
+                            <span className="text-amber-400 font-bold">{mgr.reviewsPerformed}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="border-r border-on-surface/5 last:border-0 px-1">
-                        <span className="text-on-surface/40 block">TASKS</span>
-                        <span className="text-foreground font-bold">{mgr.tasksCreated}</span>
-                      </div>
-                      <div className="pl-1">
-                        <span className="text-on-surface/40 block">REVIEWS</span>
-                        <span className="text-amber-400 font-bold">{mgr.reviewsPerformed}</span>
-                      </div>
+                      {isSelected && renderPersonPanel(mgr, true)}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
-      {/* ── View 3: Quality & Delay Task Audit ── */}
+      {/* ── View 3: Quality & Delay Task Audit (Redesigned) ── */}
       {activeTab === "TASK_AUDIT" && (() => {
-        const ongoingCount = managementTasksReport.filter(t => t.status !== "DONE" && t.status !== "APPROVED").length;
-        const overdueCount = managementTasksReport.filter(t => t.isOverdue).length;
-        const revisionsCount = managementTasksReport.filter(t => t.revisionCount > 0).length;
-
-        const totalDelays = managementTasksReport
-          .filter(t => t.isOverdue && t.overdueDays > 0)
-          .reduce((sum, t) => sum + t.overdueDays, 0);
-        const overdueTasksCount = managementTasksReport.filter(t => t.isOverdue && t.overdueDays > 0).length;
-        const avgDelay = overdueTasksCount > 0 ? Math.round(totalDelays / overdueTasksCount) : 0;
-
-        const filteredTasks = managementTasksReport.filter((t) => {
+        const completedInReport = managementTasksReport.filter((t: any) => t.status === "DONE" || t.status === "APPROVED");
+        const ongoingCount = managementTasksReport.length - completedInReport.length;
+        const overdueCount = managementTasksReport.filter((t: any) => t.isOverdue).length;
+        const revisionsCount = managementTasksReport.filter((t: any) => t.revisionCount > 0).length;
+        const onTimeCount = completedInReport.filter((t: any) => !t.isOverdue).length;
+        const onTimeRate = completedInReport.length > 0 ? Math.round((onTimeCount / completedInReport.length) * 100) : 100;
+        const tasksWithStart = managementTasksReport.filter((t: any) => t.startedAt && t.createdAt);
+        const avgStartDelay = tasksWithStart.length > 0 ? (tasksWithStart.reduce((sum: number, t: any) => sum + Math.max(0, (new Date(t.startedAt).getTime() - new Date(t.createdAt).getTime()) / 864e5), 0) / tasksWithStart.length).toFixed(1) : "0";
+        const overdueWithDays = managementTasksReport.filter((t: any) => t.isOverdue && t.overdueDays > 0);
+        const avgDelay = overdueWithDays.length > 0 ? Math.round(overdueWithDays.reduce((s: number, t: any) => s + t.overdueDays, 0) / overdueWithDays.length) : 0;
+        const filteredTasks = managementTasksReport.filter((t: any) => {
           if (taskFilter === "ONGOING") return t.status !== "DONE" && t.status !== "APPROVED";
           if (taskFilter === "OVERDUE") return t.isOverdue;
           if (taskFilter === "REVISIONS") return t.revisionCount > 0;
           return true;
         });
-
+        const groupMap: Record<string, any[]> = {};
+        filteredTasks.forEach((t: any) => { const k = t.projectTitle; if (!groupMap[k]) groupMap[k] = []; groupMap[k].push(t); });
+        const projectGroups = Object.entries(groupMap).map(([title, tasks]) => ({ title, tasks, total: tasks.length, overdue: tasks.filter((t: any) => t.isOverdue).length, revisions: tasks.filter((t: any) => t.revisionCount > 0).length, completed: tasks.filter((t: any) => t.status === "DONE" || t.status === "APPROVED").length })).sort((a, b) => b.overdue - a.overdue || b.total - a.total);
+        const toggleProject = (title: string) => { setCollapsedProjects((prev) => { const next = new Set(prev); next.has(title) ? next.delete(title) : next.add(title); return next; }); };
+        const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—";
+        const getTimelineInfo = (t: any) => {
+          const now = new Date(); const created = t.createdAt ? new Date(t.createdAt) : null; const due = t.dueDate ? new Date(t.dueDate) : null; const done = t.completedAt ? new Date(t.completedAt) : null; const isComp = t.status === "DONE" || t.status === "APPROVED"; const ageDays = created ? Math.floor((now.getTime() - created.getTime()) / 864e5) : null;
+          let pct = 0; let barColor = "bg-primary";
+          if (created && due) { const total = due.getTime() - created.getTime(); if (total > 0) { const end = isComp && done ? done : now; pct = Math.min(Math.round(((end.getTime() - created.getTime()) / total) * 100), 150); } }
+          if (t.isOverdue) barColor = "bg-red-500"; else if (pct > 75 && !isComp) barColor = "bg-amber-400"; else if (isComp) barColor = "bg-green-500";
+          let delayText = "No deadline"; let delayColor = "text-on-surface/30"; let delayIcon = "remove";
+          if (t.isOverdue) { delayColor = "text-red-500"; delayIcon = "error"; delayText = isComp ? `${t.overdueDays}d late` : `${t.overdueDays}d overdue`; }
+          else if (!isComp && due) { const left = Math.ceil((due.getTime() - now.getTime()) / 864e5); if (left <= 1) { delayColor = "text-amber-400"; delayIcon = "warning"; delayText = left <= 0 ? "Due today" : "1d left"; } else { delayColor = "text-on-surface/60"; delayIcon = "schedule"; delayText = `${left}d left`; } }
+          else if (isComp && !t.isOverdue) { delayColor = "text-green-400"; delayIcon = "check_circle"; delayText = "On time"; }
+          return { pct, barColor, delayText, delayColor, delayIcon, ageDays };
+        };
         return (
-          <div className="space-y-6">
-            {/* Audit KPI Cards */}
+          <div className="space-y-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <KPICard
-                label="ONGOING_TASKS"
-                value={String(ongoingCount)}
-                sub="active assignments"
-                icon="pending_actions"
-                accent="text-blue-400"
-              />
-              <KPICard
-                label="QUALITY_CONCERNS"
-                value={String(revisionsCount)}
-                sub="tasks requiring revisions"
-                icon="rate_review"
-                accent={revisionsCount > 0 ? "text-amber-400" : "text-green-400"}
-              />
-              <KPICard
-                label="OVERDUE_TRACK"
-                value={String(overdueCount)}
-                sub="missed deadlines"
-                icon="event_busy"
-                accent={overdueCount > 0 ? "text-red-500" : "text-green-400"}
-              />
-              <KPICard
-                label="AVG_DELAY_TIME"
-                value={`${avgDelay} days`}
-                sub="for late tasks"
-                icon="hourglass_empty"
-                accent={avgDelay > 0 ? "text-red-400" : "text-green-400"}
-              />
+              <KPICard label="ON_TIME_DELIVERY" value={`${onTimeRate}%`} sub={`${onTimeCount}/${completedInReport.length} on time`} icon="verified" accent={onTimeRate >= 80 ? "text-green-400" : onTimeRate >= 50 ? "text-amber-400" : "text-red-500"} />
+              <KPICard label="AVG_START_DELAY" value={`${avgStartDelay}d`} sub="days to begin work" icon="play_circle" accent={Number(avgStartDelay) <= 1 ? "text-green-400" : Number(avgStartDelay) <= 3 ? "text-amber-400" : "text-red-400"} />
+              <KPICard label="OVERDUE_TASKS" value={String(overdueCount)} sub="missed deadlines" icon="event_busy" accent={overdueCount > 0 ? "text-red-500" : "text-green-400"} />
+              <KPICard label="AVG_DELAY" value={`${avgDelay}d`} sub="for late tasks" icon="hourglass_empty" accent={avgDelay > 0 ? "text-red-400" : "text-green-400"} />
             </div>
-
-            {/* Filter Toggle Row */}
             <div className="flex flex-wrap gap-2 brutalist-border bg-card p-2">
-              {(["ALL", "ONGOING", "OVERDUE", "REVISIONS"] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setTaskFilter(filter)}
-                  className={`px-4 py-1.5 font-headline text-[10px] uppercase tracking-wider transition-all duration-150 border brutalist-border ${
-                    taskFilter === filter
-                      ? "bg-primary text-white"
-                      : "bg-surface-container-high text-on-surface/75 hover:bg-surface-container-highest"
-                  }`}
-                >
-                  {filter.replace("_", " ")}
-                </button>
-              ))}
+              {(["ALL", "ONGOING", "OVERDUE", "REVISIONS"] as const).map((f) => {
+                const counts = { ALL: managementTasksReport.length, ONGOING: ongoingCount, OVERDUE: overdueCount, REVISIONS: revisionsCount };
+                return (<button key={f} onClick={() => setTaskFilter(f)} className={`px-4 py-1.5 font-headline text-[10px] uppercase tracking-wider transition-all duration-150 border brutalist-border ${taskFilter === f ? "bg-primary text-white" : "bg-surface-container-high text-on-surface/75 hover:bg-surface-container-highest"}`}>{f.replace("_", " ")} ({counts[f]})</button>);
+              })}
             </div>
-
-            {/* Detailed Audit Table */}
-            <div className="brutalist-border bg-card p-5">
-              <h3 className="font-headline text-sm uppercase tracking-[0.2em] text-card-text mb-4">
-                QUALITY & DELAY AUDIT LOGS
-              </h3>
-              {/* Desktop View */}
-              <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left font-mono text-xs border-collapse">
-                <thead>
-                  <tr className="border-b brutalist-border uppercase text-on-surface/50 text-[10px]">
-                    <th className="pb-3 font-headline">Task & Project</th>
-                    <th className="pb-3 font-headline">Assigned By</th>
-                    <th className="pb-3 font-headline">Assigned To</th>
-                    <th className="pb-3 font-headline">Status</th>
-                    <th className="pb-3 font-headline text-center">Due Date</th>
-                    <th className="pb-3 font-headline text-center">Quality / Revisions</th>
-                    <th className="pb-3 font-headline text-right">Delay Tracker</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-on-surface/5">
-                  {filteredTasks.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-on-surface/30 uppercase tracking-wider">
-                        NO_AUDIT_DATA_MATCHING_FILTER
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredTasks.map((t) => {
-                      const isCompleted = t.status === "DONE" || t.status === "APPROVED";
-                      
-                      let delayStatusText = "On Time";
-                      let delayColorClass = "text-green-400";
-                      
-                      if (t.isOverdue) {
-                        delayColorClass = "text-red-500 font-bold";
-                        delayStatusText = isCompleted
-                          ? `Completed ${t.overdueDays} Days Late`
-                          : `${t.overdueDays} Days Overdue`;
-                      } else if (!isCompleted && t.dueDate) {
-                        const diffTime = new Date(t.dueDate).getTime() - new Date().getTime();
-                        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        delayStatusText = `${daysLeft} Days Left`;
-                        delayColorClass = "text-on-surface/50";
-                      } else if (isCompleted && !t.isOverdue) {
-                        delayStatusText = "Completed On Time";
-                        delayColorClass = "text-green-400";
-                      } else {
-                        delayStatusText = "No Due Date";
-                        delayColorClass = "text-on-surface/30";
-                      }
-
-                      return (
-                        <tr key={t.id} className="hover:bg-surface-container-low transition-colors">
-                          <td className="py-3">
-                            <span className="font-headline font-bold text-card-text block uppercase leading-snug">
-                              {t.title}
-                            </span>
-                            <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
-                              {t.projectTitle}
-                            </span>
-                          </td>
-                          <td className="py-3">
-                            <span className="block font-bold text-card-text uppercase">{t.creatorName}</span>
-                            <span className="text-[9px] text-on-surface/45 uppercase tracking-widest">{t.creatorRole}</span>
-                          </td>
-                          <td className="py-3">
-                            <span className="block font-bold text-card-text uppercase">{t.assigneeName}</span>
-                            <span className="text-[9px] text-on-surface/45 uppercase tracking-widest">{t.assigneeDept || "—"}</span>
-                          </td>
-                          <td className="py-3">
-                            <span className="`px-2 py-0.5 text-[8px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || 'bg-neutral-500'}`">
-                              {t.status.replace("_", " ")}
-                            </span>
-                          </td>
-                          <td className="py-3 text-center text-on-surface/70">
-                            {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : "—"}
-                          </td>
-                          <td className="py-3 text-center">
-                            {t.revisionCount > 0 ? (
-                              <span className="text-amber-400 font-bold">
-                                {t.revisionCount} {t.revisionCount === 1 ? "Revision" : "Revisions"}
-                              </span>
-                            ) : (
-                              <span className="text-green-400">0 Revisions</span>
-                            )}
-                          </td>
-                          <td className={`py-3 text-right font-bold ${delayColorClass}`}>
-                            {delayStatusText}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile View */}
-            <div className="grid grid-cols-1 gap-3 md:hidden">
-              {filteredTasks.length === 0 ? (
-                <div className="py-8 text-center text-on-surface/30 uppercase tracking-wider font-mono text-[10px]">
-                  NO_AUDIT_DATA_MATCHING_FILTER
-                </div>
-              ) : (
-                filteredTasks.map((t) => {
-                  const isCompleted = t.status === "DONE" || t.status === "APPROVED";
-                  
-                  let delayStatusText = "On Time";
-                  let delayColorClass = "text-green-400";
-                  
-                  if (t.isOverdue) {
-                    delayColorClass = "text-red-500 font-bold";
-                    delayStatusText = isCompleted
-                      ? `Completed ${t.overdueDays} Days Late`
-                      : `${t.overdueDays} Days Overdue`;
-                  } else if (!isCompleted && t.dueDate) {
-                    const diffTime = new Date(t.dueDate).getTime() - new Date().getTime();
-                    const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    delayStatusText = `${daysLeft} Days Left`;
-                    delayColorClass = "text-on-surface/50";
-                  } else if (isCompleted && !t.isOverdue) {
-                    delayStatusText = "Completed On Time";
-                    delayColorClass = "text-green-400";
-                  } else {
-                    delayStatusText = "No Due Date";
-                    delayColorClass = "text-on-surface/30";
-                  }
-
-                  return (
-                    <div key={t.id} className="brutalist-border bg-surface-container-lowest p-4 space-y-3 font-mono text-xs">
-                      <div>
-                        <span className="font-headline font-bold text-card-text block uppercase leading-snug">
-                          {t.title}
-                        </span>
-                        <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
-                          {t.projectTitle}
-                        </span>
+            {filteredTasks.length === 0 && (<div className="brutalist-border bg-card p-12 text-center"><span className="material-symbols-outlined text-3xl text-on-surface/20 block mb-2">search_off</span><p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">NO TASKS MATCH THIS FILTER</p></div>)}
+            {projectGroups.map((grp) => {
+              const collapsed = collapsedProjects.has(grp.title);
+              const pct = grp.total > 0 ? Math.round((grp.completed / grp.total) * 100) : 0;
+              return (
+                <div key={grp.title} className="brutalist-border bg-card overflow-hidden">
+                  <button onClick={() => toggleProject(grp.title)} className="w-full flex items-center gap-3 p-4 bg-surface-container-low hover:bg-surface-container-high transition-colors text-left group">
+                    <span className={`material-symbols-outlined text-sm text-on-surface/40 transition-transform duration-200 ${collapsed ? "" : "rotate-90"}`}>chevron_right</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-headline text-xs uppercase tracking-wider text-card-text">{grp.title}</span>
+                        <span className="font-mono text-[9px] px-2 py-0.5 bg-surface-container-highest text-on-surface/50">{grp.total} tasks</span>
+                        {grp.overdue > 0 && <span className="font-mono text-[9px] px-2 py-0.5 bg-red-500/15 text-red-400 font-bold">{grp.overdue} overdue</span>}
+                        {grp.revisions > 0 && <span className="font-mono text-[9px] px-2 py-0.5 bg-amber-500/15 text-amber-400">{grp.revisions} rev</span>}
                       </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-on-surface/5 text-[9px] uppercase">
-                        <div>
-                          <span className="text-on-surface/40 block">ASSIGNED BY</span>
-                          <span className="text-foreground font-bold">{t.creatorName}</span>
-                          <span className="text-[7px] text-on-surface/45 block">({t.creatorRole})</span>
-                        </div>
-                        <div>
-                          <span className="text-on-surface/40 block">ASSIGNED TO</span>
-                          <span className="text-foreground font-bold">{t.assigneeName}</span>
-                          <span className="text-[7px] text-on-surface/45 block">({t.assigneeDept || "—"})</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 justify-between items-center pt-2 border-t border-on-surface/5 text-[9px] uppercase">
-                        <div>
-                          <span className={`px-2 py-0.5 text-[8px] uppercase tracking-widest text-white font-bold inline-block mr-2 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
-                            {t.status.replace("_", " ")}
-                          </span>
-                          <span className="text-on-surface/70">
-                            DUE: {t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : "—"}
-                          </span>
-                        </div>
-                        <span className={delayColorClass}>
-                          {delayStatusText}
-                        </span>
-                      </div>
-
-                      <div className="pt-2 border-t border-on-surface/5 flex justify-between text-[9px] uppercase">
-                        <span className="text-on-surface/40">QUALITY / REVISIONS</span>
-                        {t.revisionCount > 0 ? (
-                          <span className="text-amber-400 font-bold">
-                            {t.revisionCount} {t.revisionCount === 1 ? "Revision" : "Revisions"}
-                          </span>
-                        ) : (
-                          <span className="text-green-400">0 Revisions</span>
-                        )}
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="flex-1 h-1 bg-surface-container-highest overflow-hidden"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} /></div>
+                        <span className="font-mono text-[8px] text-on-surface/40 w-8 text-right">{pct}%</span>
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+                  </button>
+                  {!collapsed && (<div className="divide-y divide-on-surface/5">
+                    {grp.tasks.map((t: any) => {
+                      const info = getTimelineInfo(t); const isComp = t.status === "DONE" || t.status === "APPROVED";
+                      return (
+                        <div key={t.id}>
+                          <div className="hidden md:block px-4 py-3 hover:bg-surface-container-lowest/50 transition-colors">
+                            <div className="flex items-start gap-4">
+                              <div className="flex-1 min-w-0">
+                                <span className="font-headline text-[11px] uppercase tracking-wider text-card-text block truncate">{t.title}</span>
+                                <span className="font-mono text-[9px] text-on-surface/40 uppercase tracking-wider">{t.creatorName} <span className="text-primary">→</span> {t.assigneeName}{t.assigneeDept && <span className="text-on-surface/25 ml-1">({t.assigneeDept})</span>}</span>
+                              </div>
+                              <span className={`px-2 py-0.5 text-[8px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
+                              <div className="w-16 text-center flex-shrink-0">{t.revisionCount > 0 ? <span className="text-amber-400 font-bold font-mono text-[10px]">{t.revisionCount} rev</span> : <span className="text-green-400/60 font-mono text-[10px]">0 rev</span>}</div>
+                              <div className="w-14 text-center flex-shrink-0"><span className="font-mono text-[10px] text-on-surface/40">{info.ageDays !== null ? `${info.ageDays}d` : "—"}</span></div>
+                              <div className={`w-28 text-right flex-shrink-0 flex items-center justify-end gap-1 ${info.delayColor}`}><span className="material-symbols-outlined text-xs">{info.delayIcon}</span><span className="font-mono text-[10px] font-bold">{info.delayText}</span></div>
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="grid grid-cols-4 gap-3 font-mono text-[10px] uppercase tracking-wider flex-shrink-0 min-w-[340px]">
+                                <div className="flex flex-col">
+                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Created</span>
+                                  <span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Started</span>
+                                  {t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">Not started</span>}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Due</span>
+                                  {t.dueDate ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span> : <span className="text-on-surface/20">No due date</span>}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Completed</span>
+                                  {isComp ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">Pending</span>}
+                                </div>
+                              </div>
+                              <div className="flex-1 h-2 bg-surface-container-high overflow-hidden rounded-sm"><div className={`h-full transition-all duration-700 ${info.barColor}`} style={{ width: `${Math.min(info.pct, 100)}%` }} /></div>
+                              <span className="font-mono text-[9px] text-on-surface/30 w-8 text-right flex-shrink-0">{Math.min(info.pct, 100)}%</span>
+                            </div>
+                          </div>
+                          <div className="md:hidden p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1"><span className="font-headline text-[11px] uppercase tracking-wider text-card-text block truncate">{t.title}</span><span className="font-mono text-[9px] text-on-surface/40 uppercase">{t.creatorName} <span className="text-primary">→</span> {t.assigneeName}</span></div>
+                              <span className={`px-2 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 text-center font-mono text-[10px] uppercase brutalist-border bg-surface-container-lowest p-2">
+                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Created</span><span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span></div>
+                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Started</span>{t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}</div>
+                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Due</span><span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span></div>
+                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Completed</span>{isComp ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">Pending</span>}</div>
+                            </div>
+                            <div className="h-1.5 bg-surface-container-high overflow-hidden rounded-sm"><div className={`h-full transition-all duration-700 ${info.barColor}`} style={{ width: `${Math.min(info.pct, 100)}%` }} /></div>
+                            <div className="flex items-center justify-between pt-1 border-t border-on-surface/5 text-[9px]">
+                              <div className="flex items-center gap-3">{t.revisionCount > 0 ? <span className="text-amber-400 font-bold font-mono">{t.revisionCount} rev</span> : <span className="text-green-400/60 font-mono">0 rev</span>}{info.ageDays !== null && <span className="text-on-surface/30 font-mono">{info.ageDays}d old</span>}</div>
+                              <div className={`flex items-center gap-1 ${info.delayColor}`}><span className="material-symbols-outlined text-xs">{info.delayIcon}</span><span className="font-mono font-bold">{info.delayText}</span></div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>)}
+                </div>
+              );
+            })}
           </div>
         );
       })()}
+
     </div>
   );
 }

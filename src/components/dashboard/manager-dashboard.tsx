@@ -41,7 +41,7 @@ interface Props {
     id: string;
     title: string;
     status: string;
-    project: { title: string };
+    project: { title: string } | null;
     assignedTo: { name: string } | null;
   }>;
   upcomingDeadlines: Array<{
@@ -49,7 +49,7 @@ interface Props {
     title: string;
     dueDate: Date;
     priority: string;
-    project: { title: string };
+    project: { title: string } | null;
     assignedTo: { name: string } | null;
   }>;
   weeklyHours: number;
@@ -168,7 +168,7 @@ export function ManagerDashboard({
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
-                    <p className="font-mono text-[8px] text-on-surface/40">{t.project.title} · {t.assignedTo?.name}</p>
+                    <p className="font-mono text-[8px] text-on-surface/40">{t.project?.title ?? "No Project"} · {t.assignedTo?.name ?? "Unassigned"}</p>
                   </div>
                 </Link>
               ))

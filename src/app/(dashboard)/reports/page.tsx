@@ -188,19 +188,34 @@ export default async function ReportsPage() {
           assignedTasks: {
             select: {
               id: true,
+              title: true,
               status: true,
+              priority: true,
               dueDate: true,
               completedAt: true,
               createdAt: true,
               startedAt: true,
               revisionCount: true,
-            }
+              project: { select: { title: true } },
+              assignedBy: { select: { name: true } },
+            },
+            orderBy: { createdAt: "desc" as const },
           },
           createdTasks: {
             select: {
               id: true,
+              title: true,
               status: true,
-            }
+              priority: true,
+              dueDate: true,
+              completedAt: true,
+              createdAt: true,
+              startedAt: true,
+              revisionCount: true,
+              project: { select: { title: true } },
+              assignedTo: { select: { name: true } },
+            },
+            orderBy: { createdAt: "desc" as const },
           },
           managedProjects: {
             select: { id: true }
@@ -256,6 +271,8 @@ export default async function ReportsPage() {
         creatorRole: t.assignedBy?.role || "SYSTEM",
         status: t.status,
         dueDate: t.dueDate,
+        createdAt: t.createdAt,
+        startedAt: t.startedAt,
         completedAt: completedAt,
         revisionCount: t.revisionCount,
         isOverdue,
@@ -288,6 +305,23 @@ export default async function ReportsPage() {
         }).length;
         const overdueRate = assignedCount > 0 ? Math.round((overdueCount / assignedCount) * 100) : 0;
 
+        const taskDetails = u.assignedTasks.map(t => {
+          const isDone = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
+          const isTaskOverdue = t.dueDate
+            ? (isDone
+                ? new Date(t.completedAt || t.dueDate) > new Date(t.dueDate)
+                : new Date() > new Date(t.dueDate))
+            : false;
+          return {
+            id: t.id, title: t.title, status: t.status, priority: t.priority,
+            projectTitle: t.project?.title || "No Project",
+            assignerName: t.assignedBy?.name || "Self",
+            dueDate: t.dueDate, createdAt: t.createdAt,
+            startedAt: t.startedAt, completedAt: t.completedAt,
+            revisionCount: t.revisionCount, isOverdue: isTaskOverdue,
+          };
+        });
+
         return {
           id: u.id,
           name: u.name,
@@ -300,6 +334,7 @@ export default async function ReportsPage() {
           doneProperlyRate,
           overdueRate,
           hoursLogged,
+          tasks: taskDetails,
         };
       } else {
         const projectsManaged = u.managedProjects.length;
@@ -308,6 +343,40 @@ export default async function ReportsPage() {
           a.action === "REVISION_REQUESTED" || 
           (a.action === "STATUS_CHANGED" && (a.metadata as any)?.newStatus === "CLIENT_APPROVAL")
         ).length;
+
+        const assignedTaskDetails = u.assignedTasks.map(t => {
+          const isDone = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
+          const isTaskOverdue = t.dueDate
+            ? (isDone
+                ? new Date(t.completedAt || t.dueDate) > new Date(t.dueDate)
+                : new Date() > new Date(t.dueDate))
+            : false;
+          return {
+            id: t.id, title: t.title, status: t.status, priority: t.priority,
+            projectTitle: t.project?.title || "No Project",
+            assignerName: t.assignedBy?.name || "Self",
+            dueDate: t.dueDate, createdAt: t.createdAt,
+            startedAt: t.startedAt, completedAt: t.completedAt,
+            revisionCount: t.revisionCount, isOverdue: isTaskOverdue,
+          };
+        });
+
+        const createdTaskDetails = u.createdTasks.map(t => {
+          const isDone = t.status === TaskStatus.DONE || t.status === TaskStatus.APPROVED;
+          const isTaskOverdue = t.dueDate
+            ? (isDone
+                ? new Date(t.completedAt || t.dueDate) > new Date(t.dueDate)
+                : new Date() > new Date(t.dueDate))
+            : false;
+          return {
+            id: t.id, title: t.title, status: t.status, priority: t.priority,
+            projectTitle: t.project?.title || "No Project",
+            assigneeName: t.assignedTo?.name || "Unassigned",
+            dueDate: t.dueDate, createdAt: t.createdAt,
+            startedAt: t.startedAt, completedAt: t.completedAt,
+            revisionCount: t.revisionCount, isOverdue: isTaskOverdue,
+          };
+        });
 
         return {
           id: u.id,
@@ -319,6 +388,8 @@ export default async function ReportsPage() {
           tasksCreated,
           reviewsPerformed,
           hoursLogged,
+          tasks: assignedTaskDetails,
+          createdTasksList: createdTaskDetails,
         };
       }
     });

@@ -55,7 +55,7 @@ interface KanbanBoardProps {
     files?: any[];
   }>;
   projectId: string;
-  teamMembers: Array<{ id: string; name: string; department: string | null }>;
+  teamMembers: Array<{ id: string; name: string; department: string | null; role?: string }>;
   canCreateTask: boolean;
   userId?: string;
   userRole?: Role;

@@ -5,8 +5,9 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createTask } from "@/app/actions/tasks";
-import { Priority } from "@prisma/client";
+import { Priority, Role } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const taskSchema = z.object({
   title: z.string().min(2, "Task title is required"),
@@ -14,6 +15,7 @@ const taskSchema = z.object({
   priority: z.nativeEnum(Priority),
   assigneeIds: z.array(z.string()).optional(),
   dueDate: z.string().optional(),
+  assignedById: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -22,7 +24,7 @@ interface CreateTaskModalProps {
   projectId?: string;
   projects?: Array<{ id: string; title: string; clientId?: string | null }>;
   brands?: Array<{ id: string; companyName: string }>;
-  teamMembers?: Array<{ id: string; name: string; department: string | null }>;
+  teamMembers?: Array<{ id: string; name: string; department: string | null; role?: string }>;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (taskId: string) => void;
@@ -37,6 +39,9 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const assigneeRef = useRef<HTMLDivElement>(null);
 
+  const { role, user, isEmployee } = usePermissions();
+  const currentUserId = user?.id;
+
   const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<TaskFormValues & { selectedProjectId?: string }>({
     resolver: zodResolver(taskSchema.extend({
       selectedProjectId: z.string().optional(),
@@ -45,8 +50,17 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
       priority: Priority.MEDIUM,
       selectedProjectId: projectId || "",
       assigneeIds: [],
+      assignedById: "",
     },
   });
+
+  // Sync current user as assignee and assigner if employee
+  useEffect(() => {
+    if (isEmployee && currentUserId) {
+      setValue("assigneeIds", [currentUserId]);
+      setValue("assignedById", currentUserId);
+    }
+  }, [isEmployee, currentUserId, setValue]);
 
   const selectedAssigneeIds = watch("assigneeIds") || [];
 
@@ -58,6 +72,18 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
 
   const projectOptions = filteredProjects.map((p) => ({ value: p.id, label: p.title }));
   const brandOptions = brands.map((b) => ({ value: b.id, label: b.companyName }));
+
+  // Generate options for the Assigned By field
+  const managerOptions = useMemo(() => {
+    const options = [{ value: currentUserId || "", label: "MYSELF (FOR MY OWN TASK)" }];
+    const managers = teamMembers
+      .filter((m) => m.id !== currentUserId && (m.role === "ADMIN" || m.role === "SUPER_ADMIN"))
+      .map((m) => ({
+        value: m.id,
+        label: `${m.name}${m.department ? ` (${m.department})` : ""} - MANAGER`,
+      }));
+    return [...options, ...managers];
+  }, [teamMembers, currentUserId]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -95,7 +121,8 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
         title: data.title,
         description: data.description,
         priority: data.priority,
-        assigneeIds: data.assigneeIds?.length ? data.assigneeIds : undefined,
+        assigneeIds: isEmployee && currentUserId ? [currentUserId] : (data.assigneeIds?.length ? data.assigneeIds : undefined),
+        assignedById: isEmployee ? (data.assignedById || currentUserId) : undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
       });
       reset();
@@ -216,78 +243,97 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
             </div>
           </div>
 
-          {/* Multi-Assign To */}
-          <div className="space-y-1 relative" ref={assigneeRef}>
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
-            {/* Selected Assignees Chips */}
-            <div
-              className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
-              onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
-            >
-              {selectedAssigneeIds.length === 0 ? (
-                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface/30 px-1">— SELECT ASSIGNEES —</span>
-              ) : (
-                selectedAssigneeIds.map((id) => {
-                  const member = teamMembers.find((m) => m.id === id);
-                  if (!member) return null;
-                  return (
-                    <span
-                      key={id}
-                      className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-headline uppercase tracking-wider border border-primary/20"
-                    >
-                      {member.name}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); toggleAssignee(id); }}
-                        className="hover:text-red-500 transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[10px]">close</span>
-                      </button>
-                    </span>
-                  );
-                })
-              )}
-            </div>
-            {/* Dropdown — constrained height, scrollable, sticky search */}
-            {assigneeDropdownOpen && (
-              <div className="brutalist-border bg-surface-container-lowest max-h-48 overflow-y-auto shadow-lg mt-1 z-20 relative">
-                <div className="p-1.5 border-b border-on-surface/10 sticky top-0 bg-surface-container-lowest z-10">
-                  <input
-                    type="text"
-                    value={assigneeSearch}
-                    onChange={(e) => setAssigneeSearch(e.target.value)}
-                    placeholder="Search..."
-                    className="w-full bg-transparent px-2 py-1 font-body text-xs focus:outline-none"
-                    autoFocus
+          {/* Assigned By (for Employees) OR Multi-Assign To (for Managers) */}
+          {isEmployee ? (
+            <div className="space-y-1.5">
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNED_BY</label>
+              <Controller
+                name="assignedById"
+                control={control}
+                render={({ field }) => (
+                  <AppSelect
+                    options={managerOptions}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="— SELECT ASSIGNER —"
+                    className="h-11"
                   />
-                </div>
-                {filteredMembers.map((member) => {
-                  const isSelected = selectedAssigneeIds.includes(member.id);
-                  return (
-                    <button
-                      key={member.id}
-                      type="button"
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-container-low transition-colors"
-                      onClick={() => toggleAssignee(member.id)}
-                    >
-                      <div className={`w-4 h-4 flex-shrink-0 brutalist-border flex items-center justify-center ${isSelected ? "bg-primary text-white" : ""}`}>
-                        {isSelected && <span className="material-symbols-outlined text-[10px]">check</span>}
-                      </div>
-                      <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
-                      {member.department && (
-                        <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
-                      )}
-                    </button>
-                  );
-                })}
-                {filteredMembers.length === 0 && (
-                  <div className="p-3 text-center">
-                    <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">NO_MEMBERS_FOUND</p>
-                  </div>
+                )}
+              />
+            </div>
+          ) : (
+            <div className="space-y-1 relative" ref={assigneeRef}>
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
+              {/* Selected Assignees Chips */}
+              <div
+                className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
+                onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
+              >
+                {selectedAssigneeIds.length === 0 ? (
+                  <span className="font-label text-[10px] uppercase tracking-widest text-on-surface/30 px-1">— SELECT ASSIGNEES —</span>
+                ) : (
+                  selectedAssigneeIds.map((id) => {
+                    const member = teamMembers.find((m) => m.id === id);
+                    if (!member) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-headline uppercase tracking-wider border border-primary/20"
+                      >
+                        {member.name}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleAssignee(id); }}
+                          className="hover:text-red-500 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[10px]">close</span>
+                        </button>
+                      </span>
+                    );
+                  })
                 )}
               </div>
-            )}
-          </div>
+              {/* Dropdown — constrained height, scrollable, sticky search */}
+              {assigneeDropdownOpen && (
+                <div className="brutalist-border bg-surface-container-lowest max-h-48 overflow-y-auto shadow-lg mt-1 z-20 relative">
+                  <div className="p-1.5 border-b border-on-surface/10 sticky top-0 bg-surface-container-lowest z-10">
+                    <input
+                      type="text"
+                      value={assigneeSearch}
+                      onChange={(e) => setAssigneeSearch(e.target.value)}
+                      placeholder="Search..."
+                      className="w-full bg-transparent px-2 py-1 font-body text-xs focus:outline-none"
+                      autoFocus
+                    />
+                  </div>
+                  {filteredMembers.map((member) => {
+                    const isSelected = selectedAssigneeIds.includes(member.id);
+                    return (
+                      <button
+                        key={member.id}
+                        type="button"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-container-low transition-colors"
+                        onClick={() => toggleAssignee(member.id)}
+                      >
+                        <div className={`w-4 h-4 flex-shrink-0 brutalist-border flex items-center justify-center ${isSelected ? "bg-primary text-white" : ""}`}>
+                          {isSelected && <span className="material-symbols-outlined text-[10px]">check</span>}
+                        </div>
+                        <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
+                        {member.department && (
+                          <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filteredMembers.length === 0 && (
+                    <div className="p-3 text-center">
+                      <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">NO_MEMBERS_FOUND</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Submit */}
           <div className="flex gap-3 pt-2 brutalist-border border-b-0 border-x-0">

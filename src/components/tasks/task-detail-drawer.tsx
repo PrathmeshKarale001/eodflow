@@ -103,6 +103,7 @@ interface TaskDetailDrawerProps {
     assignedById?: string | null;
     assignedTo: { id: string; name: string } | null;
     assignedBy?: { id: string; name: string } | null;
+    assignees?: Array<{ id: string; name: string; image?: string | null }> | null;
     files?: Array<{
       id: string;
       filename: string;
@@ -442,9 +443,13 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
             
             <div>
               <h2 className="font-headline text-lg sm:text-xl uppercase tracking-tight text-foreground leading-tight">{task.title}</h2>
-              {task.assignedTo && (
+              {((task.assignees && task.assignees.length > 0) || task.assignedTo) && (
                 <p className="font-label text-[9px] text-outline uppercase tracking-widest mt-1.5">
-                  ASSIGNED → <span className="text-primary font-bold">{task.assignedTo.name}</span>
+                  ASSIGNED → <span className="text-primary font-bold">
+                    {task.assignees && task.assignees.length > 0
+                      ? task.assignees.map((a) => a.name).join(", ")
+                      : task.assignedTo?.name}
+                  </span>
                   {task.assignedBy && (
                     <span className="text-outline/60 ml-2">BY <span className="text-on-surface/60 font-bold">{task.assignedBy.name}</span></span>
                   )}

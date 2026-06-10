@@ -16,7 +16,7 @@ interface Props {
     title: string;
     status: string;
     assignedTo: { name: string } | null;
-    project: { title: string };
+    project: { title: string } | null;
     updatedAt: Date;
   }>;
   recentActivities: Array<{
@@ -135,7 +135,7 @@ export function SuperAdminDashboard({
                   <div className="min-w-0">
                     <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate">{t.title}</p>
                     <p className="font-mono text-[8px] text-on-surface/40 truncate">
-                      {t.project.title} · {t.assignedTo?.name ?? "Unassigned"}
+                      {t.project?.title ?? "No Project"} · {t.assignedTo?.name ?? "Unassigned"}
                     </p>
                   </div>
                 </div>

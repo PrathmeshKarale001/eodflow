@@ -61,7 +61,16 @@ interface TaskType {
   assignedById?: string | null;
   assignedTo: { id: string; name: string; image: string | null } | null;
   assignedBy?: { id: string; name: string } | null;
-  project?: { id: string; title: string } | null;
+  assignees?: Array<{ id: string; name: string; image: string | null }> | null;
+  project?: {
+    id: string;
+    title: string;
+    client?: {
+      id: string;
+      companyName: string;
+      brandColor?: string | null;
+    } | null;
+  } | null;
   _count: { files: number };
   subtasks: Array<{ id: string; title: string; isDone: boolean }>;
 }
@@ -256,17 +265,30 @@ export function MyTasksList({
                           <span className="font-headline text-sm uppercase tracking-tight truncate group-hover:text-primary transition-colors block leading-tight">
                             {task.title}
                           </span>
-                          {/* Show project name and assignee for Admin/Super Admin */}
+                          {/* Show project name, brand, assignee(s), and assigner for Admin/Super Admin */}
                           {canAssign && (
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
-                              {task.project && (
-                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
-                                  {task.project?.title || "No Project"}
+                              {task.project?.client?.companyName && (
+                                <span className="font-mono text-[8px] uppercase text-primary/70 tracking-widest font-bold">
+                                  {task.project.client.companyName}
                                 </span>
                               )}
-                              {task.assignedTo && (
+                              {task.project && (
+                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                  {task.project.client?.companyName ? "• " : ""}{task.project.title}
+                                </span>
+                              )}
+                              {task.assignees && task.assignees.length > 0 ? (
+                                <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                                  → {task.assignees.map((a) => a.name).join(", ")}
+                                </span>
+                              ) : task.assignedTo ? (
                                 <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
                                   → {task.assignedTo.name}
+                                </span>
+                              ) : (
+                                <span className="font-mono text-[8px] uppercase text-error/60 tracking-widest">
+                                  UNASSIGNED
                                 </span>
                               )}
                               {task.assignedBy && (
@@ -274,22 +296,29 @@ export function MyTasksList({
                                   BY {task.assignedBy.name}
                                 </span>
                               )}
-                              {!task.assignedTo && (
-                                <span className="font-mono text-[8px] uppercase text-error/60 tracking-widest">
-                                  UNASSIGNED
-                                </span>
-                              )}
                             </div>
                           )}
-                          {/* For non-admins: show who assigned this task */}
-                          {!canAssign && task.assignedBy && task.assignedBy.id !== userId && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
-                                BY {task.assignedBy.name}
-                              </span>
+                          {/* For non-admins: show brand, project, assigner, and co-assignees */}
+                          {!canAssign && (
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                              {task.project?.client?.companyName && (
+                                <span className="font-mono text-[8px] uppercase text-primary/70 tracking-widest font-bold">
+                                  {task.project.client.companyName}
+                                </span>
+                              )}
                               {task.project && (
+                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                  {task.project.client?.companyName ? "• " : ""}{task.project.title}
+                                </span>
+                              )}
+                              {task.assignedBy && (
                                 <span className="font-mono text-[8px] uppercase text-on-surface/30 tracking-widest">
-                                  • {task.project.title}
+                                  {task.project ? "• " : ""}BY {task.assignedBy.id === userId ? "MYSELF" : task.assignedBy.name}
+                                </span>
+                              )}
+                              {task.assignees && task.assignees.length > 1 && (
+                                <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                                  • WITH {task.assignees.filter((a) => a.id !== userId).map((a) => a.name).join(", ")}
                                 </span>
                               )}
                             </div>

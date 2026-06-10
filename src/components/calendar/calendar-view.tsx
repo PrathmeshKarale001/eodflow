@@ -8,7 +8,7 @@ interface CalendarTask {
   status: string;
   priority: string;
   dueDate: Date;
-  project: { title: string };
+  project: { title: string } | null;
   assignedTo: { name: string } | null;
 }
 
@@ -225,7 +225,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
                         <p className={`font-headline text-[10px] uppercase tracking-wider text-card-text ${STATUS_DONE.has(t.status) ? "line-through" : ""}`}>
                           {t.title}
                         </p>
-                        <p className="font-mono text-[8px] text-on-surface/40 mt-0.5 truncate">{t.project.title}</p>
+                        <p className="font-mono text-[8px] text-on-surface/40 mt-0.5 truncate">{t.project?.title ?? "No Project"}</p>
                         {t.assignedTo && (
                           <p className="font-mono text-[8px] text-on-surface/30">{t.assignedTo.name}</p>
                         )}
