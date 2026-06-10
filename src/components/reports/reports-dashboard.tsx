@@ -96,6 +96,7 @@ export function ReportsDashboard({
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [personTaskFilter, setPersonTaskFilter] = useState<"ALL" | "DONE" | "PENDING" | "REVISIONS" | "OVERDUE">("ALL");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -511,48 +512,125 @@ export function ReportsDashboard({
                       <tbody className="divide-y divide-on-surface/5">
                         {filteredTasks.map((t: any) => {
                           const isDone = t.status === "DONE" || t.status === "APPROVED";
+                          const isTaskSelected = selectedTaskId === t.id;
                           return (
-                            <tr key={t.id} className={`hover:bg-surface-container-lowest/50 transition-colors ${isDone ? "opacity-60" : ""}`}>
-                              <td className="px-3 py-2.5 max-w-[200px]">
-                                <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate block">{t.title}</span>
-                              </td>
-                              <td className="px-3 py-2.5">
-                                <span className="text-on-surface/50 uppercase truncate block max-w-[120px]">{t.projectTitle}</span>
-                              </td>
-                              <td className="px-3 py-2.5 text-center">
-                                <span className={`inline-block px-2 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
-                                  {t.status.replace(/_/g, " ")}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2.5 text-center">
-                                <span className={`inline-block px-1.5 py-0.5 text-[7px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>
-                                  {t.priority}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2.5 text-on-surface/50 uppercase">
-                                {isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}
-                              </td>
-                              <td className="px-3 py-2.5 text-center text-on-surface/60">{fmtDate(t.createdAt)}</td>
-                              <td className="px-3 py-2.5 text-center">
-                                {t.startedAt ? <span className="text-blue-400">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
-                              </td>
-                              <td className="px-3 py-2.5 text-center">
-                                {t.dueDate
-                                  ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-on-surface/60"}>{fmtDate(t.dueDate)}</span>
-                                  : <span className="text-on-surface/20">—</span>
-                                }
-                              </td>
-                              <td className="px-3 py-2.5 text-center">
-                                {isDone
-                                  ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-green-400 font-bold"}>{fmtDate(t.completedAt)}</span>
-                                  : <span className="text-on-surface/20">Pending</span>
-                                }
-                              </td>
-                              <td className="px-3 py-2.5 text-center">
-                                {t.revisionCount > 0
-                                  ? <span className="text-amber-400 font-bold">{t.revisionCount}</span>
-                                  : <span className="text-green-400/50">0</span>
-                                }
+                            <tr key={t.id} className="group" style={{ verticalAlign: "top" }}>
+                              <td colSpan={10} className="p-0">
+                                <div
+                                  onClick={() => setSelectedTaskId(isTaskSelected ? null : t.id)}
+                                  className={`flex items-center cursor-pointer transition-all duration-150 px-0 py-2.5 ${
+                                    isTaskSelected
+                                      ? "bg-primary/5"
+                                      : `hover:bg-surface-container-lowest/50 ${isDone ? "opacity-60" : ""}`
+                                  }`}
+                                >
+                                  <span className={`material-symbols-outlined text-[10px] text-on-surface/25 ml-1 mr-1 transition-transform duration-200 ${isTaskSelected ? "rotate-90" : ""}`}>chevron_right</span>
+                                  <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate flex-1 min-w-0 px-1" style={{ maxWidth: 180 }}>{t.title}</span>
+                                  <span className="text-on-surface/50 uppercase truncate px-2" style={{ maxWidth: 110 }}>{t.projectTitle}</span>
+                                  <span className="px-2 text-center" style={{ minWidth: 80 }}>
+                                    <span className={`inline-block px-2 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
+                                      {t.status.replace(/_/g, " ")}
+                                    </span>
+                                  </span>
+                                  <span className="px-2 text-center" style={{ minWidth: 60 }}>
+                                    <span className={`inline-block px-1.5 py-0.5 text-[7px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>
+                                      {t.priority}
+                                    </span>
+                                  </span>
+                                  <span className="px-2 text-on-surface/50 uppercase" style={{ minWidth: 85 }}>
+                                    {isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}
+                                  </span>
+                                  <span className="px-2 text-center text-on-surface/60" style={{ minWidth: 55 }}>{fmtDate(t.createdAt)}</span>
+                                  <span className="px-2 text-center" style={{ minWidth: 55 }}>
+                                    {t.startedAt ? <span className="text-blue-400">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
+                                  </span>
+                                  <span className="px-2 text-center" style={{ minWidth: 55 }}>
+                                    {t.dueDate
+                                      ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-on-surface/60"}>{fmtDate(t.dueDate)}</span>
+                                      : <span className="text-on-surface/20">—</span>
+                                    }
+                                  </span>
+                                  <span className="px-2 text-center" style={{ minWidth: 60 }}>
+                                    {isDone
+                                      ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-green-400 font-bold"}>{fmtDate(t.completedAt)}</span>
+                                      : <span className="text-on-surface/20">Pending</span>
+                                    }
+                                  </span>
+                                  <span className="px-2 text-center" style={{ minWidth: 35 }}>
+                                    {t.revisionCount > 0
+                                      ? <span className="text-amber-400 font-bold">{t.revisionCount}</span>
+                                      : <span className="text-green-400/50">0</span>
+                                    }
+                                  </span>
+                                </div>
+                                {/* Expanded Task Detail */}
+                                {isTaskSelected && (
+                                  <div className="animate-in slide-in-from-top-1 fade-in duration-200 bg-surface-container-lowest border-t border-primary/20 border-b border-b-primary/10">
+                                    <div className="p-4 space-y-3">
+                                      {/* Task Header */}
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-headline text-sm uppercase tracking-wider text-card-text">{t.title}</h4>
+                                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                            <span className={`px-2 py-0.5 text-[8px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
+                                            <span className={`px-1.5 py-0.5 text-[8px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
+                                            {t.revisionCount > 0 && <span className="px-1.5 py-0.5 text-[8px] uppercase font-bold bg-amber-500/20 text-amber-400">REV: {t.revisionCount}</span>}
+                                            {t.isOverdue && <span className="px-1.5 py-0.5 text-[8px] uppercase font-bold bg-red-500/20 text-red-400">OVERDUE</span>}
+                                          </div>
+                                        </div>
+                                        <button onClick={(e) => { e.stopPropagation(); setSelectedTaskId(null); }} className="p-1 hover:bg-surface-container-high transition-colors flex-shrink-0">
+                                          <span className="material-symbols-outlined text-sm text-on-surface/40">close</span>
+                                        </button>
+                                      </div>
+
+                                      {/* Description */}
+                                      {t.description ? (
+                                        <div className="border-l-2 border-primary/40 pl-3 py-1">
+                                          <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 block mb-1">DESCRIPTION</span>
+                                          <p className="font-mono text-[11px] text-on-surface/80 leading-relaxed whitespace-pre-wrap">{t.description}</p>
+                                        </div>
+                                      ) : (
+                                        <div className="border-l-2 border-on-surface/10 pl-3 py-1">
+                                          <span className="font-mono text-[9px] text-on-surface/25 uppercase tracking-widest">NO DESCRIPTION PROVIDED</span>
+                                        </div>
+                                      )}
+
+                                      {/* Detail Grid */}
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <div className="brutalist-border bg-card p-2.5">
+                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">PROJECT</span>
+                                          <span className="font-headline text-[10px] text-card-text uppercase block mt-0.5">{t.projectTitle}</span>
+                                        </div>
+                                        <div className="brutalist-border bg-card p-2.5">
+                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">{isManager && t.assigneeName ? "ASSIGNED TO" : "ASSIGNED BY"}</span>
+                                          <span className="font-headline text-[10px] text-primary uppercase block mt-0.5">{isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}</span>
+                                        </div>
+                                        <div className="brutalist-border bg-card p-2.5">
+                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">CREATED</span>
+                                          <span className="font-headline text-[10px] text-on-surface/70 uppercase block mt-0.5">{fmtDate(t.createdAt)}</span>
+                                        </div>
+                                        <div className="brutalist-border bg-card p-2.5">
+                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">STARTED</span>
+                                          <span className={`font-headline text-[10px] uppercase block mt-0.5 ${t.startedAt ? "text-blue-400" : "text-on-surface/20"}`}>{t.startedAt ? fmtDate(t.startedAt) : "NOT STARTED"}</span>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div className={`brutalist-border p-2.5 ${t.isOverdue ? "bg-red-500/5 border-red-500/20" : "bg-card"}`}>
+                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">DUE DATE</span>
+                                          <span className={`font-headline text-[10px] uppercase block mt-0.5 ${t.isOverdue ? "text-red-400 font-bold" : t.dueDate ? "text-on-surface/70" : "text-on-surface/20"}`}>
+                                            {t.dueDate ? fmtDate(t.dueDate) : "NO DUE DATE"}
+                                          </span>
+                                        </div>
+                                        <div className={`brutalist-border p-2.5 ${isDone ? (t.isOverdue ? "bg-red-500/5" : "bg-green-500/5") : "bg-card"}`}>
+                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">COMPLETED</span>
+                                          <span className={`font-headline text-[10px] uppercase block mt-0.5 ${isDone ? (t.isOverdue ? "text-red-400 font-bold" : "text-green-400 font-bold") : "text-on-surface/20"}`}>
+                                            {isDone ? fmtDate(t.completedAt) : "PENDING"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           );
@@ -565,40 +643,74 @@ export function ReportsDashboard({
                   <div className="md:hidden max-h-[500px] overflow-y-auto divide-y divide-on-surface/5">
                     {filteredTasks.map((t: any) => {
                       const isDone = t.status === "DONE" || t.status === "APPROVED";
+                      const isTaskSelected = selectedTaskId === t.id;
                       return (
-                        <div key={t.id} className={`p-3 space-y-2 ${isDone ? "opacity-60" : ""}`}>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <span className="font-headline text-[10px] uppercase tracking-wider text-card-text block truncate">{t.title}</span>
-                              <span className="font-mono text-[8px] text-on-surface/40 uppercase">{t.projectTitle}</span>
+                        <div key={t.id} className={`${isDone && !isTaskSelected ? "opacity-60" : ""}`}>
+                          <div
+                            onClick={() => setSelectedTaskId(isTaskSelected ? null : t.id)}
+                            className={`p-3 space-y-2 cursor-pointer transition-colors ${isTaskSelected ? "bg-primary/5" : ""}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                <span className={`material-symbols-outlined text-xs text-on-surface/25 transition-transform duration-200 flex-shrink-0 ${isTaskSelected ? "rotate-90" : ""}`}>chevron_right</span>
+                                <div className="min-w-0 flex-1">
+                                  <span className="font-headline text-[10px] uppercase tracking-wider text-card-text block truncate">{t.title}</span>
+                                  <span className="font-mono text-[8px] text-on-surface/40 uppercase">{t.projectTitle}</span>
+                                </div>
+                              </div>
+                              <span className={`px-1.5 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
+                                {t.status.replace(/_/g, " ")}
+                              </span>
                             </div>
-                            <span className={`px-1.5 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
-                              {t.status.replace(/_/g, " ")}
-                            </span>
+                            <div className="grid grid-cols-4 gap-1.5 text-center font-mono text-[8px] uppercase brutalist-border bg-surface-container-lowest p-2">
+                              <div>
+                                <span className="text-on-surface/30 block">Created</span>
+                                <span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span>
+                              </div>
+                              <div>
+                                <span className="text-on-surface/30 block">Started</span>
+                                {t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
+                              </div>
+                              <div>
+                                <span className="text-on-surface/30 block">Due</span>
+                                {t.dueDate ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span> : <span className="text-on-surface/20">—</span>}
+                              </div>
+                              <div>
+                                <span className="text-on-surface/30 block">Done</span>
+                                {isDone ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">—</span>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 text-[8px] font-mono uppercase text-on-surface/40">
+                              <span className={`px-1 py-0.5 ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
+                              <span>{isManager && t.assigneeName ? `→ ${t.assigneeName}` : `BY ${t.assignerName || "—"}`}</span>
+                              {t.revisionCount > 0 && <span className="text-amber-400 font-bold">{t.revisionCount} rev</span>}
+                            </div>
                           </div>
-                          <div className="grid grid-cols-4 gap-1.5 text-center font-mono text-[8px] uppercase brutalist-border bg-surface-container-lowest p-2">
-                            <div>
-                              <span className="text-on-surface/30 block">Created</span>
-                              <span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span>
+                          {/* Expanded Detail (Mobile) */}
+                          {isTaskSelected && (
+                            <div className="animate-in slide-in-from-top-1 fade-in duration-200 bg-surface-container-lowest border-t border-primary/20 p-3 space-y-3">
+                              {t.description ? (
+                                <div className="border-l-2 border-primary/40 pl-3 py-1">
+                                  <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 block mb-1">DESCRIPTION</span>
+                                  <p className="font-mono text-[11px] text-on-surface/80 leading-relaxed whitespace-pre-wrap">{t.description}</p>
+                                </div>
+                              ) : (
+                                <div className="border-l-2 border-on-surface/10 pl-3 py-1">
+                                  <span className="font-mono text-[9px] text-on-surface/25 uppercase tracking-widest">NO DESCRIPTION PROVIDED</span>
+                                </div>
+                              )}
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="brutalist-border bg-card p-2">
+                                  <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">PROJECT</span>
+                                  <span className="font-headline text-[9px] text-card-text uppercase block mt-0.5">{t.projectTitle}</span>
+                                </div>
+                                <div className="brutalist-border bg-card p-2">
+                                  <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">{isManager && t.assigneeName ? "ASSIGNED TO" : "ASSIGNED BY"}</span>
+                                  <span className="font-headline text-[9px] text-primary uppercase block mt-0.5">{isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}</span>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-on-surface/30 block">Started</span>
-                              {t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
-                            </div>
-                            <div>
-                              <span className="text-on-surface/30 block">Due</span>
-                              {t.dueDate ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span> : <span className="text-on-surface/20">—</span>}
-                            </div>
-                            <div>
-                              <span className="text-on-surface/30 block">Done</span>
-                              {isDone ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">—</span>}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 text-[8px] font-mono uppercase text-on-surface/40">
-                            <span className={`px-1 py-0.5 ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
-                            <span>{isManager && t.assigneeName ? `→ ${t.assigneeName}` : `BY ${t.assignerName || "—"}`}</span>
-                            {t.revisionCount > 0 && <span className="text-amber-400 font-bold">{t.revisionCount} rev</span>}
-                          </div>
+                          )}
                         </div>
                       );
                     })}

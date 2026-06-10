@@ -189,6 +189,7 @@ export default async function ReportsPage() {
             select: {
               id: true,
               title: true,
+              description: true,
               status: true,
               priority: true,
               dueDate: true,
@@ -205,6 +206,7 @@ export default async function ReportsPage() {
             select: {
               id: true,
               title: true,
+              description: true,
               status: true,
               priority: true,
               dueDate: true,
@@ -313,7 +315,7 @@ export default async function ReportsPage() {
                 : new Date() > new Date(t.dueDate))
             : false;
           return {
-            id: t.id, title: t.title, status: t.status, priority: t.priority,
+            id: t.id, title: t.title, description: t.description, status: t.status, priority: t.priority,
             projectTitle: t.project?.title || "No Project",
             assignerName: t.assignedBy?.name || "Self",
             dueDate: t.dueDate, createdAt: t.createdAt,
@@ -352,7 +354,7 @@ export default async function ReportsPage() {
                 : new Date() > new Date(t.dueDate))
             : false;
           return {
-            id: t.id, title: t.title, status: t.status, priority: t.priority,
+            id: t.id, title: t.title, description: t.description, status: t.status, priority: t.priority,
             projectTitle: t.project?.title || "No Project",
             assignerName: t.assignedBy?.name || "Self",
             dueDate: t.dueDate, createdAt: t.createdAt,
@@ -369,7 +371,7 @@ export default async function ReportsPage() {
                 : new Date() > new Date(t.dueDate))
             : false;
           return {
-            id: t.id, title: t.title, status: t.status, priority: t.priority,
+            id: t.id, title: t.title, description: t.description, status: t.status, priority: t.priority,
             projectTitle: t.project?.title || "No Project",
             assigneeName: t.assignedTo?.name || "Unassigned",
             dueDate: t.dueDate, createdAt: t.createdAt,
