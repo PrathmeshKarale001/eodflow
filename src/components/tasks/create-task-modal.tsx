@@ -9,7 +9,7 @@ import { Priority, Role } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
 import { usePermissions } from "@/hooks/use-permissions";
 
-const taskSchema = z.object({
+const taskSchemaBase = z.object({
   title: z.string().min(2, "Task title is required"),
   description: z.string().optional(),
   priority: z.nativeEnum(Priority),
@@ -18,7 +18,15 @@ const taskSchema = z.object({
   assignedById: z.string().optional(),
 });
 
-type TaskFormValues = z.infer<typeof taskSchema>;
+// Employee variant: assignedById is mandatory
+const taskSchemaEmployee = taskSchemaBase.extend({
+  assignedById: z.string().min(1, "Assigned By is required"),
+});
+
+// Manager/Admin variant: assignedById stays optional
+const taskSchemaManager = taskSchemaBase;
+
+type TaskFormValues = z.infer<typeof taskSchemaBase>;
 
 interface CreateTaskModalProps {
   projectId?: string;
@@ -42,8 +50,11 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
   const { role, user, isEmployee } = usePermissions();
   const currentUserId = user?.id;
 
+  const activeSchema = isEmployee ? taskSchemaEmployee : taskSchemaManager;
+  type ActiveFormValues = z.infer<typeof activeSchema> & { selectedProjectId?: string };
+
   const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<TaskFormValues & { selectedProjectId?: string }>({
-    resolver: zodResolver(taskSchema.extend({
+    resolver: zodResolver(activeSchema.extend({
       selectedProjectId: z.string().optional(),
     })),
     defaultValues: {
@@ -246,7 +257,9 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
           {/* Assigned By (for Employees) OR Multi-Assign To (for Managers) */}
           {isEmployee ? (
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNED_BY</label>
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+                ASSIGNED_BY <span className="text-red-500">*</span>
+              </label>
               <Controller
                 name="assignedById"
                 control={control}
@@ -256,10 +269,11 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     placeholder="— SELECT ASSIGNER —"
-                    className="h-11"
+                    className={`h-11 ${errors.assignedById ? "border-red-500" : ""}`}
                   />
                 )}
               />
+              {errors.assignedById && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.assignedById.message}</p>}
             </div>
           ) : (
             <div className="space-y-1 relative" ref={assigneeRef}>

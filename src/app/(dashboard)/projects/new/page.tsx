@@ -27,7 +27,7 @@ export default async function NewProjectPage({
     }),
     db.user.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, department: true },
+      select: { id: true, name: true, department: true, role: true },
       orderBy: { name: "asc" }
     }),
   ]);

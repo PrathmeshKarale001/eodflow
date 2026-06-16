@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,8 +10,9 @@ import { createTask } from "@/app/actions/tasks";
 import { uploadFile } from "@/lib/storage-client";
 import { Priority } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
+import { usePermissions } from "@/hooks/use-permissions";
 
-const formSchema = z.object({
+const formSchemaBase = z.object({
   // Project fields
   title: z.string().min(3, "Title must be at least 3 characters"),
   clientId: z.string().min(1, "Client is required"),
@@ -21,14 +22,22 @@ const formSchema = z.object({
   taskPriority: z.nativeEnum(Priority),
   taskDueDate: z.string().optional(),
   taskAssigneeIds: z.array(z.string()).optional(),
+  taskAssignedById: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+// Employee variant: taskAssignedById is mandatory when creating a task
+const formSchemaEmployee = formSchemaBase.extend({
+  taskAssignedById: z.string().min(1, "Assigned By is required"),
+});
+
+const formSchemaManager = formSchemaBase;
+
+type FormValues = z.infer<typeof formSchemaBase>;
 
 interface CreateProjectFormProps {
   clients: { id: string; companyName: string }[];
   managers: { id: string; name: string; email: string }[];
-  teamMembers?: { id: string; name: string; department: string | null }[];
+  teamMembers?: { id: string; name: string; department: string | null; role?: string }[];
   preselectedClientId?: string;
 }
 
@@ -40,9 +49,26 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
   const [assigneeSearch, setAssigneeSearch] = useState("");
 
+  const { isEmployee, user: currentUser } = usePermissions();
+  const currentUserId = currentUser?.id;
+
   const preselectedClient = preselectedClientId
     ? clients.find((c) => c.id === preselectedClientId)
     : null;
+
+  const activeSchema = isEmployee ? formSchemaEmployee : formSchemaManager;
+
+  // Manager options for "Assigned By" dropdown (employees only)
+  const assignerOptions = useMemo(() => {
+    const options = [{ value: currentUserId || "", label: "MYSELF (FOR MY OWN TASK)" }];
+    const mgrs = teamMembers
+      .filter((m) => m.id !== currentUserId && (m.role === "ADMIN" || m.role === "SUPER_ADMIN"))
+      .map((m) => ({
+        value: m.id,
+        label: `${m.name}${m.department ? ` (${m.department})` : ""} - MANAGER`,
+      }));
+    return [...options, ...mgrs];
+  }, [teamMembers, currentUserId]);
 
   const {
     register,
@@ -52,11 +78,12 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
     watch,
     setValue,
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(activeSchema),
     defaultValues: {
       clientId: preselectedClientId || "",
       taskPriority: Priority.MEDIUM,
       taskAssigneeIds: [],
+      taskAssignedById: "",
     },
   });
 
@@ -136,7 +163,8 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
           title: data.taskTitle,
           description: data.taskDescription,
           priority: data.taskPriority,
-          assigneeIds: data.taskAssigneeIds?.length ? data.taskAssigneeIds : undefined,
+          assigneeIds: isEmployee && currentUserId ? [currentUserId] : (data.taskAssigneeIds?.length ? data.taskAssigneeIds : undefined),
+          assignedById: isEmployee ? (data.taskAssignedById || currentUserId) : undefined,
           dueDate: data.taskDueDate ? new Date(data.taskDueDate) : undefined,
         });
       }
@@ -262,72 +290,94 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
           </div>
         </div>
 
-        {/* Task Assignees */}
-        {teamMembers.length > 0 && (
-          <div className="space-y-1 relative">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
-            <div
-              className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
-              onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
-            >
-              {selectedAssigneeIds.length === 0 ? (
-                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface/30 px-1">— SELECT ASSIGNEES —</span>
-              ) : (
-                selectedAssigneeIds.map((id) => {
-                  const member = teamMembers.find((m) => m.id === id);
-                  if (!member) return null;
-                  return (
-                    <span
-                      key={id}
-                      className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-headline uppercase tracking-wider border border-primary/20"
-                    >
-                      {member.name}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); toggleAssignee(id); }}
-                        className="hover:text-red-500 transition-colors"
+        {/* Assigned By (mandatory for employees) OR Assignees (for managers) */}
+        {isEmployee ? (
+          <div className="space-y-1.5">
+            <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+              ASSIGNED_BY <span className="text-red-500">*</span>
+            </label>
+            <Controller
+              name="taskAssignedById"
+              control={control}
+              render={({ field }) => (
+                <AppSelect
+                  options={assignerOptions}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="— SELECT ASSIGNER —"
+                  className={`h-11 ${errors.taskAssignedById ? "border-red-500" : ""}`}
+                />
+              )}
+            />
+            {errors.taskAssignedById && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.taskAssignedById.message}</p>}
+          </div>
+        ) : (
+          teamMembers.length > 0 && (
+            <div className="space-y-1 relative">
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
+              <div
+                className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
+                onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
+              >
+                {selectedAssigneeIds.length === 0 ? (
+                  <span className="font-label text-[10px] uppercase tracking-widest text-on-surface/30 px-1">— SELECT ASSIGNEES —</span>
+                ) : (
+                  selectedAssigneeIds.map((id) => {
+                    const member = teamMembers.find((m) => m.id === id);
+                    if (!member) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-headline uppercase tracking-wider border border-primary/20"
                       >
-                        <span className="material-symbols-outlined text-[10px]">close</span>
+                        {member.name}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleAssignee(id); }}
+                          className="hover:text-red-500 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[10px]">close</span>
+                        </button>
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+              {assigneeDropdownOpen && (
+                <div className="brutalist-border bg-surface-container-lowest max-h-48 overflow-y-auto shadow-lg mt-1 z-20 relative">
+                  <div className="p-1.5 border-b border-on-surface/10 sticky top-0 bg-surface-container-lowest z-10">
+                    <input
+                      type="text"
+                      value={assigneeSearch}
+                      onChange={(e) => setAssigneeSearch(e.target.value)}
+                      placeholder="Search..."
+                      className="w-full bg-transparent px-2 py-1 font-body text-xs focus:outline-none"
+                      autoFocus
+                    />
+                  </div>
+                  {filteredMembers.map((member) => {
+                    const isSelected = selectedAssigneeIds.includes(member.id);
+                    return (
+                      <button
+                        key={member.id}
+                        type="button"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-container-low transition-colors"
+                        onClick={() => toggleAssignee(member.id)}
+                      >
+                        <div className={`w-4 h-4 flex-shrink-0 brutalist-border flex items-center justify-center ${isSelected ? "bg-primary text-white" : ""}`}>
+                          {isSelected && <span className="material-symbols-outlined text-[10px]">check</span>}
+                        </div>
+                        <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
+                        {member.department && (
+                          <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
+                        )}
                       </button>
-                    </span>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </div>
-            {assigneeDropdownOpen && (
-              <div className="brutalist-border bg-surface-container-lowest max-h-48 overflow-y-auto shadow-lg mt-1 z-20 relative">
-                <div className="p-1.5 border-b border-on-surface/10 sticky top-0 bg-surface-container-lowest z-10">
-                  <input
-                    type="text"
-                    value={assigneeSearch}
-                    onChange={(e) => setAssigneeSearch(e.target.value)}
-                    placeholder="Search..."
-                    className="w-full bg-transparent px-2 py-1 font-body text-xs focus:outline-none"
-                    autoFocus
-                  />
-                </div>
-                {filteredMembers.map((member) => {
-                  const isSelected = selectedAssigneeIds.includes(member.id);
-                  return (
-                    <button
-                      key={member.id}
-                      type="button"
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-container-low transition-colors"
-                      onClick={() => toggleAssignee(member.id)}
-                    >
-                      <div className={`w-4 h-4 flex-shrink-0 brutalist-border flex items-center justify-center ${isSelected ? "bg-primary text-white" : ""}`}>
-                        {isSelected && <span className="material-symbols-outlined text-[10px]">check</span>}
-                      </div>
-                      <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
-                      {member.department && (
-                        <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          )
         )}
 
         {/* Deliverables Attachment */}
