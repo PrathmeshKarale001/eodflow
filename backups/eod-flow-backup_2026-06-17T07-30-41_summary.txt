@@ -1,0 +1,33 @@
+EOD Flow Database Backup
+========================
+Date:    6/17/2026, 1:00:49 PM
+Tables:  23
+Records: 1690
+
+Files:
+  Data:    eod-flow-backup_2026-06-17T07-30-41.json
+
+Table Breakdown:
+  users: 33 records
+  accounts: 33 records
+  sessions: 90 records
+  verifications: 0 records
+  invitations: 4 records
+  departmentChangeRequests: 1 records
+  clients: 14 records
+  projects: 63 records
+  projectTemplates: 0 records
+  tasks: 190 records
+  subtasks: 0 records
+  tags: 0 records
+  tagsOnTasks: 0 records
+  files: 22 records
+  comments: 9 records
+  timeEntries: 33 records
+  activityLogs: 800 records
+  notifications: 200 records
+  pushSubscriptions: 18 records
+  chatChannels: 22 records
+  chatChannelMembers: 38 records
+  chatMessages: 120 records
+  chatMessageReactions: 0 records

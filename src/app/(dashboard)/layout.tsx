@@ -23,14 +23,14 @@ export default async function DashboardLayout({
   let session;
   try {
     session = await auth();
-    console.log("[DASHBOARD_LAYOUT] auth() result:", JSON.stringify(session?.user?.email ?? "NO_SESSION"));
   } catch (error) {
-    console.error("[DASHBOARD_LAYOUT] auth() CRASHED:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("[DASHBOARD_LAYOUT] auth() error:", error);
+    }
     redirect("/login");
   }
 
   if (!session?.user) {
-    console.log("[DASHBOARD_LAYOUT] No session user, redirecting to login");
     redirect("/login");
   }
 
@@ -40,6 +40,7 @@ export default async function DashboardLayout({
 
   // Fetch Brand → Project hierarchy for sidebar tree + chat channels in parallel
   // ADMIN: Only show brands where they are POC or manage a project
+  // EMPLOYEE: Only show brands where they have assigned tasks
   const brandWhereClause = userRole === "ADMIN"
     ? {
         isActive: true,
@@ -48,13 +49,20 @@ export default async function DashboardLayout({
           { projects: { some: { assignedManagerId: userId } } },
         ],
       }
-    : { isActive: true };
+    : userRole === "EMPLOYEE"
+      ? {
+          isActive: true,
+          projects: { some: { tasks: { some: { assignedToId: userId } } } },
+        }
+      : { isActive: true };
 
   const projectWhereClause = userRole === "ADMIN"
     ? { status: { not: "ARCHIVED" as const }, assignedManagerId: userId }
-    : { status: { not: "ARCHIVED" as const } };
+    : userRole === "EMPLOYEE"
+      ? { status: { not: "ARCHIVED" as const }, tasks: { some: { assignedToId: userId } } }
+      : { status: { not: "ARCHIVED" as const } };
 
-  const [brands, channels] = await Promise.all([
+  const [brands, channels, allClients] = await Promise.all([
     db.client.findMany({
       where: brandWhereClause,
       select: {
@@ -75,6 +83,14 @@ export default async function DashboardLayout({
       orderBy: { companyName: "asc" },
     }),
     getUserChannels(),
+    // Lightweight all-clients list for sidebar "All Clients" section (ADMIN + EMPLOYEE)
+    userRole !== "SUPER_ADMIN"
+      ? db.client.findMany({
+          where: { isActive: true },
+          select: { id: true, companyName: true, brandColor: true },
+          orderBy: { companyName: "asc" },
+        })
+      : Promise.resolve([]),
   ]);
 
   const channelList = (channels as { id: string; name: string | null; type: string }[]).map((c) => ({
@@ -97,6 +113,7 @@ export default async function DashboardLayout({
           }}
           navItems={navItems}
           brands={brands}
+          allClients={allClients}
         />
 
         {/* Desktop Sidebar */}
@@ -110,6 +127,7 @@ export default async function DashboardLayout({
           }}
           navItems={navItems}
           brands={brands}
+          allClients={allClients}
         />
 
         {/* Main content with conditional scroll/padding */}

@@ -12,6 +12,7 @@ import { NotificationType } from "@prisma/client";
 export async function getNotifications(userId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+  if (userId !== session.user.id) throw new Error("FORBIDDEN: Cannot access other users' notifications.");
 
   const notifications = await db.notification.findMany({
     where: { userId },
@@ -29,6 +30,7 @@ export async function getNotifications(userId: string) {
 export async function getUnreadCount(userId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+  if (userId !== session.user.id) throw new Error("FORBIDDEN: Cannot access other users' notifications.");
 
   const count = await db.notification.count({
     where: { userId, isRead: false },
@@ -44,6 +46,15 @@ export async function getUnreadCount(userId: string) {
 export async function markAsRead(notificationId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  // Verify ownership before marking as read
+  const notification = await db.notification.findUnique({
+    where: { id: notificationId },
+    select: { userId: true },
+  });
+  if (!notification || notification.userId !== session.user.id) {
+    throw new Error("FORBIDDEN: Cannot modify other users' notifications.");
+  }
 
   await db.notification.update({
     where: { id: notificationId },
@@ -61,6 +72,7 @@ export async function markAsRead(notificationId: string) {
 export async function markAllAsRead(userId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+  if (userId !== session.user.id) throw new Error("FORBIDDEN: Cannot modify other users' notifications.");
 
   await db.notification.updateMany({
     where: { userId, isRead: false },

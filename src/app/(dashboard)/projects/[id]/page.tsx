@@ -20,6 +20,18 @@ export default async function ProjectDetailPage({
   if (!project) return notFound();
 
   const userRole = session.user.role as Role;
+
+  // RBAC: verify the user has access to this project
+  if (userRole === Role.EMPLOYEE) {
+    const hasTaskInProject = tasks.some((t) => t.assignedToId === session.user.id);
+    if (!hasTaskInProject) return notFound();
+  } else if (userRole === Role.ADMIN) {
+    const isManager = project.assignedManagerId === session.user.id;
+    const isCreator = project.createdById === session.user.id;
+    if (!isManager && !isCreator) return notFound();
+  }
+  // SUPER_ADMIN: full access
+
   const canCreateTask = hasPermission(userRole, "createTask") || userRole === Role.EMPLOYEE;
 
   // All team members available (admins assign to anyone, employees self-assign via UI)
@@ -32,6 +44,19 @@ export default async function ProjectDetailPage({
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center gap-1.5 font-label text-[9px] uppercase tracking-widest text-on-surface/40">
+        <a href="/projects" className="hover:text-primary transition-colors">Projects</a>
+        <span className="material-symbols-outlined text-[10px]">chevron_right</span>
+        {project.client && (
+          <>
+            <a href={`/clients/${project.client.id}`} className="hover:text-primary transition-colors">{project.client.companyName}</a>
+            <span className="material-symbols-outlined text-[10px]">chevron_right</span>
+          </>
+        )}
+        <span className="text-foreground">{project.title}</span>
+      </nav>
+
       {/* Project Header */}
       <div className="brutalist-border bg-card p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>

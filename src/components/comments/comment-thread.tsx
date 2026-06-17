@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, startTransition, useCallback } from "react";
-import { addComment, getTaskComments, deleteComment } from "@/app/actions/comments";
+import { addComment, getTaskComments, deleteComment, editComment } from "@/app/actions/comments";
 import { getTeamMembers } from "@/app/actions/users-list";
 import { subscribeToTaskComments } from "@/lib/realtime";
 
@@ -212,6 +212,21 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
     });
   };
 
+  const handleEdit = (commentId: string, newContent: string) => {
+    startTransition(async () => {
+      try {
+        await editComment(commentId, newContent);
+        const updated = await getTaskComments(taskId);
+        setComments(updated);
+        const { toast } = await import("react-hot-toast");
+        toast.success("Comment updated.");
+      } catch (err: any) {
+        const { toast } = await import("react-hot-toast");
+        toast.error(err?.message || "Failed to edit comment.", { duration: 5000 });
+      }
+    });
+  };
+
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleString("en-US", {
       month: "short",
@@ -251,6 +266,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
                 currentUserId={currentUserId}
                 onReply={() => setReplyTo({ id: comment.id, name: comment.user.name })}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
                 formatTime={formatTime}
                 isReply={false}
               />
@@ -265,6 +281,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
                       currentUserId={currentUserId}
                       onReply={() => setReplyTo({ id: comment.id, name: reply.user.name })}
                       onDelete={handleDelete}
+                      onEdit={handleEdit}
                       formatTime={formatTime}
                       isReply={true}
                     />
@@ -437,6 +454,7 @@ function CommentBubble({
   currentUserId,
   onReply,
   onDelete,
+  onEdit,
   formatTime,
   isReply,
 }: {
@@ -444,10 +462,13 @@ function CommentBubble({
   currentUserId: string;
   onReply: () => void;
   onDelete: (id: string) => void;
+  onEdit: (id: string, content: string) => void;
   formatTime: (d: Date) => string;
   isReply: boolean;
 }) {
   const isOwn = comment.userId === currentUserId;
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
 
   return (
     <div className={`px-4 py-3 hover:bg-card-muted/50 transition-colors ${isReply ? "pl-5" : ""}`}>
@@ -462,7 +483,41 @@ function CommentBubble({
             <span className="font-headline text-[10px] uppercase tracking-widest text-on-surface">{comment.user.name}</span>
             <span className="font-mono text-[8px] text-on-surface/40">{formatTime(comment.createdAt)}</span>
           </div>
-          <p className="font-body text-sm text-on-surface/80 leading-relaxed whitespace-pre-wrap">{renderContent(comment.content)}</p>
+          <p className="font-body text-sm text-on-surface/80 leading-relaxed whitespace-pre-wrap">
+            {isEditing ? (
+              <span className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="w-full brutalist-border px-2 py-1 font-body text-sm bg-card text-on-surface focus:border-primary focus:outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      onEdit(comment.id, editContent);
+                      setIsEditing(false);
+                    }
+                    if (e.key === "Escape") {
+                      setEditContent(comment.content);
+                      setIsEditing(false);
+                    }
+                  }}
+                  autoFocus
+                />
+                <span className="flex gap-2">
+                  <button
+                    onClick={() => { onEdit(comment.id, editContent); setIsEditing(false); }}
+                    className="font-mono text-[8px] uppercase tracking-widest text-primary hover:underline"
+                  >SAVE</button>
+                  <button
+                    onClick={() => { setEditContent(comment.content); setIsEditing(false); }}
+                    className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-on-surface"
+                  >CANCEL</button>
+                </span>
+              </span>
+            ) : (
+              renderContent(comment.content)
+            )}
+          </p>
           
           {comment.fileUrl && (
             <div className="mt-2 flex">
@@ -493,12 +548,20 @@ function CommentBubble({
               REPLY
             </button>
             {isOwn ? (
-              <button
-                onClick={() => onDelete(comment.id)}
-                className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-red-500 transition-colors"
-              >
-              DELETE
-              </button>
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-primary transition-colors"
+                >
+                  EDIT
+                </button>
+                <button
+                  onClick={() => onDelete(comment.id)}
+                  className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-red-500 transition-colors"
+                >
+                  DELETE
+                </button>
+              </>
             ) : null}
           </div>
         </div>

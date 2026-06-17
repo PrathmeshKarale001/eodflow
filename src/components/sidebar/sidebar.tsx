@@ -37,14 +37,21 @@ export interface BrandNode {
   }>;
 }
 
+export interface ClientNode {
+  id: string;
+  companyName: string;
+  brandColor: string;
+}
+
 interface SidebarProps {
   user: { id: string; name: string; email: string; image?: string; role: Role };
   navItems: NavItem[];
   unreadCount?: number;
   brands?: BrandNode[];
+  allClients?: ClientNode[];
 }
 
-export function Sidebar({ user, navItems, unreadCount = 0, brands = [] }: SidebarProps) {
+export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClients = [] }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -310,6 +317,9 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [] }: Sideba
                     {/* Nested Projects */}
                     {isExpanded && (
                       <div className="ml-5 border-l border-on-surface/10 pl-2 space-y-0.5 py-0.5">
+                        {brand.projects.length === 0 && (
+                          <span className="px-2 py-1 font-mono text-[8px] text-on-surface/20 uppercase">No projects</span>
+                        )}
                         {brand.projects.map((project) => {
                           const isProjectActive = pathname === `/projects/${project.id}`;
                           return (
@@ -355,6 +365,38 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [] }: Sideba
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ─── All Clients Section (ADMIN + EMPLOYEE) ────────────────────── */}
+        {!collapsed && allClients.length > 0 && (
+          <div className="px-2 py-2 border-t border-on-surface/10">
+            <div className="flex items-center justify-between px-3 py-1.5 mb-1">
+              <span className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface/40">All Clients</span>
+              <span className="font-mono text-[8px] text-on-surface/25">{allClients.length}</span>
+            </div>
+            <div className="space-y-0.5 max-h-32 overflow-y-auto">
+              {allClients.map((client) => (
+                <Link
+                  key={client.id}
+                  href={`/clients/${client.id}`}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 transition-colors",
+                    pathname.startsWith(`/clients/${client.id}`)
+                      ? "bg-primary-container/20 text-primary"
+                      : "text-outline hover:text-foreground hover:bg-card/5"
+                  )}
+                >
+                  <span
+                    className="w-2 h-2 flex-shrink-0 rounded-sm"
+                    style={{ backgroundColor: client.brandColor || "#6c5ce7" }}
+                  />
+                  <span className="font-label text-[10px] uppercase tracking-wide truncate">
+                    {client.companyName}
+                  </span>
+                </Link>
+              ))}
             </div>
           </div>
         )}

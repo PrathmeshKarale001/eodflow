@@ -163,7 +163,7 @@ export function ManagerDashboard({
               <p className="px-4 py-6 font-mono text-[9px] text-on-surface/30 text-center uppercase">Nothing pending review ✓</p>
             ) : (
               pendingReview.map((t) => (
-                <Link key={t.id} href="/tasks" className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
+                <Link key={t.id} href={`/tasks?taskId=${t.id}`} className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
                   <span className="font-mono text-[8px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 flex-shrink-0 uppercase">
                     {t.status.replace(/_/g, " ")}
                   </span>
@@ -190,7 +190,7 @@ export function ManagerDashboard({
               upcomingDeadlines.map((t) => {
                 const days = daysUntil(t.dueDate);
                 return (
-                  <Link key={t.id} href="/tasks" className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
+                  <Link key={t.id} href={`/tasks?taskId=${t.id}`} className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
                     <span className={`font-mono text-[8px] w-12 text-center flex-shrink-0 ${days < 0 ? "text-red-400" : days <= 2 ? "text-amber-400" : "text-on-surface/40"}`}>
                       {days < 0 ? "LATE" : days === 0 ? "TODAY" : `${days}d`}
                     </span>

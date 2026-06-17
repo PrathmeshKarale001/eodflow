@@ -21,6 +21,28 @@ export default async function ReportsPage() {
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+  const isSuperAdmin = userRole === Role.SUPER_ADMIN;
+  const userId = session.user.id;
+
+  // ADMIN: pre-fetch managed project IDs for scoping
+  let managedProjectIds: string[] = [];
+  if (!isSuperAdmin) {
+    const managedProjects = await db.project.findMany({
+      where: {
+        OR: [
+          { assignedManagerId: userId },
+          { createdById: userId },
+        ],
+      },
+      select: { id: true },
+    });
+    managedProjectIds = managedProjects.map((p) => p.id);
+  }
+
+  // Build project/task scope for ADMIN
+  const projectScope = isSuperAdmin ? {} : { id: { in: managedProjectIds } };
+  const taskScope = isSuperAdmin ? {} : { projectId: { in: managedProjectIds } };
+
   // Parallel fetch all report data
   const [
     projectsByStatus,
@@ -36,23 +58,34 @@ export default async function ReportsPage() {
     // Projects by status
     db.project.groupBy({
       by: ["status"],
+      where: projectScope,
       _count: { id: true },
     }),
     // Tasks by status
     db.task.groupBy({
       by: ["status"],
+      where: taskScope,
       _count: { id: true },
     }),
     // Overdue tasks
     db.task.count({
       where: {
+        ...taskScope,
         dueDate: { lt: now },
         status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] },
       },
     }),
-    // Team performance (tasks per user)
+    // Team performance (tasks per user — scoped for ADMIN)
     db.user.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        ...(isSuperAdmin ? {} : {
+          OR: [
+            { assignedTasks: { some: { projectId: { in: managedProjectIds } } } },
+            { id: userId },
+          ],
+        }),
+      },
       select: {
         id: true,
         name: true,
@@ -60,7 +93,7 @@ export default async function ReportsPage() {
         department: true,
         _count: {
           select: {
-            assignedTasks: true,
+            assignedTasks: isSuperAdmin ? true : { where: { projectId: { in: managedProjectIds } } },
           },
         },
         assignedTasks: {
@@ -68,6 +101,7 @@ export default async function ReportsPage() {
           where: {
             status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
             completedAt: { gte: startOfMonth },
+            ...(isSuperAdmin ? {} : { projectId: { in: managedProjectIds } }),
           },
         },
       },
@@ -76,6 +110,7 @@ export default async function ReportsPage() {
     // Recent activity
     db.activityLog.findMany({
       take: 20,
+      where: isSuperAdmin ? {} : { projectId: { in: managedProjectIds } },
       include: {
         user: { select: { name: true } },
         task: { select: { title: true } },
@@ -86,6 +121,7 @@ export default async function ReportsPage() {
     // Completed this week
     db.task.count({
       where: {
+        ...taskScope,
         status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
         completedAt: { gte: startOfWeek },
       },
@@ -93,18 +129,25 @@ export default async function ReportsPage() {
     // Completed this month
     db.task.count({
       where: {
+        ...taskScope,
         status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
         completedAt: { gte: startOfMonth },
       },
     }),
     // Total time logged this week (in minutes)
     db.timeEntry.aggregate({
-      where: { entryDate: { gte: startOfWeek } },
+      where: {
+        entryDate: { gte: startOfWeek },
+        ...(isSuperAdmin ? {} : { task: { projectId: { in: managedProjectIds } } }),
+      },
       _sum: { durationMins: true },
     }),
     // Projects with task progress
     db.project.findMany({
-      where: { status: { in: [ProjectStatus.ACTIVE, ProjectStatus.DRAFT] } },
+      where: {
+        status: { in: [ProjectStatus.ACTIVE, ProjectStatus.DRAFT] },
+        ...projectScope,
+      },
       select: {
         id: true,
         title: true,

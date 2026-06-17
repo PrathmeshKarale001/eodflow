@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, startTransition } from "react";
+import { useRouter } from "next/navigation";
 import { getNotifications, markAsRead, markAllAsRead } from "@/app/actions/notifications";
 import { NotificationType } from "@prisma/client";
 
@@ -36,6 +37,7 @@ interface NotificationPanelProps {
 export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefresh }: NotificationPanelProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     getNotifications(userId)
@@ -106,7 +108,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
         </div>
 
         {/* Notification List */}
-        <div className="overflow-y-auto h-[calc(100%-60px)]" style={{ contentVisibility: "auto" }}>
+        <div className="overflow-y-auto h-[calc(100%-100px)]" style={{ contentVisibility: "auto" }}>
           {isLoading ? (
             <div className="p-8 text-center">
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground animate-pulse">
@@ -129,7 +131,13 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
                 return (
                   <button
                     key={notif.id}
-                    onClick={() => handleMarkRead(notif.id)}
+                    onClick={() => {
+                      handleMarkRead(notif.id);
+                      if (notif.linkUrl) {
+                        onClose();
+                        router.push(notif.linkUrl);
+                      }
+                    }}
                     className={`w-full text-left px-4 py-3 hover:bg-surface-container-high transition-colors flex items-start gap-3 ${
                       !notif.isRead ? "border-l-3 border-l-[#5847d2] bg-purple-50/50" : ""
                     }`}
@@ -148,6 +156,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
                       ) : null}
                       <span className="font-mono text-[8px] text-muted-foreground mt-1 block">
                         {formatTime(notif.createdAt)}
+                        {notif.linkUrl && " • TAP TO OPEN"}
                       </span>
                     </div>
                     {!notif.isRead ? (
@@ -158,6 +167,13 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
               })}
             </div>
           )}
+        </div>
+
+        {/* Footer — notification count */}
+        <div className="absolute bottom-0 left-0 right-0 px-5 py-3 brutalist-border border-b-0 border-x-0 bg-card-muted">
+          <p className="font-mono text-[9px] text-center uppercase tracking-widest text-on-surface/40">
+            {notifications.filter((n) => !n.isRead).length} UNREAD · {notifications.length} TOTAL
+          </p>
         </div>
       </div>
     </>

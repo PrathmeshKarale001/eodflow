@@ -67,7 +67,7 @@ export async function addComment(data: {
       type: "COMMENT_ADDED",
       title: `New comment on "${task.title}"`,
       body: data.content.substring(0, 120),
-      linkUrl: `/tasks?id=${data.taskId}`,
+      linkUrl: `/tasks?taskId=${data.taskId}`,
       tag: `comment-${data.taskId}`,
     });
   }
@@ -105,7 +105,7 @@ export async function addComment(data: {
           type: "MENTION",
           title: `${session.user.name} mentioned you`,
           body: `In "${task?.title || "a task"}": ${data.content.substring(0, 100)}`,
-          linkUrl: `/tasks?id=${data.taskId}`,
+          linkUrl: `/tasks?taskId=${data.taskId}`,
           tag: `mention-${data.taskId}`,
         }
       );
@@ -175,4 +175,35 @@ export async function deleteComment(commentId: string) {
   await db.comment.delete({ where: { id: commentId } });
   revalidatePath("/tasks");
   return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Edit Comment (only own comments)
+// ---------------------------------------------------------------------------
+
+export async function editComment(commentId: string, newContent: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  if (!newContent || !newContent.trim()) {
+    throw new Error("Comment content cannot be empty.");
+  }
+
+  const comment = await db.comment.findUnique({
+    where: { id: commentId },
+    select: { userId: true },
+  });
+
+  if (!comment) throw new Error("Comment not found");
+  if (comment.userId !== session.user.id) {
+    throw new Error("FORBIDDEN: You can only edit your own comments.");
+  }
+
+  const updated = await db.comment.update({
+    where: { id: commentId },
+    data: { content: newContent.trim() },
+  });
+
+  revalidatePath("/tasks");
+  return updated;
 }

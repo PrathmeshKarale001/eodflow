@@ -10,21 +10,32 @@ export default async function FilesPage() {
   if (!session?.user) redirect("/login");
 
   const role = session.user.role as Role;
-  const canViewAll = hasPermission(role, "viewAllClients");
+  const isSuperAdmin = role === "SUPER_ADMIN";
+
+  // Build role-based file scoping:
+  // SUPER_ADMIN: all files | ADMIN: managed projects, POC clients, own uploads | EMPLOYEE: own files
+  const fileScope = isSuperAdmin
+    ? {}
+    : role === "ADMIN"
+      ? {
+          OR: [
+            { uploadedById: session.user.id },
+            { project: { assignedManagerId: session.user.id } },
+            { client: { pocAdminId: session.user.id } },
+          ],
+        }
+      : {
+          OR: [
+            { uploadedById: session.user.id },
+            { task: { assignedToId: session.user.id } },
+          ],
+        };
 
   // Fetch files (root files only — no version children)
   const files = await db.file.findMany({
     where: {
       AND: [
-        canViewAll
-          ? {}
-          : {
-              OR: [
-                { uploadedById: session.user.id },
-                { task: { assignedToId: session.user.id } },
-                { client: { pocAdminId: session.user.id } },
-              ],
-            },
+        fileScope,
         { parentFileId: null }, // only root files
       ],
     },
@@ -47,13 +58,17 @@ export default async function FilesPage() {
 
   // Fetch clients and projects for upload association
   const clients = await db.client.findMany({
-    where: canViewAll ? {} : { pocAdminId: session.user.id },
+    where: isSuperAdmin
+      ? {}
+      : role === "ADMIN"
+        ? { OR: [{ pocAdminId: session.user.id }, { projects: { some: { assignedManagerId: session.user.id } } }] }
+        : { pocAdminId: session.user.id },
     select: { id: true, companyName: true },
     orderBy: { companyName: "asc" },
   });
 
   const projects = await db.project.findMany({
-    where: canViewAll
+    where: isSuperAdmin
       ? {}
       : {
           OR: [

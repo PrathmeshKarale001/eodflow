@@ -56,6 +56,7 @@ interface TaskType {
   status: TaskStatus;
   priority: Priority;
   dueDate: Date | null;
+  createdAt: Date;
   revisionCount: number;
   projectId: string | null;
   assignedById?: string | null;
@@ -104,13 +105,23 @@ export function MyTasksList({
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
+  // ─── Filter State ────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<Priority | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
+  const [assigneeFilter, setAssigneeFilter] = useState<string>("ALL");
+  const [projectFilter, setProjectFilter] = useState<string>("ALL");
+  const [dueFilter, setDueFilter] = useState<"ALL" | "OVERDUE" | "TODAY" | "THIS_WEEK" | "NO_DATE">("ALL");
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"priority" | "due_date" | "title" | "created">("priority");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Sync action=new-task from other pages to open the modal instantly
   useEffect(() => {
     if (searchParams.get("action") === "new-task") {
       setIsCreateModalOpen(true);
-      // clean up URL to avoid reopening on refresh
       const params = new URLSearchParams(searchParams.toString());
       params.delete("action");
       router.replace(`/tasks?${params.toString()}`);
@@ -129,7 +140,6 @@ export function MyTasksList({
     const urlTaskId = searchParams.get("taskId");
     if (urlTaskId && !selectedTaskId) {
       setSelectedTaskId(urlTaskId);
-      // clean up URL to avoid reopening on refresh
       const params = new URLSearchParams(searchParams.toString());
       params.delete("taskId");
       router.replace(`/tasks?${params.toString()}`);
@@ -184,26 +194,105 @@ export function MyTasksList({
     router.replace(`/tasks?${params.toString()}`);
   };
 
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setPriorityFilter("ALL");
+    setStatusFilter("ALL");
+    setAssigneeFilter("ALL");
+    setProjectFilter("ALL");
+    setDueFilter("ALL");
+    setActiveFilter(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("filter");
+    router.replace(`/tasks?${params.toString()}`);
+  };
+
+  const hasAnyFilter = !!(searchQuery || priorityFilter !== "ALL" || statusFilter !== "ALL" || assigneeFilter !== "ALL" || projectFilter !== "ALL" || dueFilter !== "ALL" || activeFilter);
+
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
 
-  // Apply URL-based filter if active
+  // ─── Apply all filters composably ─────────────────────────────────────────
   const REVIEW_STATUSES: TaskStatus[] = [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL, TaskStatus.REVISION];
-  const filteredTasks = activeFilter
-    ? tasks.filter((t) => {
-        if (activeFilter === "review") return REVIEW_STATUSES.includes(t.status);
-        if (activeFilter === "due") {
-          if (!t.dueDate) return false;
-          const daysLeft = Math.ceil((new Date(t.dueDate).getTime() - Date.now()) / 86400000);
-          return daysLeft <= 7 && daysLeft >= 0 && t.status !== TaskStatus.DONE && t.status !== TaskStatus.APPROVED;
-        }
-        return true;
-      })
-    : tasks;
+  const filteredTasks = tasks.filter((t) => {
+    // URL-based quick filter from overview KPIs
+    if (activeFilter === "review" && !REVIEW_STATUSES.includes(t.status)) return false;
+    if (activeFilter === "due") {
+      if (!t.dueDate) return false;
+      const daysLeft = Math.ceil((new Date(t.dueDate).getTime() - Date.now()) / 86400000);
+      if (!(daysLeft <= 7 && daysLeft >= 0 && t.status !== TaskStatus.DONE && t.status !== TaskStatus.APPROVED)) return false;
+    }
+    // Search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = t.title.toLowerCase().includes(q);
+      const matchProject = t.project?.title?.toLowerCase().includes(q) || false;
+      const matchBrand = t.project?.client?.companyName?.toLowerCase().includes(q) || false;
+      const matchAssignee = t.assignedTo?.name?.toLowerCase().includes(q) || false;
+      if (!matchTitle && !matchProject && !matchBrand && !matchAssignee) return false;
+    }
+    // Priority
+    if (priorityFilter !== "ALL" && t.priority !== priorityFilter) return false;
+    // Status
+    if (statusFilter !== "ALL" && t.status !== statusFilter) return false;
+    // Assignee
+    if (assigneeFilter !== "ALL") {
+      if (assigneeFilter === "MINE" && t.assignedTo?.id !== userId) return false;
+      if (assigneeFilter === "UNASSIGNED" && t.assignedTo !== null) return false;
+      if (assigneeFilter !== "MINE" && assigneeFilter !== "UNASSIGNED" && t.assignedTo?.id !== assigneeFilter) return false;
+    }
+    // Project
+    if (projectFilter !== "ALL" && t.projectId !== projectFilter) return false;
+    // Due date
+    if (dueFilter !== "ALL") {
+      if (dueFilter === "NO_DATE") return t.dueDate === null;
+      if (!t.dueDate) return false;
+      const now = new Date();
+      const due = new Date(t.dueDate);
+      const daysLeft = Math.ceil((due.getTime() - now.getTime()) / 86400000);
+      if (dueFilter === "OVERDUE") return daysLeft < 0 && t.status !== "DONE" && t.status !== "APPROVED";
+      if (dueFilter === "TODAY") return daysLeft === 0;
+      if (dueFilter === "THIS_WEEK") return daysLeft >= 0 && daysLeft <= 7;
+    }
+    return true;
+  });
+
+  // Apply sorting
+  const PRIORITY_ORDER = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  filteredTasks.sort((a, b) => {
+    let cmp = 0;
+    switch (sortBy) {
+      case "priority":
+        cmp = (PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER] ?? 2) - (PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER] ?? 2);
+        break;
+      case "due_date": {
+        const da = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+        const db2 = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+        cmp = da - db2;
+        break;
+      }
+      case "title":
+        cmp = a.title.localeCompare(b.title);
+        break;
+      case "created":
+        cmp = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        break;
+    }
+    return sortDir === "desc" ? -cmp : cmp;
+  });
 
   const grouped = STATUS_SECTIONS.map((section) => ({
     ...section,
     tasks: filteredTasks.filter((t) => t.status === section.status),
   })).filter((section) => section.tasks.length > 0);
+
+  // Unique assignees and projects from current tasks for filter dropdowns
+  const uniqueAssignees = Array.from(
+    new Map(tasks.filter((t) => t.assignedTo).map((t) => [t.assignedTo!.id, t.assignedTo!.name])).entries()
+  ).sort((a, b) => a[1].localeCompare(b[1]));
+
+  const uniqueProjects = Array.from(
+    new Map(tasks.filter((t) => t.project).map((t) => [t.project!.id, t.project!.title])).entries()
+  ).sort((a, b) => a[1].localeCompare(b[1]));
 
   const handleReassign = (taskId: string, newAssigneeId: string) => {
     setReassigning(true);
@@ -249,32 +338,232 @@ export function MyTasksList({
         </div>
       </div>
 
-      {/* Active Filter Indicator */}
-      {activeFilter && (
-        <div className="flex items-center gap-3 brutalist-border bg-amber-500/10 border-amber-500/30 px-4 py-2.5">
-          <span className="material-symbols-outlined text-sm text-amber-400">filter_alt</span>
-          <span className="font-headline text-[10px] uppercase tracking-widest text-amber-400 flex-1">
-            FILTERED: {activeFilter === "review" ? "PENDING REVIEW" : activeFilter === "due" ? "DUE THIS WEEK" : activeFilter.toUpperCase()}
-            <span className="font-mono text-on-surface/40 ml-2">({filteredTasks.length} of {tasks.length})</span>
-          </span>
-          <button
-            onClick={clearFilter}
-            className="flex items-center gap-1 px-2.5 py-1 brutalist-border text-[9px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-foreground hover:bg-surface-container-high transition-colors"
-          >
-            <span className="material-symbols-outlined text-xs">close</span>
-            CLEAR
-          </button>
+      {/* ─── Filter Bar ─────────────────────────────────────────────────── */}
+      <div className="brutalist-border bg-card p-3 space-y-3">
+        {/* Top row: Search + toggle */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Search */}
+          <div className="relative flex-1">
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-on-surface/30">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="SEARCH TASKS, PROJECTS, BRANDS..."
+              className="w-full h-9 brutalist-border bg-transparent pl-9 pr-3 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none placeholder:text-on-surface/20"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface">
+                <span className="material-symbols-outlined text-xs">close</span>
+              </button>
+            )}
+          </div>
+
+          {/* Filter toggle + result count */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-1.5 px-3 py-2 brutalist-border text-[9px] font-headline uppercase tracking-widest transition-colors ${
+                showFilters || hasAnyFilter ? "bg-primary/10 text-primary border-primary/30" : "text-on-surface/60 hover:text-foreground"
+              }`}
+            >
+              <span className="material-symbols-outlined text-sm">tune</span>
+              FILTERS
+              {hasAnyFilter && (
+                <span className="bg-primary text-on-primary text-[8px] px-1.5 py-0.5 font-mono min-w-[18px] text-center">
+                  {[searchQuery, priorityFilter !== "ALL", statusFilter !== "ALL", assigneeFilter !== "ALL", projectFilter !== "ALL", dueFilter !== "ALL", activeFilter].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+            <span className="font-mono text-[9px] text-on-surface/40 uppercase tracking-widest hidden sm:inline">
+              {filteredTasks.length}/{tasks.length}
+            </span>
+            {/* Sort Controls */}
+            <div className="flex items-center gap-1 ml-auto">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="bg-transparent font-mono text-[9px] text-on-surface/60 uppercase tracking-wider border-none focus:outline-none cursor-pointer"
+              >
+                <option value="priority">SORT: PRIORITY</option>
+                <option value="due_date">SORT: DUE DATE</option>
+                <option value="title">SORT: TITLE</option>
+                <option value="created">SORT: CREATED</option>
+              </select>
+              <button
+                onClick={() => setSortDir((d) => d === "asc" ? "desc" : "asc")}
+                className="flex items-center justify-center w-6 h-6 text-on-surface/40 hover:text-primary transition-colors"
+                title={sortDir === "asc" ? "Ascending" : "Descending"}
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
+                </span>
+              </button>
+            </div>
+            {hasAnyFilter && (
+              <button
+                onClick={clearAllFilters}
+                className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-headline uppercase tracking-widest text-error/60 hover:text-error transition-colors"
+              >
+                <span className="material-symbols-outlined text-xs">delete_sweep</span>
+                CLEAR
+              </button>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Expanded filters */}
+        {showFilters && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 animate-in slide-in-from-top-2 duration-200">
+            {/* Priority */}
+            <div>
+              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Priority</label>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value as Priority | "ALL")}
+                className="w-full h-8 brutalist-border bg-transparent px-2 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none cursor-pointer appearance-none"
+              >
+                <option value="ALL">ALL</option>
+                <option value="URGENT">🔴 URGENT</option>
+                <option value="HIGH">🟠 HIGH</option>
+                <option value="MEDIUM">🟡 MEDIUM</option>
+                <option value="LOW">⚪ LOW</option>
+              </select>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as TaskStatus | "ALL")}
+                className="w-full h-8 brutalist-border bg-transparent px-2 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none cursor-pointer appearance-none"
+              >
+                <option value="ALL">ALL</option>
+                {STATUS_SECTIONS.map((s) => (
+                  <option key={s.status} value={s.status}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Assignee — for all roles */}
+            <div>
+              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Assignee</label>
+              <select
+                value={assigneeFilter}
+                onChange={(e) => setAssigneeFilter(e.target.value)}
+                className="w-full h-8 brutalist-border bg-transparent px-2 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none cursor-pointer appearance-none"
+              >
+                <option value="ALL">ALL</option>
+                <option value="MINE">MY_TASKS</option>
+                <option value="UNASSIGNED">UNASSIGNED</option>
+                {uniqueAssignees.map(([id, name]) => (
+                  <option key={id} value={id}>{name.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Project */}
+            <div>
+              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Project</label>
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                className="w-full h-8 brutalist-border bg-transparent px-2 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none cursor-pointer appearance-none"
+              >
+                <option value="ALL">ALL</option>
+                {uniqueProjects.map(([id, title]) => (
+                  <option key={id} value={id}>{title.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Due Date */}
+            <div>
+              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Due Date</label>
+              <select
+                value={dueFilter}
+                onChange={(e) => setDueFilter(e.target.value as typeof dueFilter)}
+                className="w-full h-8 brutalist-border bg-transparent px-2 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none cursor-pointer appearance-none"
+              >
+                <option value="ALL">ALL</option>
+                <option value="OVERDUE">OVERDUE</option>
+                <option value="TODAY">DUE_TODAY</option>
+                <option value="THIS_WEEK">THIS_WEEK</option>
+                <option value="NO_DATE">NO_DUE_DATE</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Active filter chips */}
+        {hasAnyFilter && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {activeFilter && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/15 text-amber-400 text-[8px] font-headline uppercase tracking-widest brutalist-border border-amber-500/30">
+                <span className="material-symbols-outlined text-[10px]">filter_alt</span>
+                {activeFilter === "review" ? "PENDING_REVIEW" : activeFilter === "due" ? "DUE_THIS_WEEK" : activeFilter.toUpperCase()}
+                <button onClick={clearFilter} className="ml-0.5 hover:text-amber-200"><span className="material-symbols-outlined text-[10px]">close</span></button>
+              </span>
+            )}
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+                SEARCH: &quot;{searchQuery.toUpperCase()}&quot;
+                <button onClick={() => setSearchQuery("")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+              </span>
+            )}
+            {priorityFilter !== "ALL" && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+                PRIORITY: {priorityFilter}
+                <button onClick={() => setPriorityFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+              </span>
+            )}
+            {statusFilter !== "ALL" && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+                STATUS: {statusFilter}
+                <button onClick={() => setStatusFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+              </span>
+            )}
+            {assigneeFilter !== "ALL" && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+                ASSIGNEE: {assigneeFilter === "MINE" ? "MY_TASKS" : assigneeFilter === "UNASSIGNED" ? "UNASSIGNED" : uniqueAssignees.find(([id]) => id === assigneeFilter)?.[1]?.toUpperCase() || assigneeFilter}
+                <button onClick={() => setAssigneeFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+              </span>
+            )}
+            {projectFilter !== "ALL" && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+                PROJECT: {uniqueProjects.find(([id]) => id === projectFilter)?.[1]?.toUpperCase() || projectFilter}
+                <button onClick={() => setProjectFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+              </span>
+            )}
+            {dueFilter !== "ALL" && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+                DUE: {dueFilter.replace("_", " ")}
+                <button onClick={() => setDueFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="space-y-6">
       {grouped.length === 0 ? (
         <div className="brutalist-border bg-card p-12 text-center">
           <span className="material-symbols-outlined text-4xl text-neutral-300 mb-3 block">task_alt</span>
-          <h3 className="font-headline text-lg uppercase tracking-tight text-card-text mb-1">NO_TASKS_ASSIGNED</h3>
+          <h3 className="font-headline text-lg uppercase tracking-tight text-card-text mb-1">
+            {hasAnyFilter ? "NO_MATCHING_TASKS" : "NO_TASKS_ASSIGNED"}
+          </h3>
           <p className="font-mono text-xs uppercase text-muted-foreground tracking-widest">
-            ALL QUEUES ARE CLEAR
+            {hasAnyFilter ? "TRY ADJUSTING YOUR FILTERS" : "ALL QUEUES ARE CLEAR"}
           </p>
+          {hasAnyFilter && (
+            <button
+              onClick={clearAllFilters}
+              className="mt-4 px-4 py-2 brutalist-border text-[10px] font-headline uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+            >
+              CLEAR ALL FILTERS
+            </button>
+          )}
         </div>
       ) : (
         grouped.map((section) => (
@@ -303,7 +592,9 @@ export function MyTasksList({
                   <div key={task.id}>
                     <div
                       onClick={() => setSelectedTaskId(task.id)}
-                      className="px-4 py-4 md:px-5 md:py-3 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors group gap-3"
+                      className={`px-4 py-4 md:px-5 md:py-3 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors group gap-3 ${
+                        isOverdue ? "border-l-2 border-l-red-500 bg-red-500/5" : ""
+                      }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         <span className={`inline-block px-1.5 py-0.5 text-[8px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0 mt-1 sm:mt-0`}>
@@ -380,6 +671,14 @@ export function MyTasksList({
                       </div>
                       <div className="flex items-center justify-between sm:justify-end gap-4 text-[9px] font-mono text-muted-foreground uppercase flex-shrink-0">
                         <div className="flex items-center gap-3">
+                          {task.subtasks && task.subtasks.length > 0 ? (
+                            <span className="flex items-center gap-0.5" title={`${task.subtasks.filter((s: any) => s.isDone).length}/${task.subtasks.length} subtasks done`}>
+                              <span className="material-symbols-outlined text-xs">checklist</span>
+                              <span className={task.subtasks.every((s: any) => s.isDone) ? "text-green-500" : ""}>
+                                {task.subtasks.filter((s: any) => s.isDone).length}/{task.subtasks.length}
+                              </span>
+                            </span>
+                          ) : null}
                           {task._count.files > 0 ? (
                             <span className="flex items-center gap-0.5">
                               <span className="material-symbols-outlined text-xs">attach_file</span>

@@ -50,7 +50,13 @@ export async function createProjectFileRecord(data: {
   mimeType: string;
   fileSize: number;
 }) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
   await db.file.create({
-    data,
+    data: {
+      ...data,
+      uploadedById: session.user.id, // Always use session user, never trust client
+    },
   });
 }

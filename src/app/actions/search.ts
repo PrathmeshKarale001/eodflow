@@ -22,13 +22,45 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   const canViewProjects = hasPermission(role, "editProject") || hasPermission(role, "viewAllProjects");
   const canViewClients = hasPermission(role, "viewAllClients") || hasPermission(role, "viewOwnClients");
 
+  // Build ADMIN task scoping: only tasks from managed projects or assigned to them
+  const taskWhere = role === Role.EMPLOYEE
+    ? { assignedToId: session.user.id }
+    : role === Role.ADMIN
+      ? {
+          OR: [
+            { assignedToId: session.user.id },
+            { project: { assignedManagerId: session.user.id } },
+          ],
+        }
+      : {}; // SUPER_ADMIN sees all
+
+  const projectWhere = role === Role.ADMIN
+    ? {
+        OR: [
+          { assignedManagerId: session.user.id },
+          { createdById: session.user.id },
+        ],
+      }
+    : {};
+
+  const fileWhere = role === Role.EMPLOYEE
+    ? { uploadedById: session.user.id }
+    : role === Role.ADMIN
+      ? {
+          OR: [
+            { uploadedById: session.user.id },
+            { project: { assignedManagerId: session.user.id } },
+          ],
+        }
+      : {};
+
   // Run ALL queries in parallel — not sequentially
   const [tasks, projects, clients, files] = await Promise.all([
     // Search tasks
     db.task.findMany({
       where: {
         title: { contains: query, mode: "insensitive" },
-        ...(role === Role.EMPLOYEE ? { assignedToId: session.user.id } : {}),
+        ...taskWhere,
       },
       include: { project: { select: { title: true } } },
       take: 5,
@@ -37,7 +69,10 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     // Search projects (if permitted)
     canViewProjects
       ? db.project.findMany({
-          where: { title: { contains: query, mode: "insensitive" } },
+          where: {
+            title: { contains: query, mode: "insensitive" },
+            ...projectWhere,
+          },
           include: { client: { select: { companyName: true } } },
           take: 5,
         })
@@ -58,7 +93,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     db.file.findMany({
       where: {
         originalName: { contains: query, mode: "insensitive" },
-        ...(role === Role.EMPLOYEE ? { uploadedById: session.user.id } : {}),
+        ...fileWhere,
       },
       take: 5,
     }),

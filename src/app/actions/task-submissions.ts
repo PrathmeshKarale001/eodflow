@@ -60,6 +60,9 @@ export async function createTaskFileRecord(data: {
   mimeType: string;
   fileSize: number;
 }) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
   // Look up projectId from task
   const task = await db.task.findUnique({
     where: { id: data.taskId },
@@ -71,6 +74,7 @@ export async function createTaskFileRecord(data: {
   const file = await db.file.create({
     data: {
       ...data,
+      uploadedById: session.user.id, // Always use session user, never trust client
       projectId: task.projectId,
     },
   });

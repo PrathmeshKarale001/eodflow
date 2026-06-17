@@ -99,7 +99,7 @@ export async function createTask(data: {
       type: "TASK_ASSIGNED",
       title: `New task assigned: ${data.title}`,
       body: `${session.user.name || "Manager"} assigned you a new task`,
-      linkUrl: `/tasks?id=${task.id}`,
+      linkUrl: `/tasks?taskId=${task.id}`,
       tag: `task-assigned-${task.id}`,
     }).catch(() => {});
   }
@@ -240,7 +240,7 @@ export async function updateTaskStatus(data: {
         type: "APPROVAL_REQUESTED",
         title: "Task ready for review",
         body: `"${updatedTask.title}" submitted by ${session.user.name || "an employee"}`,
-        linkUrl: `/tasks?id=${data.taskId}`,
+        linkUrl: `/tasks?taskId=${data.taskId}`,
         tag: `review-${data.taskId}`,
       }).catch(() => {});
     }
@@ -253,7 +253,7 @@ export async function updateTaskStatus(data: {
       type: "REVISION_REQUESTED",
       title: "Revision requested",
       body: `Your task needs changes — ${session.user.name || "Manager"}`,
-      linkUrl: `/tasks?id=${data.taskId}`,
+      linkUrl: `/tasks?taskId=${data.taskId}`,
       tag: `revision-${data.taskId}`,
     }).catch(() => {});
   }
@@ -265,7 +265,7 @@ export async function updateTaskStatus(data: {
       type: "TASK_STATUS_CHANGED",
       title: "Task approved! ✓",
       body: `"${updatedTask.title}" has been approved`,
-      linkUrl: `/tasks?id=${data.taskId}`,
+      linkUrl: `/tasks?taskId=${data.taskId}`,
       tag: `approved-${data.taskId}`,
     }).catch(() => {});
   }
@@ -366,7 +366,7 @@ export async function reassignTask(taskId: string, newAssigneeId: string) {
       type: "TASK_ASSIGNED",
       title: `You've been assigned: ${task.title}`,
       body: `Assigned by ${session.user.name || "a team member"}`,
-      linkUrl: `/tasks`,
+      linkUrl: `/tasks?taskId=${taskId}`,
       tag: `task-assigned-${taskId}`,
     }),
   ]);
@@ -558,6 +558,17 @@ export async function markTaskDone(taskId: string) {
     throw new Error("FORBIDDEN");
   }
 
+  // Enforce status transition rules:
+  // - ADMIN/SUPER_ADMIN can mark DONE from any non-final status (force-done)
+  // - EMPLOYEE can only mark DONE from APPROVED status (must go through review)
+  const finalStatuses = [TaskStatus.DONE, TaskStatus.APPROVED];
+  if (task.status === TaskStatus.DONE) {
+    throw new Error("Task is already DONE.");
+  }
+  if (userRole === Role.EMPLOYEE && task.status !== TaskStatus.APPROVED) {
+    throw new Error(`Cannot mark DONE from ${task.status}. Submit for review first.`);
+  }
+
   const updatedTask = await db.task.update({
     where: { id: taskId },
     data: {
@@ -582,7 +593,7 @@ export async function markTaskDone(taskId: string) {
               type: "TASK_STATUS_CHANGED" as const,
               title: `Task completed: ${task.title}`,
               body: `${session.user.name || "An employee"} marked a task as DONE in ${task.project?.title || "a project"}`,
-              linkUrl: `/tasks`,
+              linkUrl: `/tasks?taskId=${taskId}`,
             })),
           })
         )
