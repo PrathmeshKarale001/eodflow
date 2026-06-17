@@ -34,7 +34,7 @@ export const ROLE_COLORS: Record<Role, string> = {
 
 export const PERMISSIONS = {
   // Client management
-  viewAllClients: [Role.SUPER_ADMIN],
+  viewAllClients: [Role.SUPER_ADMIN, Role.ADMIN],
   viewOwnClients: [Role.SUPER_ADMIN, Role.ADMIN],
   createClient: [Role.SUPER_ADMIN, Role.ADMIN],
   editClient: [Role.SUPER_ADMIN, Role.ADMIN],

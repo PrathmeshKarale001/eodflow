@@ -14,10 +14,19 @@ export default async function TasksPage() {
   const canAssign = hasPermission(userRole, "assignTask");
   const canCreateTask = hasPermission(userRole, "createTask") || userRole === Role.EMPLOYEE; // all employees can self-assign
 
-  // Admin/Super Admin see ALL tasks; employees see only their own
-  const tasksWhereClause: Prisma.TaskWhereInput = hasPermission(userRole, "assignTask")
-    ? {}
-    : { OR: [{ assignedToId: session.user.id }, { assignedById: session.user.id }] };
+  // SUPER_ADMIN sees ALL tasks; ADMIN sees tasks they own, assigned to others, or in their managed projects; EMPLOYEE sees only their own
+  const tasksWhereClause: Prisma.TaskWhereInput =
+    userRole === Role.SUPER_ADMIN
+      ? {}
+      : userRole === Role.ADMIN
+        ? {
+            OR: [
+              { assignedToId: session.user.id },
+              { assignedById: session.user.id },
+              { project: { assignedManagerId: session.user.id } },
+            ],
+          }
+        : { OR: [{ assignedToId: session.user.id }, { assignedById: session.user.id }] };
 
   // ─── PERF: All queries are independent → run in parallel ────────────────
   const [tasks, teamMembers, projects, brands] = await Promise.all([
@@ -55,9 +64,19 @@ export default async function TasksPage() {
           orderBy: { name: "asc" },
         }),
     // Fetch projects for Task Creation selector (with clientId for brand filtering)
+    // ADMIN only sees their managed/created projects; SUPER_ADMIN sees all
     canCreateTask
       ? db.project.findMany({
-          where: { status: { not: "COMPLETED" } },
+          where:
+            userRole === Role.SUPER_ADMIN
+              ? { status: { not: "COMPLETED" } }
+              : {
+                  status: { not: "COMPLETED" },
+                  OR: [
+                    { assignedManagerId: session.user.id },
+                    { createdById: session.user.id },
+                  ],
+                },
           select: { id: true, title: true, clientId: true },
           orderBy: { title: "asc" },
         })

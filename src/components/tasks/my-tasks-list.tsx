@@ -102,6 +102,7 @@ export function MyTasksList({
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
   const [reassigning, setReassigning] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -115,6 +116,14 @@ export function MyTasksList({
       router.replace(`/tasks?${params.toString()}`);
     }
   }, [searchParams, router]);
+
+  // Sync filter from URL query params (e.g., ?filter=review from overview KPI)
+  useEffect(() => {
+    const filterParam = searchParams.get("filter");
+    if (filterParam && !activeFilter) {
+      setActiveFilter(filterParam);
+    }
+  }, [searchParams, activeFilter]);
   
   useEffect(() => {
     const urlTaskId = searchParams.get("taskId");
@@ -168,11 +177,32 @@ export function MyTasksList({
     );
   };
 
+  const clearFilter = () => {
+    setActiveFilter(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("filter");
+    router.replace(`/tasks?${params.toString()}`);
+  };
+
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
+
+  // Apply URL-based filter if active
+  const REVIEW_STATUSES: TaskStatus[] = [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL, TaskStatus.REVISION];
+  const filteredTasks = activeFilter
+    ? tasks.filter((t) => {
+        if (activeFilter === "review") return REVIEW_STATUSES.includes(t.status);
+        if (activeFilter === "due") {
+          if (!t.dueDate) return false;
+          const daysLeft = Math.ceil((new Date(t.dueDate).getTime() - Date.now()) / 86400000);
+          return daysLeft <= 7 && daysLeft >= 0 && t.status !== TaskStatus.DONE && t.status !== TaskStatus.APPROVED;
+        }
+        return true;
+      })
+    : tasks;
 
   const grouped = STATUS_SECTIONS.map((section) => ({
     ...section,
-    tasks: tasks.filter((t) => t.status === section.status),
+    tasks: filteredTasks.filter((t) => t.status === section.status),
   })).filter((section) => section.tasks.length > 0);
 
   const handleReassign = (taskId: string, newAssigneeId: string) => {
@@ -198,10 +228,10 @@ export function MyTasksList({
         <div className="relative z-10 flex items-center justify-between">
           <div>
             <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text leading-none">
-              {canAssign ? "ALL_TASKS" : "MY_TASKS"}
+              {userRole === "SUPER_ADMIN" ? "ALL_TASKS" : "MY_TASKS"}
             </h1>
             <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-on-surface/50">
-              {canAssign ? "MANAGE & ASSIGN" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
+              {userRole === "SUPER_ADMIN" ? "MANAGE & ASSIGN" : userRole === "ADMIN" ? "MY_TEAM & ASSIGNMENTS" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -218,6 +248,24 @@ export function MyTasksList({
           </div>
         </div>
       </div>
+
+      {/* Active Filter Indicator */}
+      {activeFilter && (
+        <div className="flex items-center gap-3 brutalist-border bg-amber-500/10 border-amber-500/30 px-4 py-2.5">
+          <span className="material-symbols-outlined text-sm text-amber-400">filter_alt</span>
+          <span className="font-headline text-[10px] uppercase tracking-widest text-amber-400 flex-1">
+            FILTERED: {activeFilter === "review" ? "PENDING REVIEW" : activeFilter === "due" ? "DUE THIS WEEK" : activeFilter.toUpperCase()}
+            <span className="font-mono text-on-surface/40 ml-2">({filteredTasks.length} of {tasks.length})</span>
+          </span>
+          <button
+            onClick={clearFilter}
+            className="flex items-center gap-1 px-2.5 py-1 brutalist-border text-[9px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-foreground hover:bg-surface-container-high transition-colors"
+          >
+            <span className="material-symbols-outlined text-xs">close</span>
+            CLEAR
+          </button>
+        </div>
+      )}
 
       <div className="space-y-6">
       {grouped.length === 0 ? (

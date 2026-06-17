@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MobileSidebar } from "@/components/sidebar/mobile-sidebar";
 import { NavItem } from "@/lib/permissions";
 import { Role } from "@prisma/client";
+import type { BrandNode } from "@/components/sidebar/sidebar";
 
 interface DashboardHeaderProps {
   user: {
@@ -14,9 +15,10 @@ interface DashboardHeaderProps {
     role: Role;
   };
   navItems: NavItem[];
+  brands?: BrandNode[];
 }
 
-export function DashboardHeader({ user, navItems }: DashboardHeaderProps) {
+export function DashboardHeader({ user, navItems, brands = [] }: DashboardHeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -45,6 +47,7 @@ export function DashboardHeader({ user, navItems }: DashboardHeaderProps) {
         onClose={() => setIsSidebarOpen(false)}
         user={user}
         navItems={navItems}
+        brands={brands}
       />
     </header>
   );

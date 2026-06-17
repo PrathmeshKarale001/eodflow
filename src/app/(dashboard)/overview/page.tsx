@@ -114,22 +114,23 @@ export default async function OverviewPage() {
 
   // ─── ADMIN (formerly MANAGER) ────────────────────────────────────────────────────────────────
   if (role === "ADMIN") {
-    // Stage 1: Fetch teamMembers first (needed for groupBy filters)
-    const [teamMembers, managedProjects, pendingReview, upcomingDeadlines, weeklyTime] = await Promise.all([
-      db.user.findMany({
-        where: { isActive: true, role: "EMPLOYEE" },
-        select: { id: true, name: true },
-      }),
+    // Stage 1: Fetch managed projects + scoped data in parallel
+    const [managedProjects, pendingReview, upcomingDeadlines, weeklyTime] = await Promise.all([
       db.project.findMany({
         where: { assignedManagerId: userId },
-        include: { _count: { select: { tasks: true } } },
+        include: {
+          client: { select: { companyName: true } },
+          _count: { select: { tasks: true } },
+        },
         orderBy: { updatedAt: "desc" },
-        take: 10,
       }),
       db.task.findMany({
         where: {
           status: { in: [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL, TaskStatus.REVISION] },
-          project: { assignedManagerId: userId },
+          OR: [
+            { project: { assignedManagerId: userId } },
+            { assignedById: userId },
+          ],
         },
         include: {
           assignedTo: { select: { name: true } },
@@ -140,9 +141,13 @@ export default async function OverviewPage() {
       }),
       db.task.findMany({
         where: {
-          dueDate: { lte: nextWeek },
+          dueDate: { gte: new Date(), lte: nextWeek },
           status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] },
-          project: { assignedManagerId: userId },
+          OR: [
+            { project: { assignedManagerId: userId } },
+            { assignedToId: userId },
+            { assignedById: userId },
+          ],
         },
         include: {
           assignedTo: { select: { name: true } },
@@ -151,17 +156,26 @@ export default async function OverviewPage() {
         orderBy: { dueDate: "asc" },
         take: 15,
       }),
-      db.timeEntry.aggregate({ where: { createdAt: { gte: startOfWeek } }, _sum: { durationMins: true } }),
+      db.timeEntry.aggregate({ where: { userId, createdAt: { gte: startOfWeek } }, _sum: { durationMins: true } }),
     ]);
 
-    // Stage 2: GroupBy queries (depend on teamMembers IDs) — run in parallel
-    const memberIds = teamMembers.map((m) => m.id);
-    const [tasksByMember, inProgressByMember] = await Promise.all([
+    // Stage 2: Get team workload scoped to THIS manager's managed projects only
+    const managedProjectIds = managedProjects.map((p) => p.id);
+    const [teamMembers, tasksByMember, inProgressByMember] = await Promise.all([
+      // Find employees who have tasks in this manager's projects
+      db.user.findMany({
+        where: {
+          isActive: true,
+          role: "EMPLOYEE",
+          assignedTasks: { some: { projectId: { in: managedProjectIds } } },
+        },
+        select: { id: true, name: true },
+      }),
       db.task.groupBy({
         by: ["assignedToId"],
         where: {
           status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] },
-          assignedToId: { in: memberIds },
+          projectId: { in: managedProjectIds },
         },
         _count: { id: true },
       }),
@@ -169,7 +183,7 @@ export default async function OverviewPage() {
         by: ["assignedToId"],
         where: {
           status: TaskStatus.IN_PROGRESS,
-          assignedToId: { in: memberIds },
+          projectId: { in: managedProjectIds },
         },
         _count: { id: true },
       }),

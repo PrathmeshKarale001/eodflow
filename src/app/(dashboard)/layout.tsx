@@ -35,17 +35,34 @@ export default async function DashboardLayout({
   }
 
   const navItems = getNavForRole(session.user.role as Role);
+  const userRole = session.user.role as Role;
+  const userId = session.user.id;
 
   // Fetch Brand → Project hierarchy for sidebar tree + chat channels in parallel
+  // ADMIN: Only show brands where they are POC or manage a project
+  const brandWhereClause = userRole === "ADMIN"
+    ? {
+        isActive: true,
+        OR: [
+          { pocAdminId: userId },
+          { projects: { some: { assignedManagerId: userId } } },
+        ],
+      }
+    : { isActive: true };
+
+  const projectWhereClause = userRole === "ADMIN"
+    ? { status: { not: "ARCHIVED" as const }, assignedManagerId: userId }
+    : { status: { not: "ARCHIVED" as const } };
+
   const [brands, channels] = await Promise.all([
     db.client.findMany({
-      where: { isActive: true },
+      where: brandWhereClause,
       select: {
         id: true,
         companyName: true,
         brandColor: true,
         projects: {
-          where: { status: { not: "ARCHIVED" } },
+          where: projectWhereClause,
           select: {
             id: true,
             title: true,
@@ -79,6 +96,7 @@ export default async function DashboardLayout({
             role: session.user.role as Role,
           }}
           navItems={navItems}
+          brands={brands}
         />
 
         {/* Desktop Sidebar */}

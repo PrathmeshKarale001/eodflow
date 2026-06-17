@@ -29,6 +29,7 @@ interface Props {
     title: string;
     status: string;
     deadline: Date | null;
+    client: { companyName: string } | null;
     _count: { tasks: number };
   }>;
   teamWorkload: Array<{
@@ -77,8 +78,8 @@ export function ManagerDashboard({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "PROJECTS_MANAGED", value: managedProjects.length, icon: "folder_managed", color: "border-t-blue-500", href: "/projects" },
-          { label: "PENDING_REVIEW", value: pendingReview.length, icon: "rate_review", color: "border-t-amber-500", href: "/tasks" },
-          { label: "DUE_THIS_WEEK", value: upcomingDeadlines.filter(t => daysUntil(t.dueDate) <= 7).length, icon: "event_upcoming", color: "border-t-red-500", href: "/calendar" },
+          { label: "PENDING_REVIEW", value: pendingReview.length, icon: "rate_review", color: "border-t-amber-500", href: "/tasks?filter=review" },
+          { label: "DUE_THIS_WEEK", value: upcomingDeadlines.filter(t => daysUntil(t.dueDate) <= 7).length, icon: "event_upcoming", color: "border-t-red-500", href: "/tasks?filter=due" },
           { label: "HOURS_THIS_WEEK", value: weeklyHours, icon: "timer", color: "border-t-green-500", href: "/reports" },
         ].map((k) => (
           <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} hover:bg-card/80 transition-colors group block`}>
@@ -109,7 +110,7 @@ export function ManagerDashboard({
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{p.title}</p>
-                      <p className="font-mono text-[8px] text-on-surface/40">{p._count.tasks} tasks</p>
+                      <p className="font-mono text-[8px] text-on-surface/40">{p.client?.companyName ?? "No Client"} · {p._count.tasks} tasks</p>
                     </div>
                     {days !== null && (
                       <span className={`font-mono text-[8px] flex-shrink-0 ${days < 0 ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-on-surface/30"}`}>

@@ -34,7 +34,7 @@ export default async function ProjectsPage() {
   const [projects, taskStatusCounts] = await Promise.all([
     db.project.findMany({
       where:
-        userRole === "SUPER_ADMIN" || userRole === "ADMIN"
+        userRole === "SUPER_ADMIN"
           ? {}
           : {
               OR: [
