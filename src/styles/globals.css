@@ -237,3 +237,56 @@ textarea,
   content-visibility: auto;
   contain-intrinsic-size: auto 400px;
 }
+
+/* =============================================================================
+   EOD FLOW — Custom Native Dropdown Styling
+   ============================================================================= */
+
+select {
+  appearance: none;
+  background-color: var(--clr-surface-low);
+  color: var(--fg);
+  border: 1px solid var(--clr-card-border);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  border-radius: 0px;
+  padding: 0.25rem 1.75rem 0.25rem 0.5rem;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23c6bfff'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+}
+
+.light select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c5ce7'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+}
+
+select:hover {
+  border-color: var(--clr-outline);
+  background-color: var(--clr-surface-container);
+}
+
+select:focus {
+  outline: 2px solid var(--clr-primary);
+  outline-offset: 2px;
+}
+
+/* Don't show custom background chevron if select has a manual sibling chevron */
+.relative:has(> .material-symbols-outlined) select,
+div:has(> .material-symbols-outlined) select {
+  background-image: none;
+  padding-right: 0.5rem;
+}
+
+/* Dropdown Options List panel styling */
+select option {
+  background-color: #131313 !important; /* Matches var(--clr-surface) */
+  color: #e5e2e1 !important; /* Matches var(--fg) / var(--clr-on-surface) */
+  font-family: var(--font-mono) !important;
+}
+
+/* Light Mode Dropdown Options List styling */
+.light select option {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+}
