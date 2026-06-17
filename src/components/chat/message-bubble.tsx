@@ -37,6 +37,7 @@ interface MessageBubbleProps {
   onRemoveReaction?: (messageId: string, emoji: string) => void;
   onEdit?: (messageId: string, newContent: string) => void;
   onDelete?: (messageId: string) => void;
+  isReadByOthers?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,6 +134,7 @@ export function MessageBubble({
   onRemoveReaction,
   onEdit,
   onDelete,
+  isReadByOthers = false,
 }: MessageBubbleProps) {
   const [showActions, setShowActions] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -246,7 +248,14 @@ export function MessageBubble({
           <span className="font-headline text-[9px] uppercase tracking-widest text-on-surface/60">
             {isOwn ? "YOU" : userName}
           </span>
-          <span className="font-mono text-[8px] text-on-surface/30">{time}</span>
+          <span className="font-mono text-[8px] text-on-surface/30 flex items-center justify-end gap-1">
+            {time}
+            {isOwn && (
+              <span className={`material-symbols-outlined text-[10px] select-none font-bold ${isReadByOthers ? "text-primary" : "text-on-surface/30"}`}>
+                {isReadByOthers ? "done_all" : "done"}
+              </span>
+            )}
+          </span>
           {editedAt && (
             <span className="font-mono text-[7px] text-on-surface/25 italic">(edited)</span>
           )}

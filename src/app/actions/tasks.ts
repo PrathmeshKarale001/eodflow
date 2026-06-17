@@ -673,3 +673,26 @@ export async function getTaskFiles(taskId: string) {
     orderBy: { createdAt: "desc" },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Get Task Activities (on-demand — used by task detail drawer)
+// ---------------------------------------------------------------------------
+
+export async function getTaskActivities(taskId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  return db.activityLog.findMany({
+    where: { taskId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}

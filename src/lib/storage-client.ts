@@ -6,7 +6,8 @@
 
 export async function uploadFile(
   file: File,
-  pathPrefix: string
+  pathPrefix: string,
+  onProgress?: (percent: number) => void
 ): Promise<{ path: string; url: string }> {
   // ─── Strategy: Presigned URL (direct browser → R2) ─────────────────────
   // This bypasses Vercel's serverless 4.5MB body limit entirely.
@@ -24,21 +25,34 @@ export async function uploadFile(
     if (presignRes.ok) {
       const { presignedUrl, publicUrl, key } = await presignRes.json();
 
-      // Upload directly to R2 using the presigned URL
-      const uploadRes = await fetch(presignedUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type || "application/octet-stream",
-        },
-        body: file,
+      // Upload directly to R2 using XMLHttpRequest to track progress
+      const xhr = new XMLHttpRequest();
+      const uploadPromise = new Promise<{ path: string; url: string }>((resolve, reject) => {
+        xhr.open("PUT", presignedUrl);
+        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+
+        if (onProgress) {
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              onProgress(percent);
+            }
+          };
+        }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve({ path: key, url: publicUrl });
+          } else {
+            reject(new Error(`Direct upload failed (HTTP ${xhr.status})`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Direct upload network error"));
+        xhr.send(file);
       });
 
-      if (uploadRes.ok) {
-        return { path: key, url: publicUrl };
-      }
-
-      // If direct upload failed, fall through to legacy route
-      console.warn("[UPLOAD] Presigned upload failed, falling back to /api/upload");
+      return await uploadPromise;
     }
   } catch (err) {
     console.warn("[UPLOAD] Presign flow failed, falling back:", err);
@@ -49,32 +63,43 @@ export async function uploadFile(
   formData.append("file", file);
   formData.append("pathPrefix", pathPrefix);
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60_000);
+  const xhr = new XMLHttpRequest();
+  const fallbackUploadPromise = new Promise<{ path: string; url: string }>((resolve, reject) => {
+    xhr.open("POST", "/api/upload");
 
-  try {
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-    });
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          onProgress(percent);
+        }
+      };
+    }
 
-    if (!res.ok) {
-      const contentType = res.headers.get("content-type") || "";
-      if (contentType.includes("text/html") || res.redirected) {
-        throw new Error("Session expired. Please refresh the page and try again.");
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          reject(new Error("Invalid response from server"));
+        }
+      } else {
+        try {
+          const errData = JSON.parse(xhr.responseText);
+          reject(new Error(errData.error || `Upload failed (HTTP ${xhr.status})`));
+        } catch {
+          reject(new Error(`Upload failed (HTTP ${xhr.status})`));
+        }
       }
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error || `Upload failed (HTTP ${res.status})`);
-    }
+    };
 
-    return res.json();
-  } catch (err: any) {
-    if (err.name === "AbortError") {
-      throw new Error("Upload timed out. The file may be too large.");
-    }
-    throw err;
-  } finally {
-    clearTimeout(timeout);
-  }
+    xhr.onerror = () => reject(new Error("Fallback upload network error"));
+    // Set a 60s timeout
+    xhr.timeout = 60000;
+    xhr.ontimeout = () => reject(new Error("Upload timed out. The file may be too large."));
+    
+    xhr.send(formData);
+  });
+
+  return await fallbackUploadPromise;
 }

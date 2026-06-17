@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { fetchActivitiesAction } from "@/app/actions/reports";
 
 interface TeamMember {
   id: string;
@@ -98,6 +99,82 @@ export function ReportsDashboard({
   const [personTaskFilter, setPersonTaskFilter] = useState<"ALL" | "DONE" | "PENDING" | "REVISIONS" | "OVERDUE">("ALL");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
+  const [activitiesList, setActivitiesList] = useState<Activity[]>(recentActivity);
+  const [isLoadingMoreActivities, setIsLoadingMoreActivities] = useState(false);
+  const [hasMoreActivities, setHasMoreActivities] = useState(recentActivity.length >= 20);
+
+  const handleLoadMoreActivities = async () => {
+    setIsLoadingMoreActivities(true);
+    try {
+      const nextBatch = await fetchActivitiesAction(activitiesList.length);
+      if (nextBatch.length === 0) {
+        setHasMoreActivities(false);
+      } else {
+        setActivitiesList((prev) => [...prev, ...nextBatch]);
+        if (nextBatch.length < 20) {
+          setHasMoreActivities(false);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load more activities", err);
+    } finally {
+      setIsLoadingMoreActivities(false);
+    }
+  };
+
+  const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportProjectProgress = () => {
+    const headers = ["Project ID", "Title", "Status", "Client Name", "Deadline", "Task Count", "Completed Tasks", "Progress %"];
+    const rows = projectProgress.map(p => [
+      p.id,
+      p.title,
+      p.status,
+      p.clientName,
+      p.deadline ? new Date(p.deadline).toISOString() : "None",
+      String(p.taskCount),
+      String(p.completedCount),
+      `${p.progress}%`
+    ]);
+    downloadCSV("project_progress_report.csv", headers, rows);
+  };
+
+  const exportTeamPerformance = () => {
+    const headers = ["User ID", "Name", "Role", "Department", "Total Tasks", "Completed This Month"];
+    const rows = teamPerformance.map(m => [
+      m.id,
+      m.name,
+      m.role,
+      m.department || "None",
+      String(m.totalTasks),
+      String(m.completedThisMonth)
+    ]);
+    downloadCSV("team_performance_report.csv", headers, rows);
+  };
+
+  const exportActivityLog = () => {
+    const headers = ["Activity ID", "Action", "User Name", "Task Title", "Project Title", "Created At"];
+    const rows = activitiesList.map(a => [
+      a.id,
+      a.action,
+      a.userName,
+      a.taskTitle || "None",
+      a.projectTitle || "None",
+      new Date(a.createdAt).toISOString()
+    ]);
+    downloadCSV("recent_activity_report.csv", headers, rows);
+  };
+
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
@@ -141,6 +218,62 @@ export function ReportsDashboard({
       {/* ── View 1: General Dashboard ── */}
       {activeTab === "DASHBOARD" && (
         <>
+          <style dangerouslySetInnerHTML={{__html: `
+            @media print {
+              aside, nav, header, button, .no-print, [role="navigation"], .data-actions-toolbar {
+                display: none !important;
+              }
+              main, .print-full-width {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+              .brutalist-border {
+                border: 1px solid black !important;
+                box-shadow: none !important;
+              }
+              body {
+                background: white !important;
+                color: black !important;
+              }
+            }
+          `}} />
+
+          {/* Data Actions Toolbar */}
+          <div className="flex flex-wrap gap-2 brutalist-border bg-card p-3 items-center justify-between shadow-[4px_4px_0px_#000000] data-actions-toolbar mb-2">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm text-on-surface/50">download</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-on-surface/70">Data Actions:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={exportProjectProgress}
+                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                Export Projects CSV
+              </button>
+              <button
+                onClick={exportTeamPerformance}
+                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                Export Team CSV
+              </button>
+              <button
+                onClick={exportActivityLog}
+                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                Export Activities CSV
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-primary text-white border brutalist-border hover:bg-primary/90 shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                Print PDF / Save
+              </button>
+            </div>
+          </div>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <KPICard label="COMPLETION" value={`${completionRate}%`} sub={`${completedTasks}/${totalTasks} tasks`} icon="donut_large" accent={completionRate >= 70 ? "text-green-400" : completionRate >= 40 ? "text-amber-400" : "text-red-400"} />
@@ -319,13 +452,13 @@ export function ReportsDashboard({
               <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">
                 RECENT_ACTIVITY
               </h3>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {recentActivity.length === 0 ? (
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {activitiesList.length === 0 ? (
                   <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-4">
                     NO_RECENT_ACTIVITY
                   </p>
                 ) : (
-                  recentActivity.slice(0, 10).map((a) => (
+                  activitiesList.map((a) => (
                     <div key={a.id} className="flex items-start gap-2 py-1.5 border-b border-on-surface/5 last:border-0">
                       <span className="material-symbols-outlined text-xs text-primary flex-shrink-0 mt-0.5">
                         {ACTION_ICONS[a.action] || "radio_button_unchecked"}
@@ -350,6 +483,15 @@ export function ReportsDashboard({
                       </div>
                     </div>
                   ))
+                )}
+                {hasMoreActivities && (
+                  <button
+                    onClick={handleLoadMoreActivities}
+                    disabled={isLoadingMoreActivities}
+                    className="w-full text-center py-1.5 font-mono text-[9px] uppercase tracking-wider border brutalist-border bg-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 mt-2"
+                  >
+                    {isLoadingMoreActivities ? "LOADING..." : "LOAD MORE ACTIVITIES"}
+                  </button>
                 )}
               </div>
             </div>

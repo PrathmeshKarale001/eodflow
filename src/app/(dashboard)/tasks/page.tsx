@@ -70,13 +70,21 @@ export default async function TasksPage() {
           where:
             userRole === Role.SUPER_ADMIN
               ? { status: { not: "COMPLETED" } }
-              : {
-                  status: { not: "COMPLETED" },
-                  OR: [
-                    { assignedManagerId: session.user.id },
-                    { createdById: session.user.id },
-                  ],
-                },
+              : userRole === Role.ADMIN
+                ? {
+                    status: { not: "COMPLETED" },
+                    OR: [
+                      { assignedManagerId: session.user.id },
+                      { createdById: session.user.id },
+                    ],
+                  }
+                : {
+                    status: { not: "COMPLETED" },
+                    OR: [
+                      { tasks: { some: { assignedToId: session.user.id } } },
+                      { createdById: session.user.id },
+                    ],
+                  },
           select: { id: true, title: true, clientId: true },
           orderBy: { title: "asc" },
         })

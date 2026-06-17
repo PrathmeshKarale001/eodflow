@@ -123,6 +123,10 @@ export function ChatWindow({
   const [typingUsers, setTypingUsers] = useState<Array<{ userId: string; userName: string; timestamp: number }>>([]);
   const lastTypingBroadcast = useRef<number>(0);
 
+  // Presence read receipts state
+  const [presenceUsers, setPresenceUsers] = useState<Record<string, { userId: string; userName: string; lastReadMessageId: string; lastReadTime: string }>>({});
+  const presenceChannelRef = useRef<any>(null);
+
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
@@ -197,6 +201,48 @@ export function ChatWindow({
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Subscribe to presence for read receipts
+  useEffect(() => {
+    const supabase = createClient();
+    const presenceChannel = supabase.channel(`presence-chat-${channelId}`, {
+      config: { presence: { key: currentUserId } },
+    });
+
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChannel.presenceState();
+        const mapped: Record<string, any> = {};
+        Object.keys(state).forEach((key) => {
+          const presences = state[key] as any[];
+          if (presences && presences.length > 0) {
+            mapped[key] = presences[0];
+          }
+        });
+        setPresenceUsers(mapped);
+      })
+      .subscribe();
+
+    presenceChannelRef.current = presenceChannel;
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+      presenceChannelRef.current = null;
+    };
+  }, [channelId, currentUserId]);
+
+  // Track/update presence when messages list grows
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && presenceChannelRef.current) {
+      presenceChannelRef.current.track({
+        userId: currentUserId,
+        userName: currentUserName,
+        lastReadMessageId: lastMsg.id,
+        lastReadTime: new Date(lastMsg.createdAt).toISOString(),
+      });
+    }
+  }, [messages, currentUserId, currentUserName]);
 
   // ─── Input change with @mention detection ────────────────────────────────
   const handleInputChange = (val: string) => {
@@ -439,54 +485,64 @@ export function ChatWindow({
         </div>
 
         {/* Messages area with date separators */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-container-lowest">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-2">chat_bubble_outline</span>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">NO_MESSAGES_YET</p>
-              <p className="font-mono text-[9px] text-on-surface/20 mt-1">Start the conversation</p>
-            </div>
-          ) : (
-            messages.map((msg, idx) => {
-              const showDateSep = idx === 0 || !isSameDay(messages[idx - 1].createdAt, msg.createdAt);
-              return (
-                <div key={msg.id}>
-                  {/* Date separator */}
-                  {showDateSep && (
-                    <div className="flex items-center gap-3 my-4">
-                      <div className="flex-1 h-px bg-on-surface/10" />
-                      <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30 px-2">
-                        {getDateLabel(msg.createdAt)}
-                      </span>
-                      <div className="flex-1 h-px bg-on-surface/10" />
-                    </div>
-                  )}
-                  <div id={`msg-${msg.id}`} className="transition-colors duration-500">
-                    <MessageBubble
-                      messageId={msg.id}
-                      content={msg.content}
-                      userName={msg.user.name}
-                      userImage={msg.user.image}
-                      timestamp={msg.createdAt}
-                      isOwn={msg.user.id === currentUserId}
-                      fileUrl={msg.fileUrl}
-                      reactions={msg.reactions}
-                      replyTo={msg.replyTo}
-                      isDeleted={msg.isDeleted}
-                      editedAt={msg.editedAt}
-                      currentUserId={currentUserId}
-                      onReply={handleReply}
-                      onReact={handleReact}
-                      onRemoveReaction={handleRemoveReaction}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  </div>
+        {(() => {
+          const otherUsersReadReceipts = Object.values(presenceUsers)
+            .filter((u) => u.userId !== currentUserId && u.lastReadTime)
+            .map((u) => new Date(u.lastReadTime).getTime());
+          const maxOtherReadTime = otherUsersReadReceipts.length > 0 ? Math.max(...otherUsersReadReceipts) : 0;
+
+          return (
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-container-lowest">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-2">chat_bubble_outline</span>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">NO_MESSAGES_YET</p>
+                  <p className="font-mono text-[9px] text-on-surface/20 mt-1">Start the conversation</p>
                 </div>
-              );
-            })
-          )}
-        </div>
+              ) : (
+                messages.map((msg, idx) => {
+                  const showDateSep = idx === 0 || !isSameDay(messages[idx - 1].createdAt, msg.createdAt);
+                  return (
+                    <div key={msg.id}>
+                      {/* Date separator */}
+                      {showDateSep && (
+                        <div className="flex items-center gap-3 my-4">
+                          <div className="flex-1 h-px bg-on-surface/10" />
+                          <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30 px-2">
+                            {getDateLabel(msg.createdAt)}
+                          </span>
+                          <div className="flex-1 h-px bg-on-surface/10" />
+                        </div>
+                      )}
+                      <div id={`msg-${msg.id}`} className="transition-colors duration-500">
+                        <MessageBubble
+                          messageId={msg.id}
+                          content={msg.content}
+                          userName={msg.user.name}
+                          userImage={msg.user.image}
+                          timestamp={msg.createdAt}
+                          isOwn={msg.user.id === currentUserId}
+                          fileUrl={msg.fileUrl}
+                          reactions={msg.reactions}
+                          replyTo={msg.replyTo}
+                          isDeleted={msg.isDeleted}
+                          editedAt={msg.editedAt}
+                          currentUserId={currentUserId}
+                          onReply={handleReply}
+                          onReact={handleReact}
+                          onRemoveReaction={handleRemoveReaction}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          isReadByOthers={msg.user.id === currentUserId && new Date(msg.createdAt).getTime() <= maxOtherReadTime}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          );
+        })()}
 
         {/* Upload progress */}
         {uploadProgress && (

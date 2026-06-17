@@ -40,6 +40,29 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
   const [previewFile, setPreviewFile] = useState<FileRecord | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const [hasMore, setHasMore] = useState(initialFiles.length >= 50);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const handleLoadMore = async () => {
+    setIsLoadingMore(true);
+    try {
+      const { fetchFilesAction } = await import("@/app/actions/files");
+      const nextBatch = await fetchFilesAction(files.length);
+      if (nextBatch.length === 0) {
+        setHasMore(false);
+      } else {
+        setFiles((prev) => [...prev, ...nextBatch]);
+        if (nextBatch.length < 50) {
+          setHasMore(false);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load more files", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   // Filter files client-side
   const filtered = files.filter((f) => {
     if (search) {
@@ -304,6 +327,17 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
               ))}
             </tbody>
           </table>
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="brutalist-border bg-surface hover:bg-surface-container-high px-6 py-2.5 font-headline text-[10px] uppercase tracking-widest shadow-[4px_4px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingMore ? "LOADING..." : "LOAD MORE FILES"}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="brutalist-border p-12 text-center bg-card">

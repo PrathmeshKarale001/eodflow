@@ -306,3 +306,58 @@ export async function getFilteredFiles(filters: {
 
   return files;
 }
+
+// ---------------------------------------------------------------------------
+// Fetch Files Action (Paginated)
+// ---------------------------------------------------------------------------
+
+export async function fetchFilesAction(offset: number, limit: number = 50) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const role = session.user.role as Role;
+  const isSuperAdmin = role === "SUPER_ADMIN";
+
+  const fileScope = isSuperAdmin
+    ? {}
+    : role === "ADMIN"
+      ? {
+          OR: [
+            { uploadedById: session.user.id },
+            { project: { assignedManagerId: session.user.id } },
+            { client: { pocAdminId: session.user.id } },
+          ],
+        }
+      : {
+          OR: [
+            { uploadedById: session.user.id },
+            { task: { assignedToId: session.user.id } },
+          ],
+        };
+
+  const files = await db.file.findMany({
+    skip: offset,
+    take: limit,
+    where: {
+      AND: [
+        fileScope,
+        { parentFileId: null }, // only root files
+      ],
+    },
+    include: {
+      uploadedBy: { select: { name: true } },
+      client: { select: { companyName: true, brandColor: true } },
+      project: { select: { title: true } },
+      task: { select: { title: true } },
+      versions: {
+        select: { id: true, version: true },
+        orderBy: { version: "desc" },
+        take: 1,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return JSON.parse(JSON.stringify(files));
+}
+

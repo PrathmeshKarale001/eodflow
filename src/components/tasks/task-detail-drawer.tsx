@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { getTaskFiles } from "@/app/actions/tasks";
+import { getTaskFiles, getTaskActivities } from "@/app/actions/tasks";
 import { TaskStatus, Priority } from "@prisma/client";
 import { createTaskFileRecord } from "@/app/actions/task-submissions";
 import { updateTaskStatus, deleteTask } from "@/app/actions/tasks";
@@ -125,7 +125,7 @@ interface TaskDetailDrawerProps {
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
 }
 
-type TabId = "details" | "comments" | "time";
+type TabId = "details" | "comments" | "time" | "activity";
 
 export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, teamMembers = [] }: TaskDetailDrawerProps) {
   const [isUploading, setIsUploading] = useState(false);
@@ -143,6 +143,33 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [isSendingReminder, setIsSendingReminder] = useState(false);
   const [isSelfAssigning, setIsSelfAssigning] = useState(false);
   const [localSubtasks, setLocalSubtasks] = useState(task.subtasks);
+
+  const [activities, setActivities] = useState<any[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
+  const [prevPriority, setPrevPriority] = useState(task.priority);
+  const [flashPriority, setFlashPriority] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
+  // Monitor priority changes for highlight animation
+  useEffect(() => {
+    if (task.priority !== prevPriority) {
+      setFlashPriority(true);
+      setPrevPriority(task.priority);
+      const timer = setTimeout(() => setFlashPriority(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [task.priority, prevPriority]);
+
+  // Load activities on-demand when activeTab changes to activity
+  useEffect(() => {
+    if (isOpen && activeTab === "activity") {
+      setIsLoadingActivities(true);
+      getTaskActivities(task.id)
+        .then((data) => setActivities(data))
+        .catch(() => {})
+        .finally(() => setIsLoadingActivities(false));
+    }
+  }, [isOpen, activeTab, task.id]);
 
   // ─── PERF: Load files on-demand when drawer opens ──────────────────────────
   useEffect(() => {
@@ -178,7 +205,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     setIsUpgradingVersion(true);
     try {
       const pathPrefix = `tasks/${task.id}/revisions/${userId}`;
-      const { url } = await uploadFile(fileInput, pathPrefix);
+      const { url } = await uploadFile(fileInput, pathPrefix, (percent) => setUploadProgress(percent));
 
       const newVersion = await uploadNewVersion({
         parentFileId,
@@ -212,6 +239,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     } finally {
       setIsUpgradingVersion(false);
       setUpgradingFileId(null);
+      setUploadProgress(null);
       if (e.target) e.target.value = "";
     }
   }, [upgradingFileId, task.id]);
@@ -244,7 +272,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     setIsUploading(true);
     try {
       for (const file of fileList) {
-        const { url } = await uploadFile(file, `tasks/${task.id}/${userId}`);
+        const { url } = await uploadFile(file, `tasks/${task.id}/${userId}`, (percent) => setUploadProgress(percent));
         const record = await createTaskFileRecord({
           taskId: task.id,
           uploadedById: userId,
@@ -279,6 +307,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
       toast.error(error?.message || "Upload failed.", { duration: 5000 });
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -385,6 +414,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     { id: "details", label: "DETAILS", icon: "description" },
     { id: "comments", label: "COMMENTS", icon: "forum" },
     { id: "time", label: "TIME", icon: "timer" },
+    { id: "activity", label: "ACTIVITY", icon: "history" },
   ];
 
   return (
@@ -400,7 +430,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
           <div className="relative z-10 flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className={`px-1.5 py-0.5 text-[8px] sm:text-[9px] font-headline uppercase ${PRIORITY_COLORS[task.priority]}`}>
+                <span className={`px-1.5 py-0.5 text-[8px] sm:text-[9px] font-headline uppercase ${PRIORITY_COLORS[task.priority]} ${flashPriority ? "animate-pulse ring-2 ring-primary" : ""} transition-all duration-150`}>
                   {task.priority}
                 </span>
                 <span className="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-headline uppercase bg-card/10 text-foreground">
@@ -557,6 +587,16 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                     {isUploading ? "TRANSMITTING_DATA..." : "TAP_OR_DROP_FILES"}
                   </span>
                 </div>
+
+                {uploadProgress !== null && (
+                  <div className="w-full brutalist-border h-5 mt-2 bg-surface-container-low overflow-hidden relative font-mono text-[9px] uppercase tracking-widest flex items-center justify-center">
+                    <div 
+                      className="absolute left-0 top-0 h-full bg-primary-container transition-all duration-150"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                    <span className="relative z-10 text-white font-bold">{uploadProgress}% UPLOADING...</span>
+                  </div>
+                )}
 
                 {/* File List */}
                 {isLoadingFiles ? (
@@ -758,6 +798,105 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
           {activeTab === "time" && (
             <div className="p-4 sm:p-6">
               <TimeLogger taskId={task.id} userId={userId} />
+            </div>
+          )}
+
+          {/* Activity Tab */}
+          {activeTab === "activity" && (
+            <div className="p-4 sm:p-6 space-y-4">
+              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">
+                ACTIVITY_LOG
+              </h3>
+              {isLoadingActivities ? (
+                <div className="space-y-3 animate-pulse">
+                  <div className="h-4 bg-surface-container-high w-1/3" />
+                  <div className="h-10 bg-surface-container-high w-full" />
+                  <div className="h-10 bg-surface-container-high w-full" />
+                </div>
+              ) : activities.length === 0 ? (
+                <div className="brutalist-border bg-card p-6 text-center">
+                  <span className="material-symbols-outlined text-2xl text-neutral-400 mb-1 block">history</span>
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground tracking-widest">
+                    NO_ACTIVITIES_LOGGED_YET
+                  </p>
+                </div>
+              ) : (
+                <div className="relative border-l border-on-surface/10 pl-4 ml-2 space-y-6">
+                  {activities.map((act) => {
+                    let actionText = "";
+                    let actionIcon = "circle";
+                    let iconColor = "text-outline";
+
+                    switch (act.action) {
+                      case "CREATED":
+                        actionText = "created the task";
+                        actionIcon = "add_circle";
+                        iconColor = "text-primary";
+                        break;
+                      case "UPDATED":
+                        actionText = "updated the task";
+                        actionIcon = "edit";
+                        iconColor = "text-amber-500";
+                        break;
+                      case "STATUS_CHANGED": {
+                        const meta = act.metadata as any;
+                        actionText = `changed status from ${meta?.oldValue || "unknown"} to ${meta?.newValue || "unknown"}`;
+                        actionIcon = "sync_alt";
+                        iconColor = "text-blue-500";
+                        break;
+                      }
+                      case "ASSIGNED": {
+                        const meta = act.metadata as any;
+                        actionText = `assigned task to ${meta?.newValue || "someone"}`;
+                        actionIcon = "person_add";
+                        iconColor = "text-green-500";
+                        break;
+                      }
+                      case "COMMENTED":
+                        actionText = "added a comment";
+                        actionIcon = "comment";
+                        iconColor = "text-purple-500";
+                        break;
+                      case "FILE_UPLOADED":
+                        actionText = "uploaded a file";
+                        actionIcon = "upload_file";
+                        iconColor = "text-teal-500";
+                        break;
+                      case "TIME_LOGGED": {
+                        const meta = act.metadata as any;
+                        actionText = `logged ${meta?.durationMins || "?"} mins`;
+                        actionIcon = "more_time";
+                        iconColor = "text-orange-500";
+                        break;
+                      }
+                      default:
+                        actionText = act.action.toLowerCase().replace(/_/g, " ");
+                        break;
+                    }
+
+                    return (
+                      <div key={act.id} className="relative group">
+                        <span className={`material-symbols-outlined absolute -left-[25px] bg-background px-0.5 text-base ${iconColor}`}>
+                          {actionIcon}
+                        </span>
+                        <div className="space-y-0.5">
+                          <p className="font-mono text-[10px] uppercase tracking-wider text-on-surface/80">
+                            <span className="font-bold text-card-text">{act.user.name}</span> {actionText}
+                          </p>
+                          <p className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">
+                            {new Date(act.createdAt).toLocaleString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

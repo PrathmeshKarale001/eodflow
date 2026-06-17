@@ -51,7 +51,7 @@ export default async function FilesPage() {
       },
     },
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: 50,
   });
 
   const totalSize = files.reduce((sum, f) => sum + f.fileSize, 0);

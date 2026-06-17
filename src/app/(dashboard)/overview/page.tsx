@@ -6,6 +6,8 @@ import { SuperAdminDashboard } from "@/components/dashboard/super-admin-dashboar
 import { ManagerDashboard } from "@/components/dashboard/manager-dashboard";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
 import { cacheFetch, CacheKeys, CacheTTL } from "@/lib/cache";
+import { checkDueReminders } from "@/app/actions/reminders";
+import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +29,17 @@ async function getCachedCounts() {
   );
 }
 
-export default async function OverviewPage() {
+export default async function OverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ startDate?: string; endDate?: string }>;
+}) {
+  const resolvedParams = await searchParams;
   const session = await auth();
   if (!session?.user?.id) return notFound();
 
+  // Run due date reminders check passively in background
+  checkDueReminders().catch((err) => console.error("[CRON_REMINDERS] error", err));
 
   const userId = session.user.id;
   const role = session.user.role as Role;
@@ -47,6 +56,26 @@ export default async function OverviewPage() {
 
   const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
   const nextWeek = new Date(Date.now() + 7 * 86400000);
+
+  // Parse date range query params
+  const startFilter = resolvedParams?.startDate ? new Date(resolvedParams.startDate) : startOfWeek;
+  const endFilter = resolvedParams?.endDate ? new Date(resolvedParams.endDate) : undefined;
+
+  if (startFilter) startFilter.setHours(0, 0, 0, 0);
+  if (endFilter) endFilter.setHours(23, 59, 59, 999);
+
+  const dateRangeQuery = {
+    gte: startFilter,
+    ...(endFilter ? { lte: endFilter } : {}),
+  };
+
+  const rangeMs = endFilter ? (endFilter.getTime() - startFilter.getTime()) : (7 * 86400 * 1000);
+  const prevStartFilter = new Date(startFilter.getTime() - rangeMs);
+  const prevEndFilter = new Date(startFilter.getTime());
+  const prevDateRangeQuery = {
+    gte: prevStartFilter,
+    lt: prevEndFilter,
+  };
 
   // ─── SUPER_ADMIN ────────────────────────────────────────────────────────────
   if (role === "SUPER_ADMIN") {
@@ -66,10 +95,10 @@ export default async function OverviewPage() {
         where: { dueDate: { lt: new Date() }, status: { notIn: [TaskStatus.DONE, TaskStatus.APPROVED] } },
       }),
       db.task.count({ where: { status: { in: [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL] } } }),
-      db.task.count({ where: { status: TaskStatus.DONE, updatedAt: { gte: startOfWeek } } }),
-      db.timeEntry.aggregate({ where: { createdAt: { gte: startOfWeek } }, _sum: { durationMins: true } }),
+      db.task.count({ where: { status: TaskStatus.DONE, updatedAt: dateRangeQuery } }),
+      db.timeEntry.aggregate({ where: { createdAt: dateRangeQuery }, _sum: { durationMins: true } }),
       db.timeEntry.aggregate({
-        where: { createdAt: { gte: lastWeekStart, lt: startOfWeek } },
+        where: { createdAt: prevDateRangeQuery },
         _sum: { durationMins: true },
       }),
       db.task.findMany({
@@ -96,6 +125,7 @@ export default async function OverviewPage() {
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <DashboardHeader role="AGENCY_CONTROL" subtitle="FULL_AGENCY_OVERVIEW // KPI_DASHBOARD" />
+        <DateRangePicker />
         <SuperAdminDashboard
           activeProjects={activeProjects}
           totalClients={totalClients}
@@ -156,7 +186,7 @@ export default async function OverviewPage() {
         orderBy: { dueDate: "asc" },
         take: 15,
       }),
-      db.timeEntry.aggregate({ where: { userId, createdAt: { gte: startOfWeek } }, _sum: { durationMins: true } }),
+      db.timeEntry.aggregate({ where: { userId, createdAt: dateRangeQuery }, _sum: { durationMins: true } }),
     ]);
 
     // Stage 2: Get team workload scoped to THIS manager's managed projects only
@@ -199,6 +229,7 @@ export default async function OverviewPage() {
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <DashboardHeader role="MANAGER_VIEW" subtitle="TEAM_WORKLOAD // PROJECT_STATUS" />
+        <DateRangePicker />
         <ManagerDashboard
           managedProjects={managedProjects as any}
           teamWorkload={teamWorkload}
@@ -229,7 +260,7 @@ export default async function OverviewPage() {
       _sum: { durationMins: true },
     }),
     db.timeEntry.aggregate({
-      where: { userId, createdAt: { gte: startOfWeek } },
+      where: { userId, createdAt: dateRangeQuery },
       _sum: { durationMins: true },
     }),
     db.comment.findMany({
@@ -249,6 +280,7 @@ export default async function OverviewPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <DashboardHeader role="MY_DASHBOARD" subtitle={`WELCOME_BACK // ${(session.user.name ?? "").toUpperCase().replace(" ", "_")}`} />
+      <DateRangePicker />
       <EmployeeDashboard
         myName={session.user.name ?? ""}
         myTasks={myTasks as any}

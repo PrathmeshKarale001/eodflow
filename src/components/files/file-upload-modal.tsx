@@ -47,7 +47,7 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
 
         setUploadingFiles((prev) =>
           prev.map((f, j) =>
-            j === idx ? { ...f, status: "uploading", progress: 30 } : f
+            j === idx ? { ...f, status: "uploading", progress: 0 } : f
           )
         );
 
@@ -75,11 +75,11 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
           }
 
           // Upload via presigned URL (direct to R2, bypasses Vercel 4.5MB limit)
-          const { url } = await uploadFile(file, pathPrefix);
-
-          setUploadingFiles((prev) =>
-            prev.map((f, j) => (j === idx ? { ...f, progress: 70 } : f))
-          );
+          const { url } = await uploadFile(file, pathPrefix, (percent) => {
+            setUploadingFiles((prev) =>
+              prev.map((f, j) => (j === idx ? { ...f, progress: percent } : f))
+            );
+          });
 
           // Save record to DB via server action
           await uploadFileRecord({
