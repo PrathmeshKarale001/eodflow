@@ -59,6 +59,7 @@
 
 /* ===== DARK MODE (default) ===== */
 :root {
+  color-scheme: dark;
   --bg: #0A0A0A;
   --fg: #e5e2e1;
   --clr-primary: #c6bfff;
@@ -92,6 +93,7 @@
 
 /* ===== LIGHT MODE ===== */
 .light {
+  color-scheme: light;
   --bg: #f5f5f5;
   --fg: #1a1a1a;
   --clr-primary: #6c5ce7;
