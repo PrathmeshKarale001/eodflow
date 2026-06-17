@@ -83,11 +83,26 @@ export default async function DashboardLayout({
       orderBy: { companyName: "asc" },
     }),
     getUserChannels(),
-    // Lightweight all-clients list for sidebar "All Clients" section (ADMIN + EMPLOYEE)
+    // All-clients list for sidebar bottom section (ADMIN + EMPLOYEE)
+    // Same shape as brands (BrandNode) so it renders identically with expandable projects
     userRole !== "SUPER_ADMIN"
       ? db.client.findMany({
           where: { isActive: true },
-          select: { id: true, companyName: true, brandColor: true },
+          select: {
+            id: true,
+            companyName: true,
+            brandColor: true,
+            projects: {
+              where: { status: { not: "ARCHIVED" as const } },
+              select: {
+                id: true,
+                title: true,
+                status: true,
+                _count: { select: { tasks: true } },
+              },
+              orderBy: { title: "asc" },
+            },
+          },
           orderBy: { companyName: "asc" },
         })
       : Promise.resolve([]),

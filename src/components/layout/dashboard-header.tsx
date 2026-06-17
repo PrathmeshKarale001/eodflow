@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MobileSidebar } from "@/components/sidebar/mobile-sidebar";
 import { NavItem } from "@/lib/permissions";
 import { Role } from "@prisma/client";
-import type { BrandNode, ClientNode } from "@/components/sidebar/sidebar";
+import type { BrandNode } from "@/components/sidebar/sidebar";
 
 interface DashboardHeaderProps {
   user: {
@@ -16,7 +16,7 @@ interface DashboardHeaderProps {
   };
   navItems: NavItem[];
   brands?: BrandNode[];
-  allClients?: ClientNode[];
+  allClients?: BrandNode[];
 }
 
 export function DashboardHeader({ user, navItems, brands = [], allClients = [] }: DashboardHeaderProps) {

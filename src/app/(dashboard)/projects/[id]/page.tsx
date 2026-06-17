@@ -22,15 +22,12 @@ export default async function ProjectDetailPage({
   const userRole = session.user.role as Role;
 
   // RBAC: verify the user has access to this project
+  // EMPLOYEE: can only view projects where they have tasks
+  // ADMIN + SUPER_ADMIN: can view any project (browse via All Clients sidebar)
   if (userRole === Role.EMPLOYEE) {
     const hasTaskInProject = tasks.some((t) => t.assignedToId === session.user.id);
     if (!hasTaskInProject) return notFound();
-  } else if (userRole === Role.ADMIN) {
-    const isManager = project.assignedManagerId === session.user.id;
-    const isCreator = project.createdById === session.user.id;
-    if (!isManager && !isCreator) return notFound();
   }
-  // SUPER_ADMIN: full access
 
   const canCreateTask = hasPermission(userRole, "createTask") || userRole === Role.EMPLOYEE;
 
