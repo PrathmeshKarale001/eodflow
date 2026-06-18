@@ -40,7 +40,8 @@ export default async function DashboardLayout({
 
   // Fetch Brand → Project hierarchy for sidebar tree + chat channels in parallel
   // ADMIN: Only show brands where they are POC or manage a project
-  // EMPLOYEE: Only show brands where they have assigned tasks
+  // EMPLOYEE + SUPER_ADMIN: Show all active brands/projects so employees can
+  //   navigate to any project and self-assign tasks
   const brandWhereClause = userRole === "ADMIN"
     ? {
         isActive: true,
@@ -49,18 +50,11 @@ export default async function DashboardLayout({
           { projects: { some: { assignedManagerId: userId } } },
         ],
       }
-    : userRole === "EMPLOYEE"
-      ? {
-          isActive: true,
-          projects: { some: { tasks: { some: { assignedToId: userId } } } },
-        }
-      : { isActive: true };
+    : { isActive: true };
 
   const projectWhereClause = userRole === "ADMIN"
     ? { status: { not: "ARCHIVED" as const }, assignedManagerId: userId }
-    : userRole === "EMPLOYEE"
-      ? { status: { not: "ARCHIVED" as const }, tasks: { some: { assignedToId: userId } } }
-      : { status: { not: "ARCHIVED" as const } };
+    : { status: { not: "ARCHIVED" as const } };
 
   const [brands, channels, allClients] = await Promise.all([
     db.client.findMany({
