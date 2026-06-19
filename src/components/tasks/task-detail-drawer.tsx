@@ -28,18 +28,7 @@ const CommentThread = dynamic(
     ),
   }
 );
-const TimeLogger = dynamic(
-  () => import("@/components/time/time-logger").then((m) => m.TimeLogger),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="p-6 space-y-3 animate-pulse">
-        <div className="h-4 bg-surface-container-high w-1/4" />
-        <div className="h-16 bg-surface-container-high w-full" />
-      </div>
-    ),
-  }
-);
+
 const EditTaskModal = dynamic(
   () => import("./edit-task-modal").then((m) => m.EditTaskModal),
   { ssr: false }
@@ -129,7 +118,7 @@ interface TaskDetailDrawerProps {
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
 }
 
-type TabId = "details" | "comments" | "time" | "activity";
+type TabId = "details" | "comments" | "activity";
 
 export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, teamMembers = [] }: TaskDetailDrawerProps) {
   const [isUploading, setIsUploading] = useState(false);
@@ -417,7 +406,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const TABS: { id: TabId; label: string; icon: string }[] = [
     { id: "details", label: "DETAILS", icon: "description" },
     { id: "comments", label: "COMMENTS", icon: "forum" },
-    { id: "time", label: "TIME", icon: "timer" },
+
     { id: "activity", label: "ACTIVITY", icon: "history" },
   ];
 
@@ -841,12 +830,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
             </div>
           )}
 
-          {/* Time Tab */}
-          {activeTab === "time" && (
-            <div className="p-4 sm:p-6">
-              <TimeLogger taskId={task.id} userId={userId} />
-            </div>
-          )}
+
 
           {/* Activity Tab */}
           {activeTab === "activity" && (
