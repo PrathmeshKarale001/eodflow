@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function DashboardError({
   error,
   reset,
@@ -7,6 +9,9 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error("[DASHBOARD_ERROR]", error.message, error.digest, error.stack);
+  }, [error]);
   return (
     <div className="flex items-center justify-center min-h-[60vh] px-4">
       <div className="w-full max-w-lg brutalist-border bg-card p-8 text-center space-y-4">
