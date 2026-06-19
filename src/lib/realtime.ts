@@ -75,6 +75,9 @@ export function subscribeToTaskComments(
 /**
  * Subscribe to notifications for the current user.
  * Powers the notification bell in the sidebar.
+ *
+ * Uses Broadcast (not postgres_changes) to bypass Supabase RLS restrictions.
+ * The server broadcasts via broadcastUserNotification() in realtime-server.ts.
  */
 export function subscribeToNotifications(
   userId: string,
@@ -84,15 +87,8 @@ export function subscribeToNotifications(
 
   return supabase
     .channel(`user-notifications-${userId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "notifications",
-        filter: `userId=eq.${userId}`,
-      },
-      (payload) => onNotification(payload)
+    .on("broadcast", { event: "new-notification" }, (payload) =>
+      onNotification(payload)
     )
     .subscribe();
 }

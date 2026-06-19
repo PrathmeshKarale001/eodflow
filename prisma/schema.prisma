@@ -50,6 +50,7 @@ enum ProjectStatus {
 }
 
 enum TaskStatus {
+  PENDING_APPROVAL
   BACKLOG
   TODO
   IN_PROGRESS

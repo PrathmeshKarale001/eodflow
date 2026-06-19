@@ -34,15 +34,15 @@ export default async function ProjectsPage() {
   const [projects, taskStatusCounts] = await Promise.all([
     db.project.findMany({
       where:
-        userRole === "SUPER_ADMIN"
-          ? {}
-          : {
+        userRole === "ADMIN"
+          ? {
               OR: [
                 { assignedManagerId: session.user.id },
                 { createdById: session.user.id },
                 { tasks: { some: { assignedToId: session.user.id } } },
               ],
-            },
+            }
+          : {},
       include: {
         client: { select: { id: true, companyName: true, brandColor: true } },
         assignedManager: { select: { name: true } },

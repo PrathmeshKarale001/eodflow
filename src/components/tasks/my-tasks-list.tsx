@@ -150,7 +150,7 @@ export function MyTasksList({
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
-      .channel("task-notifications-refresh")
+      .channel("task-notifications")
       .on("broadcast", { event: "task-event" }, () => {
         startTransition(() => {
           router.refresh();

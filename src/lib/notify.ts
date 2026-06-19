@@ -5,6 +5,7 @@
 
 import { db } from "@/lib/db";
 import { sendPushToUser, sendPushToUsers } from "@/lib/web-push";
+import { broadcastUserNotification } from "@/lib/realtime-server";
 import type { NotificationType } from "@prisma/client";
 
 interface NotifyParams {
@@ -34,7 +35,18 @@ export async function notify(params: NotifyParams) {
     },
   });
 
-  // 2. Fire Web Push (non-blocking, never fails the main flow)
+  // 2. Broadcast to notification bell (non-blocking, bypasses RLS)
+  broadcastUserNotification(userId, {
+    id: notification.id,
+    type,
+    title,
+    body,
+    linkUrl,
+  }).catch((err) => {
+    console.error("[NOTIFY] Broadcast failed for user", userId, err.message);
+  });
+
+  // 3. Fire Web Push (non-blocking, never fails the main flow)
   sendPushToUser(userId, {
     title,
     body: body || "",
@@ -70,7 +82,20 @@ export async function notifyMany(
     })),
   });
 
-  // 2. Fire Web Push to all (non-blocking)
+  // 2. Broadcast to each user's notification bell (non-blocking)
+  for (const userId of userIds) {
+    broadcastUserNotification(userId, {
+      id: `batch-${Date.now()}-${userId}`,
+      type,
+      title,
+      body,
+      linkUrl,
+    }).catch((err) => {
+      console.error("[NOTIFY] Broadcast failed for user", userId, err.message);
+    });
+  }
+
+  // 3. Fire Web Push to all (non-blocking)
   sendPushToUsers(userIds, {
     title,
     body: body || "",

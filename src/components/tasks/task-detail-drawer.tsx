@@ -54,9 +54,9 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 // ─── Status transition config for action buttons ─────────────────────────────
 // Employee flow:  TODO → IN_PROGRESS → IN_REVIEW (notifies manager)
-// Manager flow:   IN_REVIEW → APPROVED or REVISION
+// Manager flow:   IN_REVIEW → DONE (approved) or REVISION
 // After REVISION: Employee reworks → IN_PROGRESS → IN_REVIEW again
-// Finalize:       Manager: APPROVED → DONE
+// PENDING_APPROVAL: Employee created task claiming manager assigned → manager approves → TODO
 const STATUS_ACTIONS: Record<TaskStatus, Array<{
   targetStatus: TaskStatus;
   label: string;
@@ -64,6 +64,9 @@ const STATUS_ACTIONS: Record<TaskStatus, Array<{
   color: string; // tailwind classes
   roles: Role[]; // who can perform this action
 }>> = {
+  [TaskStatus.PENDING_APPROVAL]: [
+    { targetStatus: TaskStatus.TODO, label: "APPROVE_TASK", icon: "check_circle", color: "bg-green-600 text-white shadow-[4px_4px_0px_#14532d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+  ],
   [TaskStatus.BACKLOG]: [
     { targetStatus: TaskStatus.TODO, label: "MOVE_TO_TODO", icon: "playlist_add", color: "bg-blue-600 text-white shadow-[4px_4px_0px_#1e3a5f]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   ],
@@ -74,8 +77,8 @@ const STATUS_ACTIONS: Record<TaskStatus, Array<{
     { targetStatus: TaskStatus.IN_REVIEW, label: "SUBMIT_FOR_REVIEW", icon: "send", color: "bg-[#180065] text-white shadow-[4px_4px_0px_#5847d2]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   ],
   [TaskStatus.IN_REVIEW]: [
-    // Manager actions: approve directly or send back for revision
-    { targetStatus: TaskStatus.APPROVED, label: "APPROVE", icon: "check_circle", color: "bg-green-600 text-white shadow-[4px_4px_0px_#14532d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+    // Manager actions: approve directly (→ DONE) or send back for revision
+    { targetStatus: TaskStatus.DONE, label: "APPROVE", icon: "check_circle", color: "bg-green-600 text-white shadow-[4px_4px_0px_#14532d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
     { targetStatus: TaskStatus.REVISION, label: "SEND_TO_REVISION", icon: "undo", color: "bg-red-600 text-white shadow-[4px_4px_0px_#7f1d1d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   ],
   [TaskStatus.REVISION]: [
@@ -85,6 +88,7 @@ const STATUS_ACTIONS: Record<TaskStatus, Array<{
   [TaskStatus.CLIENT_APPROVAL]: [],
   [TaskStatus.CLIENT_REVISION]: [],
   [TaskStatus.APPROVED]: [
+    // Legacy: finalize tasks that were already in APPROVED state before the merge
     { targetStatus: TaskStatus.DONE, label: "FINALIZE_TASK", icon: "task_alt", color: "bg-success text-white shadow-[4px_4px_0px_#15803d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   ],
   [TaskStatus.DONE]: [],
@@ -488,6 +492,49 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
             </div>
           </div>
         </div>
+
+        {/* PENDING_APPROVAL Banner */}
+        {task.status === TaskStatus.PENDING_APPROVAL && (
+          <div className={`px-4 sm:px-6 py-3 flex-shrink-0 border-b border-on-surface/10 ${
+            isManager
+              ? "bg-amber-500/15 border-l-4 border-l-amber-500"
+              : "bg-amber-500/10 border-l-4 border-l-amber-400"
+          }`}>
+            {isManager ? (
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-amber-500 text-lg flex-shrink-0">approval</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-headline text-[10px] uppercase tracking-widest text-amber-600">
+                    APPROVAL REQUIRED
+                  </p>
+                  <p className="font-body text-[11px] text-on-surface/70 mt-0.5">
+                    {task.assignedTo?.name || "An employee"} created this task and assigned you as the assigner. Approve to allow work, or reject to delete.
+                  </p>
+                </div>
+                <button
+                  onClick={handleDeleteTask}
+                  disabled={isDeleting}
+                  className="flex-shrink-0 flex items-center gap-1.5 mono-clip px-3 py-2 bg-red-600 text-white font-headline text-[9px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-xs">{isDeleting ? "progress_activity" : "close"}</span>
+                  REJECT
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-amber-400 text-lg animate-pulse">hourglass_top</span>
+                <div>
+                  <p className="font-headline text-[10px] uppercase tracking-widest text-amber-500">
+                    AWAITING MANAGER APPROVAL
+                  </p>
+                  <p className="font-body text-[11px] text-on-surface/60 mt-0.5">
+                    This task must be approved by your manager before you can start work.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex border-b border-on-surface/10 flex-shrink-0 bg-card-muted/30">

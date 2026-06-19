@@ -28,12 +28,12 @@ if (typeof window !== "undefined") {
 }
 
 const KANBAN_COLUMNS: TaskStatus[] = [
+  TaskStatus.PENDING_APPROVAL,
   TaskStatus.BACKLOG,
   TaskStatus.TODO,
   TaskStatus.IN_PROGRESS,
   TaskStatus.IN_REVIEW,
   TaskStatus.REVISION,
-  TaskStatus.APPROVED,
   TaskStatus.DONE,
 ];
 

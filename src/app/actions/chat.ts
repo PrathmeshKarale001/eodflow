@@ -282,6 +282,8 @@ export async function sendMessage(data: {
     reactions: [],
     isDeleted: false,
     editedAt: null,
+  }).catch((err) => {
+    console.error("[CHAT] Broadcast failed:", err.message);
   });
 
   return message;

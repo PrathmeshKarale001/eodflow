@@ -147,3 +147,48 @@ export async function broadcastTaskNotification(data: {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Broadcast a notification event to a specific user's bell
+// Uses Broadcast (not postgres_changes) to bypass RLS restrictions
+// ---------------------------------------------------------------------------
+
+export async function broadcastUserNotification(
+  userId: string,
+  notification: {
+    id: string;
+    type: string;
+    title: string;
+    body?: string | null;
+    linkUrl?: string | null;
+  }
+) {
+  const client = getAdminClient();
+  if (!client) return;
+
+  try {
+    const channel = client.channel(`user-notifications-${userId}`);
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Subscribe timeout")), 5000);
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          clearTimeout(timeout);
+          resolve();
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          clearTimeout(timeout);
+          reject(new Error(`Channel subscribe failed: ${status}`));
+        }
+      });
+    });
+
+    await channel.send({
+      type: "broadcast",
+      event: "new-notification",
+      payload: notification,
+    });
+
+    await client.removeChannel(channel);
+  } catch (err) {
+    console.error("[REALTIME_SERVER] User notification broadcast failed:", err);
+  }
+}

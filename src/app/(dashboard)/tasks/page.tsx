@@ -64,27 +64,19 @@ export default async function TasksPage() {
           orderBy: { name: "asc" },
         }),
     // Fetch projects for Task Creation selector (with clientId for brand filtering)
-    // ADMIN only sees their managed/created projects; SUPER_ADMIN sees all
+    // ADMIN only sees their managed/created projects; SUPER_ADMIN + EMPLOYEE see all active
     canCreateTask
       ? db.project.findMany({
           where:
-            userRole === Role.SUPER_ADMIN
-              ? { status: { not: "COMPLETED" } }
-              : userRole === Role.ADMIN
-                ? {
-                    status: { not: "COMPLETED" },
-                    OR: [
-                      { assignedManagerId: session.user.id },
-                      { createdById: session.user.id },
-                    ],
-                  }
-                : {
-                    status: { not: "COMPLETED" },
-                    OR: [
-                      { tasks: { some: { assignedToId: session.user.id } } },
-                      { createdById: session.user.id },
-                    ],
-                  },
+            userRole === Role.ADMIN
+              ? {
+                  status: { not: "COMPLETED" },
+                  OR: [
+                    { assignedManagerId: session.user.id },
+                    { createdById: session.user.id },
+                  ],
+                }
+              : { status: { not: "COMPLETED" } },
           select: { id: true, title: true, clientId: true },
           orderBy: { title: "asc" },
         })

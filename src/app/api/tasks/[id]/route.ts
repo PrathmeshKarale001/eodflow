@@ -16,7 +16,7 @@ const updateTaskSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
   status: z.enum([
-    "BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "REVISION",
+    "PENDING_APPROVAL", "BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "REVISION",
     "CLIENT_APPROVAL", "CLIENT_REVISION", "APPROVED", "DONE",
   ]).optional(),
   priority: z.enum(["URGENT", "HIGH", "MEDIUM", "LOW"]).optional(),
@@ -28,14 +28,15 @@ const updateTaskSchema = z.object({
 
 // Valid status transitions (prevents skipping review gates)
 const VALID_TRANSITIONS: Record<string, TaskStatus[]> = {
+  PENDING_APPROVAL: ["TODO"],
   BACKLOG: ["TODO"],
   TODO: ["IN_PROGRESS", "BACKLOG"],
   IN_PROGRESS: ["IN_REVIEW", "TODO"],
-  IN_REVIEW: ["REVISION", "CLIENT_APPROVAL", "IN_PROGRESS"],
+  IN_REVIEW: ["REVISION", "DONE", "CLIENT_APPROVAL", "IN_PROGRESS"],
   REVISION: ["IN_PROGRESS"],
-  CLIENT_APPROVAL: ["APPROVED", "CLIENT_REVISION"],
+  CLIENT_APPROVAL: ["DONE", "CLIENT_REVISION"],
   CLIENT_REVISION: ["IN_PROGRESS"],
-  APPROVED: ["DONE"],
+  APPROVED: ["DONE"],   // legacy
   DONE: [],  // Terminal state
 };
 

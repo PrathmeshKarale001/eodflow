@@ -4,6 +4,7 @@ import { TaskStatus } from "@prisma/client";
 import { TaskCard } from "./task-card";
 
 const COLUMN_STYLES: Record<string, { label: string; accent: string }> = {
+  PENDING_APPROVAL: { label: "PENDING_APPROVAL", accent: "border-t-amber-400" },
   BACKLOG: { label: "BACKLOG", accent: "border-t-neutral-400" },
   TODO: { label: "TODO", accent: "border-t-blue-500" },
   IN_PROGRESS: { label: "IN_PROGRESS", accent: "border-t-amber-500" },

@@ -21,7 +21,7 @@ export function useTaskRealtime() {
     const supabase = createClient();
 
     const channel = supabase
-      .channel("global-task-sync")
+      .channel("task-notifications")
       .on("broadcast", { event: "task-event" }, () => {
         // Refresh server components to get latest data
         router.refresh();

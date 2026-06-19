@@ -42,6 +42,14 @@ export async function createTask(data: {
     }
   }
 
+  // ─── Determine initial status ──────────────────────────────────────────────
+  // Employee claims a manager assigned them → PENDING_APPROVAL (manager must acknowledge)
+  // Employee self-assigns or manager creates → TODO (ready to work)
+  const employeeClaimsManager = userRole === Role.EMPLOYEE
+    && data.assignedById
+    && data.assignedById !== session.user.id;
+  const initialStatus = employeeClaimsManager ? TaskStatus.PENDING_APPROVAL : TaskStatus.TODO;
+
   // Build assignees connect array for M:N relation
   const assigneeConnect = data.assigneeIds?.length
     ? data.assigneeIds.map((id) => ({ id }))
@@ -57,7 +65,7 @@ export async function createTask(data: {
       priority: data.priority,
       assignedToId: leadAssigneeId || undefined,
       assignedById: data.assignedById || session.user.id,
-      status: TaskStatus.TODO,
+      status: initialStatus,
       dueDate: data.dueDate,
       ...(assigneeConnect ? { assignees: { connect: assigneeConnect } } : {}),
     },
@@ -90,18 +98,31 @@ export async function createTask(data: {
     assigneeIds: data.assigneeIds || (leadAssigneeId ? [leadAssigneeId] : []),
   }).catch(() => {});
 
-  // Notify assigned employee(s) that work has been assigned
-  const assigneesToNotify = (data.assigneeIds || (leadAssigneeId ? [leadAssigneeId] : []))
-    .filter((id) => id !== session.user.id); // Don't notify yourself
-  if (assigneesToNotify.length > 0) {
-    const { notifyMany } = await import("@/lib/notify");
-    notifyMany(assigneesToNotify, {
-      type: "TASK_ASSIGNED",
-      title: `New task assigned: ${data.title}`,
-      body: `${session.user.name || "Manager"} assigned you a new task`,
+  // ─── Notifications ─────────────────────────────────────────────────────────
+  if (employeeClaimsManager && data.assignedById) {
+    // Employee claimed a manager assigned them → notify the manager to approve
+    notify({
+      userId: data.assignedById,
+      type: "APPROVAL_REQUESTED",
+      title: "Task approval required",
+      body: `${session.user.name || "An employee"} created a task and needs your approval: "${data.title}"`,
       linkUrl: `/tasks?taskId=${task.id}`,
-      tag: `task-assigned-${task.id}`,
+      tag: `pending-approval-${task.id}`,
     }).catch(() => {});
+  } else {
+    // Manager-assigned or self-assigned → notify assignees directly
+    const assigneesToNotify = (data.assigneeIds || (leadAssigneeId ? [leadAssigneeId] : []))
+      .filter((id) => id !== session.user.id); // Don't notify yourself
+    if (assigneesToNotify.length > 0) {
+      const { notifyMany } = await import("@/lib/notify");
+      notifyMany(assigneesToNotify, {
+        type: "TASK_ASSIGNED",
+        title: `New task assigned: ${data.title}`,
+        body: `${session.user.name || "Manager"} assigned you a new task`,
+        linkUrl: `/tasks?taskId=${task.id}`,
+        tag: `task-assigned-${task.id}`,
+      }).catch(() => {});
+    }
   }
 
   return task;
@@ -112,21 +133,22 @@ export async function createTask(data: {
 // ---------------------------------------------------------------------------
 
 const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  [TaskStatus.PENDING_APPROVAL]: [TaskStatus.TODO],       // Manager approves → TODO
   [TaskStatus.BACKLOG]: [TaskStatus.TODO],
   [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS],
   [TaskStatus.IN_PROGRESS]: [TaskStatus.IN_REVIEW],
-  [TaskStatus.IN_REVIEW]: [TaskStatus.REVISION, TaskStatus.APPROVED],
+  [TaskStatus.IN_REVIEW]: [TaskStatus.REVISION, TaskStatus.DONE], // APPROVE now → DONE directly
   [TaskStatus.REVISION]: [TaskStatus.IN_PROGRESS],
-  [TaskStatus.CLIENT_APPROVAL]: [TaskStatus.APPROVED], // legacy — kept for existing data
+  [TaskStatus.CLIENT_APPROVAL]: [TaskStatus.DONE],        // legacy — kept for existing data
   [TaskStatus.CLIENT_REVISION]: [TaskStatus.IN_PROGRESS], // legacy — kept for existing data
-  [TaskStatus.APPROVED]: [TaskStatus.DONE],
+  [TaskStatus.APPROVED]: [TaskStatus.DONE],                // legacy — kept for existing APPROVED tasks
   [TaskStatus.DONE]: [],
 };
 
 // Roles allowed to transition INTO certain statuses
 const STATUS_ROLE_RESTRICTIONS: Partial<Record<TaskStatus, Role[]>> = {
+  [TaskStatus.TODO]: undefined, // default: all roles (but PENDING_APPROVAL → TODO checked below)
   [TaskStatus.CLIENT_APPROVAL]: [Role.SUPER_ADMIN, Role.ADMIN],
-  [TaskStatus.APPROVED]: [Role.SUPER_ADMIN, Role.ADMIN],
   [TaskStatus.REVISION]: [Role.SUPER_ADMIN, Role.ADMIN],
   [TaskStatus.CLIENT_REVISION]: [Role.SUPER_ADMIN, Role.ADMIN],
   [TaskStatus.DONE]: [Role.SUPER_ADMIN, Role.ADMIN],
@@ -228,6 +250,18 @@ export async function updateTaskStatus(data: {
   }).catch(() => {});
 
   // ─── Push notifications for critical status changes ───────────────────────
+  // Manager approves a PENDING_APPROVAL task → notify the employee who created it
+  if (oldStatus === TaskStatus.PENDING_APPROVAL && data.status === TaskStatus.TODO && task.assignedToId && task.assignedToId !== session.user.id) {
+    notify({
+      userId: task.assignedToId,
+      type: "TASK_STATUS_CHANGED",
+      title: "Task approved for work! ✓",
+      body: `"${updatedTask.title}" has been approved — you can start working`,
+      linkUrl: `/tasks?taskId=${data.taskId}`,
+      tag: `approved-work-${data.taskId}`,
+    }).catch(() => {});
+  }
+
   // Employee submits for review → notify the project manager
   if (data.status === TaskStatus.IN_REVIEW && task.projectId) {
     const project = await db.project.findUnique({
@@ -258,12 +292,12 @@ export async function updateTaskStatus(data: {
     }).catch(() => {});
   }
 
-  // Manager approves → notify the assignee
-  if (data.status === TaskStatus.APPROVED && task.assignedToId && task.assignedToId !== session.user.id) {
+  // Manager approves (IN_REVIEW → DONE) or finalizes (APPROVED → DONE) → notify the assignee
+  if (data.status === TaskStatus.DONE && task.assignedToId && task.assignedToId !== session.user.id) {
     notify({
       userId: task.assignedToId,
       type: "TASK_STATUS_CHANGED",
-      title: "Task approved! ✓",
+      title: "Task approved & completed! ✓",
       body: `"${updatedTask.title}" has been approved`,
       linkUrl: `/tasks?taskId=${data.taskId}`,
       tag: `approved-${data.taskId}`,
