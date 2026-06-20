@@ -9,10 +9,13 @@ const globalForPrisma = globalThis as unknown as {
 // Uses simple string manipulation to avoid 'url.parse()' deprecation warning.
 function withPoolParams(url: string): string {
   if (!url) return url;
+  // Override connection_limit to 3 (Supabase free tier supports ~20 pooled connections;
+  // limit=1 caused pool contention when pages run 3-5 parallel queries)
+  url = url.replace(/connection_limit=\d+/, "connection_limit=3");
   const sep = url.includes("?") ? "&" : "?";
   const params: string[] = [];
-  if (!url.includes("pool_timeout")) params.push("pool_timeout=20");
-  if (!url.includes("connect_timeout")) params.push("connect_timeout=15");
+  if (!url.includes("pool_timeout")) params.push("pool_timeout=15");
+  if (!url.includes("connect_timeout")) params.push("connect_timeout=10");
   return params.length > 0 ? `${url}${sep}${params.join("&")}` : url;
 }
 
