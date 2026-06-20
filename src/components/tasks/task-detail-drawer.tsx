@@ -871,7 +871,23 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                         break;
                       case "STATUS_CHANGED": {
                         const meta = act.metadata as any;
-                        actionText = `changed status from ${meta?.oldValue || "unknown"} to ${meta?.newValue || "unknown"}`;
+                        // Handle all metadata key formats used across the codebase
+                        const rawOld = meta?.oldStatus || meta?.oldValue || meta?.from || meta?.previousStatus || "";
+                        const rawNew = meta?.newStatus || meta?.newValue || meta?.to || "";
+                        const statusLabel = (s: string) => {
+                          const labels: Record<string, string> = {
+                            TODO: "TODO", IN_PROGRESS: "IN PROGRESS", IN_REVIEW: "IN REVIEW",
+                            REVISION: "REVISION", CLIENT_REVISION: "CLIENT REVISION",
+                            CLIENT_APPROVAL: "CLIENT APPROVAL", APPROVED: "APPROVED",
+                            DONE: "DONE", PENDING_APPROVAL: "PENDING APPROVAL",
+                          };
+                          return labels[s] || s.replace(/_/g, " ") || "—";
+                        };
+                        actionText = rawOld && rawNew
+                          ? `changed status from ${statusLabel(rawOld)} to ${statusLabel(rawNew)}`
+                          : rawNew
+                            ? `changed status to ${statusLabel(rawNew)}`
+                            : "changed status";
                         actionIcon = "sync_alt";
                         iconColor = "text-blue-500";
                         break;
