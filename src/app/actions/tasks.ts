@@ -188,6 +188,19 @@ export async function updateTaskStatus(data: {
     throw new Error("FORBIDDEN: Insufficient permissions.");
   }
 
+  // No-op: if the task is already in the target status (e.g. double-click race),
+  // return the task as-is instead of throwing an error.
+  if (task.status === data.status) {
+    return db.task.findUnique({
+      where: { id: data.taskId },
+      include: {
+        assignedTo: { select: { id: true, name: true, image: true } },
+        assignedBy: { select: { id: true, name: true, image: true } },
+        project: { select: { title: true, client: { select: { companyName: true } } } },
+      },
+    });
+  }
+
   // Validate transition
   if (!isValidTransition(task.status, data.status)) {
     throw new Error(`INVALID_TRANSITION: Cannot move from ${task.status} to ${data.status}.`);

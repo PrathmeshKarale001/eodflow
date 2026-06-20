@@ -2,11 +2,11 @@
 // EOD FLOW — Server-side Supabase Realtime (for broadcasting from server actions)
 //
 // Uses SUPABASE_SERVICE_ROLE_KEY so it doesn't depend on browser session.
-// This ensures broadcasts always reach subscribed clients, regardless of
-// whether the sender's browser channel is in a SUBSCRIBED state.
+// Optimized: reuses channels via a cache to avoid subscribe/unsubscribe churn
+// that exhausts Supabase free-tier connections.
 // =============================================================================
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type RealtimeChannel } from "@supabase/supabase-js";
 
 // Singleton server-side Supabase client (admin privileges)
 let _adminClient: ReturnType<typeof createClient> | null = null;
@@ -21,9 +21,66 @@ function getAdminClient() {
       return null;
     }
 
-    _adminClient = createClient(url, key);
+    _adminClient = createClient(url, key, {
+      realtime: { heartbeatIntervalMs: 30_000 },
+    });
   }
   return _adminClient;
+}
+
+// ---------------------------------------------------------------------------
+// Channel cache — reuse subscribed channels to avoid connection churn
+// Each channel auto-cleans up after 30s of idle time
+// ---------------------------------------------------------------------------
+
+const channelCache = new Map<string, { channel: RealtimeChannel; timer: ReturnType<typeof setTimeout> }>();
+
+async function getOrCreateChannel(name: string): Promise<RealtimeChannel | null> {
+  const client = getAdminClient();
+  if (!client) return null;
+
+  // Reuse cached channel
+  const cached = channelCache.get(name);
+  if (cached) {
+    clearTimeout(cached.timer);
+    // Reset idle cleanup timer
+    cached.timer = setTimeout(() => {
+      client.removeChannel(cached.channel).catch(() => {});
+      channelCache.delete(name);
+    }, 30_000);
+    return cached.channel;
+  }
+
+  // Create new channel and subscribe
+  const channel = client.channel(name);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Subscribe timeout")), 3000);
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          clearTimeout(timeout);
+          resolve();
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          clearTimeout(timeout);
+          reject(new Error(`Channel subscribe failed: ${status}`));
+        }
+      });
+    });
+  } catch (err) {
+    // Cleanup on failure
+    client.removeChannel(channel).catch(() => {});
+    throw err;
+  }
+
+  // Cache with idle cleanup
+  const timer = setTimeout(() => {
+    client.removeChannel(channel).catch(() => {});
+    channelCache.delete(name);
+  }, 30_000);
+
+  channelCache.set(name, { channel, timer });
+  return channel;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,27 +101,9 @@ export async function broadcastChatMessage(
     editedAt?: Date | null;
   }
 ) {
-  const client = getAdminClient();
-  if (!client) return; // Graceful degradation — don't crash if env vars missing
-
   try {
-    const channel = client.channel(`chat-${channelId}`);
-
-    // Must subscribe before sending (Supabase requirement)
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error("Subscribe timeout")), 5000);
-
-      channel.subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          clearTimeout(timeout);
-          resolve();
-        }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          clearTimeout(timeout);
-          reject(new Error(`Channel subscribe failed: ${status}`));
-        }
-      });
-    });
+    const channel = await getOrCreateChannel(`chat-${channelId}`);
+    if (!channel) return;
 
     await channel.send({
       type: "broadcast",
@@ -73,28 +112,20 @@ export async function broadcastChatMessage(
     });
 
     // Broadcast to global notification channel for unread counts
-    const notificationChannel = client.channel("chat-notifications");
-    await new Promise<void>((resolve) => {
-      notificationChannel.subscribe((status) => {
-        if (status === "SUBSCRIBED") resolve();
+    const notificationChannel = await getOrCreateChannel("chat-notifications");
+    if (notificationChannel) {
+      await notificationChannel.send({
+        type: "broadcast",
+        event: "new-notification",
+        payload: {
+          channelId,
+          messageId: message.id,
+          content: message.content.substring(0, 50),
+          senderName: message.user.name,
+          senderId: message.user.id,
+        },
       });
-    });
-
-    await notificationChannel.send({
-      type: "broadcast",
-      event: "new-notification",
-      payload: {
-        channelId,
-        messageId: message.id,
-        content: message.content.substring(0, 50), // Snippet for toast
-        senderName: message.user.name,
-        senderId: message.user.id,
-      },
-    });
-
-    // Cleanup: unsubscribe after sending (server shouldn't hold channels open)
-    await client.removeChannel(channel);
-    await client.removeChannel(notificationChannel);
+    }
   } catch (err) {
     console.error("[REALTIME_SERVER] Broadcast failed:", err);
     // Non-fatal — message is already saved in DB; user will see it on next refresh
@@ -116,32 +147,15 @@ export async function broadcastTaskNotification(data: {
   oldStatus?: string;
   newStatus?: string;
 }) {
-  const client = getAdminClient();
-  if (!client) return;
-
   try {
-    const channel = client.channel("task-notifications");
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error("Subscribe timeout")), 5000);
-      channel.subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          clearTimeout(timeout);
-          resolve();
-        }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          clearTimeout(timeout);
-          reject(new Error(`Channel subscribe failed: ${status}`));
-        }
-      });
-    });
+    const channel = await getOrCreateChannel("task-notifications");
+    if (!channel) return;
 
     await channel.send({
       type: "broadcast",
       event: "task-event",
       payload: data,
     });
-
-    await client.removeChannel(channel);
   } catch (err) {
     console.error("[REALTIME_SERVER] Task notification broadcast failed:", err);
   }
@@ -162,32 +176,15 @@ export async function broadcastUserNotification(
     linkUrl?: string | null;
   }
 ) {
-  const client = getAdminClient();
-  if (!client) return;
-
   try {
-    const channel = client.channel(`user-notifications-${userId}`);
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error("Subscribe timeout")), 5000);
-      channel.subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          clearTimeout(timeout);
-          resolve();
-        }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          clearTimeout(timeout);
-          reject(new Error(`Channel subscribe failed: ${status}`));
-        }
-      });
-    });
+    const channel = await getOrCreateChannel(`user-notifications-${userId}`);
+    if (!channel) return;
 
     await channel.send({
       type: "broadcast",
       event: "new-notification",
       payload: notification,
     });
-
-    await client.removeChannel(channel);
   } catch (err) {
     console.error("[REALTIME_SERVER] User notification broadcast failed:", err);
   }
