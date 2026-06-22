@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/realtime";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface Toast {
@@ -44,12 +44,34 @@ interface ChatProviderProps {
   currentUserId: string;
 }
 
+// ─── Helper: show browser notification ────────────────────────────────────────
+function showBrowserNotification(title: string, body: string, tag: string) {
+  if (
+    typeof window !== "undefined" &&
+    document.hidden &&
+    "Notification" in window &&
+    Notification.permission === "granted"
+  ) {
+    try {
+      new Notification(title, { body, icon: "/icon-192.png", tag });
+    } catch {
+      // Silently fail — some browsers block Notification constructor
+    }
+  }
+}
+
 export function ChatProvider({ children, channels, currentUserId }: ChatProviderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Mark a channel as read (when user opens it)
+  // Use refs for values needed in subscription callbacks to avoid re-subscribing
+  const pathnameRef = useRef(pathname);
+  const channelsRef = useRef(channels);
+  useEffect(() => { pathnameRef.current = pathname; }, [pathname]);
+  useEffect(() => { channelsRef.current = channels; }, [channels]);
+
   const markRead = useCallback((channelId: string) => {
     setUnreadCounts((prev) => ({ ...prev, [channelId]: 0 }));
   }, []);
@@ -58,14 +80,28 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Track recently seen notification IDs to deduplicate toast events
-  // (guards against edge cases where both client & server broadcast reach the listener)
+  // Dedup seen notification IDs
   const seenNotifIds = useRef<Set<string>>(new Set());
 
-  // Subscribe to global notification channel
+  // Helper to push a toast (with auto-dismiss)
+  const pushToast = useCallback((toast: Toast) => {
+    setToasts((prev) => [toast, ...prev].slice(0, 3));
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== toast.id));
+    }, 5000);
+  }, []);
+
+  // ─── SINGLE consolidated realtime subscription ──────────────────────────────
+  // All broadcast channels are subscribed once and never re-subscribed on nav.
+  // This fixes the "hibernate" issue where changing pages killed subscriptions.
   useEffect(() => {
+    if (!currentUserId) return;
+
     const supabase = createClient();
-    const channel = supabase
+    const activeChannels: RealtimeChannel[] = [];
+
+    // 1) Chat notifications — global channel for all chat messages
+    const chatNotifChannel = supabase
       .channel("chat-notifications")
       .on("broadcast", { event: "new-notification" }, (payload) => {
         const data = payload.payload as {
@@ -76,109 +112,103 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
           content: string;
         };
 
-        // Ignore own messages
         if (data.senderId === currentUserId) return;
 
-        // Ignore if we are already in this channel (the active channel subscription handles it)
-        const isActive = pathname === `/chat/${data.channelId}`;
+        // Check if user is on this channel right now
+        const isActive = pathnameRef.current === `/chat/${data.channelId}`;
         if (isActive) return;
 
-        // Check if user is even a member of this channel
-        const isMember = channels.some((c) => c.id === data.channelId);
+        // Check membership
+        const isMember = channelsRef.current.some((c) => c.id === data.channelId);
         if (!isMember) return;
 
-        // ─── DEDUP: Skip if we've already shown a toast for this message ─────
+        // Dedup
         const dedupeKey = data.messageId || `${data.channelId}-${data.content}-${data.senderName}`;
         if (seenNotifIds.current.has(dedupeKey)) return;
         seenNotifIds.current.add(dedupeKey);
-        // Auto-cleanup after 10s to prevent memory leak
         setTimeout(() => seenNotifIds.current.delete(dedupeKey), 10000);
 
-        // Increment unread count
+        // Increment unread
         setUnreadCounts((prev) => ({
           ...prev,
           [data.channelId]: (prev[data.channelId] ?? 0) + 1,
         }));
 
-        // Show toast
-        const toastId = `toast-${Date.now()}`;
-        const channelName = channels.find((c) => c.id === data.channelId)?.name || "New Message";
-        
-        setToasts((prev) => [
-          {
-            id: toastId,
-            channelId: data.channelId,
-            channelName,
-            senderName: data.senderName,
-            content: data.content,
-            timestamp: Date.now(),
-          },
-          ...prev,
-        ].slice(0, 3));
+        // Toast
+        const channelName = channelsRef.current.find((c) => c.id === data.channelId)?.name || "New Message";
+        pushToast({
+          id: `toast-${Date.now()}`,
+          channelId: data.channelId,
+          channelName,
+          senderName: data.senderName,
+          content: data.content,
+          timestamp: Date.now(),
+        });
 
-        setTimeout(() => {
-          setToasts((prev) => prev.filter((t) => t.id !== toastId));
-        }, 5000);
-
-        // ─── BROWSER NOTIFICATION (when tab is not focused) ─────────────────
-        if (typeof window !== "undefined" && document.hidden && "Notification" in window && Notification.permission === "granted") {
-          try {
-            new Notification(`${data.senderName} • ${channelName}`, {
-              body: data.content,
-              icon: "/icon-192.png",
-              tag: `chat-${data.channelId}`,
-            });
-          } catch {
-            // Silently fail — some browsers block Notification constructor
-          }
-        }
+        // Browser notification
+        showBrowserNotification(
+          `${data.senderName} • ${channelName}`,
+          data.content,
+          `chat-${data.channelId}`
+        );
       })
       .subscribe();
+    activeChannels.push(chatNotifChannel);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUserId, pathname, channels]);
+    // 2) Task notifications — SINGLE subscription (was previously duplicated
+    //    between ChatProvider and useTaskRealtime, causing one to silently fail)
+    const taskNotifChannel = supabase
+      .channel("task-notifications")
+      .on("broadcast", { event: "task-event" }, (payload) => {
+        const data = payload.payload as {
+          type: string;
+          taskId: string;
+          taskTitle: string;
+          actorName: string;
+          actorId: string;
+          assigneeIds?: string[];
+          oldStatus?: string;
+          newStatus?: string;
+        };
 
-  // Subscribe to the ACTIVE channel specifically
-  useEffect(() => {
-    const match = pathname.match(/\/chat\/(.+)/);
-    if (!match) return;
+        // Always refresh server data (replaces useTaskRealtime)
+        router.refresh();
 
-    const channelId = match[1];
+        // Skip toast for own actions
+        if (data.actorId === currentUserId) return;
 
-    // Mark as read immediately
-    markRead(channelId);
+        // Only toast if user is an assignee
+        const isAssignee = data.assigneeIds?.includes(currentUserId);
+        if (!isAssignee) return;
 
-    // Subscribe to this specific channel for high-fidelity updates
-    // (though the ChatWindow also subscribes, this ensures unread sync)
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`chat-${channelId}`)
-      .on("broadcast", { event: "new-message" }, (payload) => {
-        const msg = payload.payload as { user: { id: string } };
-        if (msg.user.id !== currentUserId) {
-          markRead(channelId);
+        let title = "Task Update";
+        let body = "";
+        if (data.type === "TASK_CREATED") {
+          title = "New Task Assigned";
+          body = `${data.actorName} assigned you: "${data.taskTitle}"`;
+        } else if (data.type === "TASK_STATUS_CHANGED") {
+          title = "Task Status Changed";
+          body = `${data.actorName} moved task to ${data.newStatus?.replace(/_/g, " ")}`;
         }
+
+        pushToast({
+          id: `task-toast-${Date.now()}`,
+          channelId: data.taskId,
+          channelName: title,
+          senderName: data.actorName,
+          content: body,
+          timestamp: Date.now(),
+        });
+
+        showBrowserNotification(title, body, `task-${data.taskId}`);
       })
       .subscribe();
+    activeChannels.push(taskNotifChannel);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [pathname, channels, currentUserId, markRead]);
-
-  // Online presence tracking
-  const [onlineUsers, setOnlineUsers] = useState<Record<string, any>>({});
-
-  useEffect(() => {
-    if (!currentUserId) return;
-
-    const supabase = createClient();
+    // 3) Online presence
     const presenceChannel = supabase.channel("online-users", {
       config: { presence: { key: currentUserId } },
     });
-
     presenceChannel
       .on("presence", { event: "sync" }, () => {
         const state = presenceChannel.presenceState();
@@ -196,78 +226,43 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
           });
         }
       });
+    activeChannels.push(presenceChannel);
+
+    // ─── Reconnection: re-subscribe if Supabase websocket reconnects ─────────
+    // Supabase client emits system events we can listen to
+    const reconnectInterval = setInterval(() => {
+      activeChannels.forEach((ch) => {
+        // If a channel's state is "closed" or "errored", force re-subscribe
+        const state = (ch as any).state;
+        if (state === "closed" || state === "errored") {
+          console.warn(`[REALTIME] Channel ${(ch as any).topic} in ${state} state, re-subscribing...`);
+          ch.subscribe();
+        }
+      });
+    }, 15_000); // Check every 15s
 
     return () => {
-      supabase.removeChannel(presenceChannel);
+      clearInterval(reconnectInterval);
+      activeChannels.forEach((ch) => supabase.removeChannel(ch));
     };
-  }, [currentUserId]);
+  }, [currentUserId, router, pushToast]);
 
-  // ─── Subscribe to global task notifications ──────────────────────────────
+  // ─── Active chat channel subscription (mark-as-read) ────────────────────────
+  // Only this one depends on pathname — and it's lightweight (no toasts)
   useEffect(() => {
-    if (!currentUserId) return;
+    const match = pathname.match(/\/chat\/(.+)/);
+    if (!match) return;
+
+    const channelId = match[1];
+    markRead(channelId);
 
     const supabase = createClient();
     const channel = supabase
-      .channel("task-notifications")
-      .on("broadcast", { event: "task-event" }, (payload) => {
-        const data = payload.payload as {
-          type: string;
-          taskId: string;
-          taskTitle: string;
-          actorName: string;
-          actorId: string;
-          assigneeIds?: string[];
-          oldStatus?: string;
-          newStatus?: string;
-        };
-
-        // Ignore own actions
-        if (data.actorId === currentUserId) return;
-
-        // Only notify if user is an assignee or affected
-        const isAssignee = data.assigneeIds?.includes(currentUserId);
-        if (!isAssignee) return;
-
-        // Build notification text
-        let title = "Task Update";
-        let body = "";
-        if (data.type === "TASK_CREATED") {
-          title = "New Task Assigned";
-          body = `${data.actorName} assigned you: "${data.taskTitle}"`;
-        } else if (data.type === "TASK_STATUS_CHANGED") {
-          title = "Task Status Changed";
-          body = `${data.actorName} moved task to ${data.newStatus?.replace(/_/g, " ")}`;
-        }
-
-        // Show in-app toast
-        const toastId = `task-toast-${Date.now()}`;
-        setToasts((prev) => [
-          {
-            id: toastId,
-            channelId: data.taskId,
-            channelName: title,
-            senderName: data.actorName,
-            content: body,
-            timestamp: Date.now(),
-          },
-          ...prev,
-        ].slice(0, 3));
-
-        setTimeout(() => {
-          setToasts((prev) => prev.filter((t) => t.id !== toastId));
-        }, 5000);
-
-        // Show browser notification when tab is not focused
-        if (typeof window !== "undefined" && document.hidden && "Notification" in window && Notification.permission === "granted") {
-          try {
-            new Notification(title, {
-              body,
-              icon: "/icon-192.png",
-              tag: `task-${data.taskId}`,
-            });
-          } catch {
-            // Silently fail
-          }
+      .channel(`chat-active-${channelId}`)
+      .on("broadcast", { event: "new-message" }, (payload) => {
+        const msg = payload.payload as { user: { id: string } };
+        if (msg.user.id !== currentUserId) {
+          markRead(channelId);
         }
       })
       .subscribe();
@@ -275,7 +270,9 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserId]);
+  }, [pathname, currentUserId, markRead]);
+
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, any>>({});
 
   return (
     <UnreadContext.Provider

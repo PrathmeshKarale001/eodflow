@@ -7,7 +7,7 @@ import { SearchDialog } from "@/components/search/search-dialog";
 import { MainContentContainer } from "@/components/layout/main-content-container";
 import { ChatProvider } from "@/components/chat/chat-provider";
 import { ChatToastContainer } from "@/components/chat/chat-toast";
-import { RealtimeSync } from "@/components/realtime-sync";
+// RealtimeSync removed — its task-notifications subscription is now in ChatProvider
 import { getUserChannels } from "@/app/actions/chat";
 import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
@@ -143,8 +143,7 @@ export default async function DashboardLayout({
           {children}
         </MainContentContainer>
 
-        {/* Global realtime sync — auto-refresh all pages on task events */}
-        <RealtimeSync />
+        {/* Realtime sync is now handled inside ChatProvider */}
 
         {/* Global Search */}
         <SearchDialog />

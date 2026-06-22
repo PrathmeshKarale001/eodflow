@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PendingApprovalCard } from "./pending-approval-card";
 
 function formatMins(mins: number) {
   const h = Math.floor(mins / 60);
@@ -54,6 +55,13 @@ interface Props {
     assignedTo: { name: string } | null;
   }>;
   weeklyHours: number;
+  pendingApproval: Array<{
+    id: string;
+    title: string;
+    createdAt: Date;
+    assignedTo: { id: string; name: string; image: string | null } | null;
+    project: { title: string } | null;
+  }>;
 }
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -69,6 +77,7 @@ export function ManagerDashboard({
   pendingReview,
   upcomingDeadlines,
   weeklyHours,
+  pendingApproval,
 }: Props) {
   const maxTasks = Math.max(...teamWorkload.map((m) => m.taskCount), 1);
 
@@ -89,6 +98,11 @@ export function ManagerDashboard({
           </Link>
         ))}
       </div>
+
+      {/* Pending Approval — prominent section when employees claim this manager assigned them */}
+      {pendingApproval.length > 0 && (
+        <PendingApprovalCard tasks={pendingApproval} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Managed Projects */}

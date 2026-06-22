@@ -145,7 +145,7 @@ export default async function OverviewPage({
   // ─── ADMIN (formerly MANAGER) ────────────────────────────────────────────────────────────────
   if (role === "ADMIN") {
     // Stage 1: Fetch managed projects + scoped data in parallel
-    const [managedProjects, pendingReview, upcomingDeadlines, weeklyTime] = await Promise.all([
+    const [managedProjects, pendingReview, upcomingDeadlines, weeklyTime, pendingApproval] = await Promise.all([
       db.project.findMany({
         where: { assignedManagerId: userId },
         include: {
@@ -187,6 +187,18 @@ export default async function OverviewPage({
         take: 15,
       }),
       db.timeEntry.aggregate({ where: { userId, createdAt: dateRangeQuery }, _sum: { durationMins: true } }),
+      // Tasks where employees claim THIS manager assigned them — awaiting acknowledgement
+      db.task.findMany({
+        where: {
+          status: TaskStatus.PENDING_APPROVAL,
+          assignedById: userId,
+        },
+        include: {
+          assignedTo: { select: { id: true, name: true, image: true } },
+          project: { select: { title: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
     ]);
 
     // Stage 2: Get team workload scoped to THIS manager's managed projects only
@@ -236,6 +248,7 @@ export default async function OverviewPage({
           pendingReview={pendingReview as any}
           upcomingDeadlines={upcomingDeadlines as any}
           weeklyHours={Math.round((weeklyTime._sum.durationMins ?? 0) / 60)}
+          pendingApproval={pendingApproval as any}
         />
       </div>
     );
