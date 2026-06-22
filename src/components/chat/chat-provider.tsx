@@ -120,13 +120,22 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     const chatNotifChannel = supabase
       .channel("chat-notifications")
       .on("broadcast", { event: "new-notification" }, (payload) => {
-        const data = payload.payload as {
+        // Diagnostic: log raw payload to see what arrives
+        console.log("[REALTIME] ← chat-notifications received:", JSON.stringify(payload));
+
+        // Defensive: handle both WebSocket (payload.payload) and possible direct format
+        const data = (payload.payload || payload) as {
           channelId: string;
           messageId?: string;
           senderId: string;
           senderName: string;
           content: string;
         };
+
+        if (!data.senderId || !data.channelId) {
+          console.warn("[REALTIME] chat-notifications: invalid payload, missing senderId or channelId");
+          return;
+        }
 
         if (data.senderId === currentUserId) return;
 
@@ -175,7 +184,11 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
     const taskNotifChannel = supabase
       .channel("task-notifications")
       .on("broadcast", { event: "task-event" }, (payload) => {
-        const data = payload.payload as {
+        // Diagnostic: log raw payload to see what arrives
+        console.log("[REALTIME] ← task-notifications received:", JSON.stringify(payload));
+
+        // Defensive: handle both payload.payload and direct payload
+        const data = (payload.payload || payload) as {
           type: string;
           taskId: string;
           taskTitle: string;
@@ -188,6 +201,7 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
 
         router.refresh();
 
+        if (!data.actorId || !data.taskId) return;
         if (data.actorId === currentUserId) return;
 
         const isAssignee = data.assigneeIds?.includes(currentUserId);
