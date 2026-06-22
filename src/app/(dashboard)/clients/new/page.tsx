@@ -13,18 +13,18 @@ export default async function NewClientPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
-      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
+      <div className="brutalist-border bg-card p-4 md:p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-headline tracking-tighter uppercase mb-2">
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-5xl font-headline tracking-tighter uppercase mb-2">
               NEW_CLIENT
             </h1>
-            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground">
               REGISTER A NEW CLIENT WORKSPACE
             </p>
           </div>
-          <span className="material-symbols-outlined text-[40px] text-primary">domain_add</span>
+          <span className="material-symbols-outlined text-[28px] md:text-[40px] text-primary flex-shrink-0">domain_add</span>
         </div>
       </div>
 

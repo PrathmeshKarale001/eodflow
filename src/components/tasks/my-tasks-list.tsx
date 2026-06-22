@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, startTransition, useEffect } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
@@ -323,17 +324,23 @@ export function MyTasksList({
               {userRole === "SUPER_ADMIN" ? "MANAGE & ASSIGN" : userRole === "ADMIN" ? "MY_TEAM & ASSIGNMENTS" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {canCreateTask && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+                className="mono-clip bg-primary-container text-white px-3 sm:px-5 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase hover:brightness-110 transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-sm">add</span>
-                NEW_TASK
+                <span className="hidden sm:inline">NEW_</span>TASK
               </button>
             )}
-            <span className="material-symbols-outlined text-[36px] text-primary">checklist</span>
+            <Link
+              href="/projects/new"
+              className="brutalist-border text-outline hover:text-foreground hover:bg-card/10 px-3 sm:px-4 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase transition-all flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-sm">create_new_folder</span>
+              <span className="hidden sm:inline">NEW_</span>PROJECT
+            </Link>
           </div>
         </div>
       </div>

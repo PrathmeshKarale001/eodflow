@@ -66,6 +66,26 @@ export function MobileSidebar({ isOpen, onClose, user, navItems, brands = [], al
             </Dialog.Close>
           </div>
 
+          {/* Quick Actions */}
+          <div className="px-3 py-3 border-b border-on-surface/10 flex gap-2">
+            <Link
+              href="/tasks?action=new-task"
+              onClick={onClose}
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              New Task
+            </Link>
+            <Link
+              href="/projects/new"
+              onClick={onClose}
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 brutalist-border text-xs font-headline font-bold text-outline uppercase hover:text-foreground hover:bg-card/10 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">create_new_folder</span>
+              Project
+            </Link>
+          </div>
+
           <nav className="flex-1 overflow-y-auto">
             {/* Navigation Links */}
             <div className="px-2 py-4 space-y-1">

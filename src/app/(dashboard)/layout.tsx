@@ -9,6 +9,7 @@ import { ChatProvider } from "@/components/chat/chat-provider";
 import { ChatToastContainer } from "@/components/chat/chat-toast";
 // RealtimeSync removed — its task-notifications subscription is now in ChatProvider
 import { getUserChannels } from "@/app/actions/chat";
+import { getUnreadCount } from "@/app/actions/notifications";
 import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
 
@@ -55,7 +56,7 @@ export default async function DashboardLayout({
     ? { status: { not: "ARCHIVED" as const }, assignedManagerId: userId }
     : { status: { not: "ARCHIVED" as const } };
 
-  const [brands, channels, allClients] = await Promise.all([
+  const [brands, channels, allClients, unreadCount] = await Promise.all([
     db.client.findMany({
       where: brandWhereClause,
       select: {
@@ -99,6 +100,7 @@ export default async function DashboardLayout({
           orderBy: { companyName: "asc" },
         })
       : Promise.resolve([]),
+    getUnreadCount(userId),
   ]);
 
   const channelList = (channels as { id: string; name: string | null; type: string }[]).map((c) => ({
@@ -120,6 +122,7 @@ export default async function DashboardLayout({
             role: session.user.role as Role,
           }}
           navItems={navItems}
+          unreadCount={unreadCount}
           brands={brands}
           allClients={allClients}
         />
@@ -134,6 +137,7 @@ export default async function DashboardLayout({
             role: session.user.role as Role,
           }}
           navItems={navItems}
+          unreadCount={unreadCount}
           brands={brands}
           allClients={allClients}
         />

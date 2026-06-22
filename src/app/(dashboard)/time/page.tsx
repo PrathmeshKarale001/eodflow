@@ -22,18 +22,18 @@ export default async function TimePage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
-      <div className="brutalist-border bg-[#180065] text-white p-6 relative overflow-hidden">
+      <div className="brutalist-border bg-[#180065] text-white p-4 md:p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase">
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase">
               TIME_TRACKER
             </h1>
-            <p className="font-mono text-xs uppercase tracking-widest text-neutral-400 mt-1">
+            <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-neutral-400 mt-1">
               TRACK_HOURS // LOG_WHAT_YOU_WORKED_ON
             </p>
           </div>
-          <span className="material-symbols-outlined text-[40px] text-on-surface/30">timer</span>
+          <span className="material-symbols-outlined text-[28px] md:text-[40px] text-on-surface/30 flex-shrink-0">timer</span>
         </div>
       </div>
 

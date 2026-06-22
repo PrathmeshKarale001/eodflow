@@ -100,8 +100,8 @@ export default async function ProjectsPage() {
       {/* Page Header */}
       <div className="brutalist-border bg-card p-4 md:p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text leading-none">
               PROJECTS
             </h1>
@@ -109,17 +109,23 @@ export default async function ProjectsPage() {
               {activeCount} ACTIVE // {projects.length} TOTAL
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              href="/tasks?action=new-task"
+              className="brutalist-border text-outline hover:text-foreground hover:bg-card/10 px-3 sm:px-4 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase transition-all flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              <span className="hidden sm:inline">NEW_</span>TASK
+            </Link>
             {canCreateProject && (
               <Link
                 href="/projects/new"
-                className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+                className="mono-clip bg-primary-container text-white px-3 sm:px-5 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase hover:brightness-110 transition-all flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-sm">add</span>
-                NEW_PROJECT
+                <span className="material-symbols-outlined text-sm">create_new_folder</span>
+                <span className="hidden sm:inline">NEW_</span>PROJECT
               </Link>
             )}
-            <span className="material-symbols-outlined text-[36px] text-primary">folder_open</span>
           </div>
         </div>
 

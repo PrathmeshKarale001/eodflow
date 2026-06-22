@@ -190,14 +190,24 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
       {/* Quick actions */}
       {!collapsed && (
         <div className="px-3 pb-3 pt-1.5 border-b border-on-surface/10 space-y-1.5">
-          {/* Row 1: New Project (full width) */}
-          <Link
-            href="/projects/new"
-            className="flex h-8 w-full items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
-          >
-            <span className="material-symbols-outlined text-sm">add</span>
-            New Project
-          </Link>
+          {/* Row 1: New Task (primary) + New Project */}
+          <div className="flex gap-1.5">
+            <Link
+              href="/tasks?action=new-task"
+              className="flex h-8 flex-1 items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              New Task
+            </Link>
+            <Link
+              href="/projects/new"
+              title="New Project"
+              className="flex h-8 items-center justify-center gap-1 px-3 brutalist-border text-xs font-headline font-bold text-outline hover:text-foreground hover:bg-card/10 transition-colors uppercase"
+            >
+              <span className="material-symbols-outlined text-sm">create_new_folder</span>
+              <span className="text-[10px]">Project</span>
+            </Link>
+          </div>
 
           {/* Row 2: Admin-only quick actions + notification bell */}
           <div className="flex gap-1.5">

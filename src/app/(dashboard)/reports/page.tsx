@@ -443,18 +443,18 @@ export default async function ReportsPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
-      <div className="brutalist-border bg-card p-6 relative overflow-hidden">
+      <div className="brutalist-border bg-card p-4 md:p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text">
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text">
               REPORTS
             </h1>
-            <p className="font-mono text-xs uppercase tracking-widest text-on-surface/50">
+            <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-on-surface/50">
               ANALYTICS & PERFORMANCE METRICS
             </p>
           </div>
-          <span className="material-symbols-outlined text-[36px] text-primary">analytics</span>
+          <span className="material-symbols-outlined text-[28px] md:text-[36px] text-primary flex-shrink-0">analytics</span>
         </div>
       </div>
 

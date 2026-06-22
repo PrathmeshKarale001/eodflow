@@ -40,11 +40,11 @@ export default async function NewProjectPage({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
       {/* Header */}
-      <div className="brutalist-border bg-card p-5 relative overflow-hidden">
+      <div className="brutalist-border bg-card p-4 md:p-5 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-headline tracking-tighter uppercase mb-1">
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-3xl font-headline tracking-tighter uppercase mb-1 truncate">
               {preselectedClient
                 ? `NEW PROJECT — ${preselectedClient.companyName}`
                 : "INIT_NEW_PROJECT"}
@@ -53,7 +53,7 @@ export default async function NewProjectPage({
               ESTABLISH WORKSPACE PARAMETERS & BRIEF DATA
             </p>
           </div>
-          <span className="material-symbols-outlined text-[36px] text-primary">add_box</span>
+          <span className="material-symbols-outlined text-[28px] md:text-[36px] text-primary flex-shrink-0">add_box</span>
         </div>
       </div>
 

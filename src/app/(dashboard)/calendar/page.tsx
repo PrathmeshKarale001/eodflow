@@ -50,23 +50,29 @@ export default async function CalendarPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div className="brutalist-border bg-[#180065] text-white p-6 relative overflow-hidden">
+      <div className="brutalist-border bg-[#180065] text-white p-4 md:p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase">
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase">
               CALENDAR
             </h1>
-            <p className="font-mono text-xs uppercase tracking-widest text-neutral-400 mt-1">
+            <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-neutral-400 mt-1">
               TASK_DEADLINES // MONTHLY_VIEW
             </p>
           </div>
-          <span className="material-symbols-outlined text-[40px] text-on-surface/30">calendar_month</span>
+          <a
+            href="/tasks?action=new-task"
+            className="flex h-9 items-center gap-1.5 px-3 sm:px-4 bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] sm:text-xs font-headline font-bold uppercase transition-colors flex-shrink-0"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            <span className="hidden sm:inline">New </span>Task
+          </a>
         </div>
       </div>
 
       {/* Summary strip */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           {
             label: "DUE_THIS_WEEK",
