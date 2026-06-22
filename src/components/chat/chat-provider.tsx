@@ -152,11 +152,19 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
           `chat-${data.channelId}`
         );
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[REALTIME] chat-notifications: SUBSCRIBED ✓");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.warn("[REALTIME] chat-notifications: failed →", status);
+        }
+      });
     activeChannels.push(chatNotifChannel);
 
-    // 2) Task notifications — SINGLE subscription (was previously duplicated
-    //    between ChatProvider and useTaskRealtime, causing one to silently fail)
+    // 2) Task notifications — THE ONLY subscription for this channel
+    //    CRITICAL: No other component should subscribe to "task-notifications"
+    //    because duplicate subscriptions on the same Supabase singleton client
+    //    cause the first subscription to silently die.
     const taskNotifChannel = supabase
       .channel("task-notifications")
       .on("broadcast", { event: "task-event" }, (payload) => {
@@ -202,7 +210,13 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
 
         showBrowserNotification(title, body, `task-${data.taskId}`);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[REALTIME] task-notifications: SUBSCRIBED ✓");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.warn("[REALTIME] task-notifications: failed →", status);
+        }
+      });
     activeChannels.push(taskNotifChannel);
 
     // 3) Online presence

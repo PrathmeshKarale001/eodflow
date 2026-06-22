@@ -1,35 +1,15 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/realtime";
-
 /**
- * Global hook that subscribes to Supabase Broadcast channel "task-notifications"
- * and triggers router.refresh() whenever any task event is received.
- *
- * This ensures ALL pages (overview, my-tasks, project boards, reports, calendar)
- * stay in sync when any user changes a task status, creates/deletes tasks, etc.
- *
- * Uses Supabase Broadcast (not postgres_changes) since the server actions
- * already broadcast to "task-notifications" via broadcastTaskNotification().
+ * @deprecated — DO NOT USE
+ * 
+ * Task realtime notifications are now handled EXCLUSIVELY in ChatProvider.
+ * 
+ * This hook was the root cause of toast notifications failing on fresh page load:
+ * it created a DUPLICATE subscription to "task-notifications" on the same Supabase
+ * singleton client, which silently killed ChatProvider's subscription.
+ * 
+ * See: src/components/chat/chat-provider.tsx (the ONLY place that should subscribe
+ * to "task-notifications")
  */
 export function useTaskRealtime() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    const channel = supabase
-      .channel("task-notifications")
-      .on("broadcast", { event: "task-event" }, () => {
-        // Refresh server components to get latest data
-        router.refresh();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [router]);
+  // No-op — all functionality moved to ChatProvider
 }
