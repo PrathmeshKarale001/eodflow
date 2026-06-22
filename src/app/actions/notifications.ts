@@ -106,3 +106,37 @@ export async function createNotification(data: {
 
   return notification;
 }
+
+// ---------------------------------------------------------------------------
+// Get Recent Unread Notifications (for polling fallback)
+// Returns only unread notifications created within the last `sinceSec` seconds.
+// This is used by the ChatProvider polling to catch any notifications
+// that the WebSocket broadcast failed to deliver.
+// ---------------------------------------------------------------------------
+
+export async function getRecentUnreadNotifications(sinceSec: number = 30) {
+  const session = await auth();
+  if (!session?.user?.id) return [];
+
+  const since = new Date(Date.now() - sinceSec * 1000);
+
+  const notifications = await db.notification.findMany({
+    where: {
+      userId: session.user.id,
+      isRead: false,
+      createdAt: { gte: since },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      type: true,
+      title: true,
+      body: true,
+      linkUrl: true,
+      createdAt: true,
+    },
+  });
+
+  return notifications;
+}
