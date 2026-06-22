@@ -65,11 +65,14 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
     },
   });
 
-  // Sync current user as assignee and assigner if employee
+  // Default: set current user as assigner for all roles
   useEffect(() => {
-    if (isEmployee && currentUserId) {
-      setValue("assigneeIds", [currentUserId]);
+    if (currentUserId) {
       setValue("assignedById", currentUserId);
+      // Employees can only assign to themselves
+      if (isEmployee) {
+        setValue("assigneeIds", [currentUserId]);
+      }
     }
   }, [isEmployee, currentUserId, setValue]);
 
@@ -84,17 +87,38 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
   const projectOptions = filteredProjects.map((p) => ({ value: p.id, label: p.title }));
   const brandOptions = brands.map((b) => ({ value: b.id, label: b.companyName }));
 
-  // Generate options for the Assigned By field
-  const managerOptions = useMemo(() => {
-    const options = [{ value: currentUserId || "", label: "MYSELF (FOR MY OWN TASK)" }];
-    const managers = teamMembers
-      .filter((m) => m.id !== currentUserId && (m.role === "ADMIN" || m.role === "SUPER_ADMIN"))
-      .map((m) => ({
-        value: m.id,
-        label: `${m.name}${m.department ? ` (${m.department})` : ""} - MANAGER`,
-      }));
-    return [...options, ...managers];
-  }, [teamMembers, currentUserId]);
+  const isManager = role === "ADMIN";
+  const isDirector = role === "SUPER_ADMIN";
+
+  // Generate "Assigned By" options based on role:
+  // Employees → see managers/directors above them
+  // Managers → see directors above them
+  // Directors → only self (they are the top)
+  const assignerOptions = useMemo(() => {
+    const options = [{ value: currentUserId || "", label: "MYSELF (MY OWN TASK)" }];
+    if (isEmployee) {
+      // Employees can claim a manager or director assigned them
+      const superiors = teamMembers
+        .filter((m) => m.id !== currentUserId && (m.role === "ADMIN" || m.role === "SUPER_ADMIN"))
+        .map((m) => ({
+          value: m.id,
+          label: `${m.name}${m.department ? ` (${m.department})` : ""} — ${m.role === "SUPER_ADMIN" ? "DIRECTOR" : "MANAGER"}`,
+        }));
+      return [...options, ...superiors];
+    }
+    if (isManager) {
+      // Managers can claim a director assigned them
+      const directors = teamMembers
+        .filter((m) => m.id !== currentUserId && m.role === "SUPER_ADMIN")
+        .map((m) => ({
+          value: m.id,
+          label: `${m.name}${m.department ? ` (${m.department})` : ""} — DIRECTOR`,
+        }));
+      return [...options, ...directors];
+    }
+    // Directors: only self
+    return options;
+  }, [teamMembers, currentUserId, isEmployee, isManager]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -133,7 +157,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
         description: data.description,
         priority: data.priority,
         assigneeIds: isEmployee && currentUserId ? [currentUserId] : (data.assigneeIds?.length ? data.assigneeIds : undefined),
-        assignedById: isEmployee ? (data.assignedById || currentUserId) : undefined,
+        assignedById: data.assignedById || currentUserId || undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
       });
       reset();
@@ -254,30 +278,31 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
             </div>
           </div>
 
-          {/* Assigned By (for Employees) OR Multi-Assign To (for Managers) */}
-          {isEmployee ? (
-            <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">
-                ASSIGNED_BY <span className="text-red-500">*</span>
-              </label>
-              <Controller
-                name="assignedById"
-                control={control}
-                render={({ field }) => (
-                  <AppSelect
-                    options={managerOptions}
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    placeholder="— SELECT ASSIGNER —"
-                    className={`h-11 ${errors.assignedById ? "border-red-500" : ""}`}
-                  />
-                )}
-              />
-              {errors.assignedById && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.assignedById.message}</p>}
-            </div>
-          ) : (
+          {/* Assigned By — shown for ALL roles (everyone can say who gave them the task) */}
+          <div className="space-y-1.5">
+            <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+              ASSIGNED_BY {isEmployee && <span className="text-red-500">*</span>}
+            </label>
+            <Controller
+              name="assignedById"
+              control={control}
+              render={({ field }) => (
+                <AppSelect
+                  options={assignerOptions}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="— WHO ASSIGNED THIS? —"
+                  className={`h-11 ${errors.assignedById ? "border-red-500" : ""}`}
+                />
+              )}
+            />
+            {errors.assignedById && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.assignedById.message}</p>}
+          </div>
+
+          {/* Assignees — only for managers/directors who can assign to others */}
+          {!isEmployee && (
             <div className="space-y-1 relative" ref={assigneeRef}>
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
+              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGN_TO</label>
               {/* Selected Assignees Chips */}
               <div
                 className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
@@ -307,7 +332,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                   })
                 )}
               </div>
-              {/* Dropdown — constrained height, scrollable, sticky search */}
+              {/* Dropdown */}
               {assigneeDropdownOpen && (
                 <div className="brutalist-border bg-surface-container-lowest max-h-48 overflow-y-auto shadow-lg mt-1 z-20 relative">
                   <div className="p-1.5 border-b border-on-surface/10 sticky top-0 bg-surface-container-lowest z-10">

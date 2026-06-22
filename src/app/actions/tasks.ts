@@ -43,8 +43,9 @@ export async function createTask(data: {
   }
 
   // ─── Determine initial status ──────────────────────────────────────────────
-  // Employee claims a manager assigned them → PENDING_APPROVAL (manager must acknowledge)
-  // Employee self-assigns or manager creates → TODO (ready to work)
+  // Employee claims a manager/director assigned them → PENDING_APPROVAL (needs acknowledgement)
+  // Manager claims director assigned them → TODO (directors are busy, skip approval)
+  // Self-assigned by anyone → TODO (ready to work)
   const employeeClaimsManager = userRole === Role.EMPLOYEE
     && data.assignedById
     && data.assignedById !== session.user.id;
