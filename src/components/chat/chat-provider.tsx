@@ -242,21 +242,34 @@ export function ChatProvider({ children, channels, currentUserId }: ChatProvider
       });
     activeChannels.push(presenceChannel);
 
-    // ─── Reconnection: re-subscribe if Supabase websocket reconnects ─────────
-    // Supabase client emits system events we can listen to
-    const reconnectInterval = setInterval(() => {
+    // ─── Reconnection: re-subscribe if Supabase websocket drops ────────────────
+    const channelHealthCheck = () => {
       activeChannels.forEach((ch) => {
-        // If a channel's state is "closed" or "errored", force re-subscribe
         const state = (ch as any).state;
+        const topic = (ch as any).topic || "unknown";
         if (state === "closed" || state === "errored") {
-          console.warn(`[REALTIME] Channel ${(ch as any).topic} in ${state} state, re-subscribing...`);
+          console.warn(`[REALTIME] ${topic}: ${state} → re-subscribing...`);
           ch.subscribe();
         }
       });
-    }, 15_000); // Check every 15s
+    };
+
+    // Regular health check every 10s
+    const reconnectInterval = setInterval(channelHealthCheck, 10_000);
+
+    // Also check immediately when tab becomes visible again (covers mobile
+    // browser backgrounding which suspends WebSocket connections)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        console.log("[REALTIME] Tab visible → checking channel health...");
+        channelHealthCheck();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       clearInterval(reconnectInterval);
+      document.removeEventListener("visibilitychange", handleVisibility);
       activeChannels.forEach((ch) => supabase.removeChannel(ch));
     };
   }, [currentUserId, router, pushToast]);

@@ -1,86 +1,53 @@
 // =============================================================================
 // EOD FLOW — Server-side Supabase Realtime (for broadcasting from server actions)
 //
-// Uses SUPABASE_SERVICE_ROLE_KEY so it doesn't depend on browser session.
-// Optimized: reuses channels via a cache to avoid subscribe/unsubscribe churn
-// that exhausts Supabase free-tier connections.
+// Uses direct HTTP POST to Supabase Realtime API instead of WebSocket channels.
+// This is critical for Vercel serverless: WebSocket connections are unreliable
+// in serverless environments because the process freezes between requests,
+// cached channels go stale, and setTimeout-based cleanup doesn't fire.
+//
+// HTTP broadcasts are stateless, reliable, and work perfectly with serverless.
 // =============================================================================
 
-import { createClient, type RealtimeChannel } from "@supabase/supabase-js";
+// ---------------------------------------------------------------------------
+// HTTP-based broadcast — no WebSocket, no channel cache, no connection issues
+// ---------------------------------------------------------------------------
 
-// Singleton server-side Supabase client (admin privileges)
-let _adminClient: ReturnType<typeof createClient> | null = null;
+async function httpBroadcast(channelName: string, event: string, payload: Record<string, any>): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-function getAdminClient() {
-  if (!_adminClient) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !apiKey) {
+    console.warn("[REALTIME_SERVER] Missing SUPABASE_URL or SERVICE_ROLE_KEY — broadcasts disabled");
+    return false;
+  }
 
-    if (!url || !key) {
-      console.warn("[REALTIME_SERVER] Missing SUPABASE_URL or SERVICE_ROLE_KEY — broadcasts disabled");
-      return null;
+  // Supabase Realtime HTTP broadcast endpoint (REST API)
+  // POST https://<project>.supabase.co/realtime/v1/api/broadcast/<topic>/events/<event>
+  const endpoint = `${url}/realtime/v1/api/broadcast/${encodeURIComponent(channelName)}/events/${encodeURIComponent(event)}`;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: apiKey,
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[REALTIME_SERVER] HTTP broadcast failed: ${res.status} ${res.statusText}`, body);
+      return false;
     }
 
-    _adminClient = createClient(url, key, {
-      realtime: { heartbeatIntervalMs: 30_000 },
-    });
-  }
-  return _adminClient;
-}
-
-// ---------------------------------------------------------------------------
-// Channel cache — reuse subscribed channels to avoid connection churn
-// Each channel auto-cleans up after 30s of idle time
-// ---------------------------------------------------------------------------
-
-const channelCache = new Map<string, { channel: RealtimeChannel; timer: ReturnType<typeof setTimeout> }>();
-
-async function getOrCreateChannel(name: string): Promise<RealtimeChannel | null> {
-  const client = getAdminClient();
-  if (!client) return null;
-
-  // Reuse cached channel
-  const cached = channelCache.get(name);
-  if (cached) {
-    clearTimeout(cached.timer);
-    // Reset idle cleanup timer
-    cached.timer = setTimeout(() => {
-      client.removeChannel(cached.channel).catch(() => {});
-      channelCache.delete(name);
-    }, 30_000);
-    return cached.channel;
-  }
-
-  // Create new channel and subscribe
-  const channel = client.channel(name);
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error("Subscribe timeout")), 3000);
-      channel.subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          clearTimeout(timeout);
-          resolve();
-        }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          clearTimeout(timeout);
-          reject(new Error(`Channel subscribe failed: ${status}`));
-        }
-      });
-    });
+    return true;
   } catch (err) {
-    // Cleanup on failure
-    client.removeChannel(channel).catch(() => {});
-    throw err;
+    console.error("[REALTIME_SERVER] HTTP broadcast network error:", err);
+    return false;
   }
-
-  // Cache with idle cleanup
-  const timer = setTimeout(() => {
-    client.removeChannel(channel).catch(() => {});
-    channelCache.delete(name);
-  }, 30_000);
-
-  channelCache.set(name, { channel, timer });
-  return channel;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,32 +69,19 @@ export async function broadcastChatMessage(
   }
 ) {
   try {
-    const channel = await getOrCreateChannel(`chat-${channelId}`);
-    if (!channel) return;
+    // Broadcast to the channel-specific room (for active chat window)
+    await httpBroadcast(`chat-${channelId}`, "new-message", message);
 
-    await channel.send({
-      type: "broadcast",
-      event: "new-message",
-      payload: message,
+    // Broadcast to global notification channel for unread counts + toasts
+    await httpBroadcast("chat-notifications", "new-notification", {
+      channelId,
+      messageId: message.id,
+      content: message.content.substring(0, 50),
+      senderName: message.user.name,
+      senderId: message.user.id,
     });
-
-    // Broadcast to global notification channel for unread counts
-    const notificationChannel = await getOrCreateChannel("chat-notifications");
-    if (notificationChannel) {
-      await notificationChannel.send({
-        type: "broadcast",
-        event: "new-notification",
-        payload: {
-          channelId,
-          messageId: message.id,
-          content: message.content.substring(0, 50),
-          senderName: message.user.name,
-          senderId: message.user.id,
-        },
-      });
-    }
   } catch (err) {
-    console.error("[REALTIME_SERVER] Broadcast failed:", err);
+    console.error("[REALTIME_SERVER] Chat broadcast failed:", err);
     // Non-fatal — message is already saved in DB; user will see it on next refresh
   }
 }
@@ -148,14 +102,10 @@ export async function broadcastTaskNotification(data: {
   newStatus?: string;
 }) {
   try {
-    const channel = await getOrCreateChannel("task-notifications");
-    if (!channel) return;
-
-    await channel.send({
-      type: "broadcast",
-      event: "task-event",
-      payload: data,
-    });
+    const success = await httpBroadcast("task-notifications", "task-event", data);
+    if (success) {
+      console.log(`[REALTIME_SERVER] Task broadcast sent: ${data.type} "${data.taskTitle}" by ${data.actorName}`);
+    }
   } catch (err) {
     console.error("[REALTIME_SERVER] Task notification broadcast failed:", err);
   }
@@ -177,14 +127,7 @@ export async function broadcastUserNotification(
   }
 ) {
   try {
-    const channel = await getOrCreateChannel(`user-notifications-${userId}`);
-    if (!channel) return;
-
-    await channel.send({
-      type: "broadcast",
-      event: "new-notification",
-      payload: notification,
-    });
+    await httpBroadcast(`user-notifications-${userId}`, "new-notification", notification);
   } catch (err) {
     console.error("[REALTIME_SERVER] User notification broadcast failed:", err);
   }
