@@ -11,14 +11,20 @@ interface Props {
   lastWeekHours: number;
   tasksInReview: number;
   completedThisWeek: number;
-  bottlenecks: Array<{
-    id: string;
-    title: string;
-    status: string;
-    assignedTo: { name: string } | null;
-    project: { title: string } | null;
-    updatedAt: Date;
-  }>;
+  productivitySnapshot: {
+    completedToday: number;
+    avgCompletionHours: number;
+    revisionRate: number;
+    topPerformers: Array<{ name: string; count: number }>;
+    blockedTasks: Array<{
+      id: string;
+      title: string;
+      status: string;
+      assignedTo: { name: string } | null;
+      project: { title: string } | null;
+      updatedAt: Date;
+    }>;
+  };
   recentActivities: Array<{
     id: string;
     action: string;
@@ -63,7 +69,7 @@ export function SuperAdminDashboard({
   lastWeekHours,
   tasksInReview,
   completedThisWeek,
-  bottlenecks,
+  productivitySnapshot,
   recentActivities,
 }: Props) {
   const change = hoursChange(weeklyHours, lastWeekHours);
@@ -114,32 +120,67 @@ export function SuperAdminDashboard({
           </div>
         </div>
 
-        {/* Bottleneck alerts */}
+        {/* Team Productivity Snapshot */}
         <div className="brutalist-border bg-card overflow-hidden">
           <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-amber-400">warning</span>
-            <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">BOTTLENECKS</h3>
-            <span className="ml-auto font-mono text-[9px] text-on-surface/40">STUCK &gt; 48h</span>
+            <span className="material-symbols-outlined text-sm text-primary">insights</span>
+            <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">TEAM_PRODUCTIVITY_SNAPSHOT</h3>
           </div>
-          <div className="divide-y divide-outline-variant/20 max-h-48 overflow-y-auto">
-            {bottlenecks.length === 0 ? (
-              <p className="px-4 py-6 font-mono text-[9px] text-on-surface/30 text-center uppercase">
-                No bottlenecks — all clear ✓
-              </p>
-            ) : (
-              bottlenecks.slice(0, 6).map((t) => (
-                <div key={t.id} className="px-4 py-3 flex items-start gap-3">
-                  <span className="font-mono text-[8px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 flex-shrink-0 uppercase">
-                    {t.status.replace("_", " ")}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate">{t.title}</p>
-                    <p className="font-mono text-[8px] text-on-surface/40 truncate">
-                      {t.project?.title ?? "No Project"} · {t.assignedTo?.name ?? "Unassigned"}
-                    </p>
-                  </div>
+          <div className="p-4 space-y-4">
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
+                <p className="font-mono text-2xl font-bold text-green-400">{productivitySnapshot.completedToday}</p>
+                <p className="font-label text-[7px] uppercase tracking-widest text-on-surface/40 mt-1">DONE_TODAY</p>
+              </div>
+              <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
+                <p className={`font-mono text-2xl font-bold ${productivitySnapshot.avgCompletionHours <= 24 ? "text-green-400" : productivitySnapshot.avgCompletionHours <= 48 ? "text-amber-400" : "text-red-400"}`}>
+                  {productivitySnapshot.avgCompletionHours > 0 ? `${productivitySnapshot.avgCompletionHours}h` : "—"}
+                </p>
+                <p className="font-label text-[7px] uppercase tracking-widest text-on-surface/40 mt-1">AVG_TIME_TO_COMPLETE</p>
+              </div>
+              <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
+                <p className={`font-mono text-2xl font-bold ${productivitySnapshot.revisionRate <= 15 ? "text-green-400" : productivitySnapshot.revisionRate <= 30 ? "text-amber-400" : "text-red-400"}`}>
+                  {productivitySnapshot.revisionRate}%
+                </p>
+                <p className="font-label text-[7px] uppercase tracking-widest text-on-surface/40 mt-1">REVISION_RATE</p>
+              </div>
+            </div>
+
+            {/* Top Performers This Week */}
+            {productivitySnapshot.topPerformers.length > 0 && (
+              <div>
+                <p className="font-headline text-[8px] uppercase tracking-widest text-on-surface/40 mb-2">TOP_PERFORMERS_THIS_WEEK</p>
+                <div className="space-y-1.5">
+                  {productivitySnapshot.topPerformers.map((p, idx) => (
+                    <div key={p.name} className="flex items-center gap-2">
+                      <span className={`w-5 h-5 flex items-center justify-center text-[8px] font-headline font-bold ${idx === 0 ? "bg-primary/20 text-primary" : "bg-surface-container-high text-on-surface/40"}`}>
+                        {idx + 1}
+                      </span>
+                      <span className="font-headline text-[9px] uppercase tracking-wider text-card-text flex-1">{p.name}</span>
+                      <span className="font-mono text-[9px] text-green-400 font-bold">{p.count} done</span>
+                    </div>
+                  ))}
                 </div>
-              ))
+              </div>
+            )}
+
+            {/* Blocked Tasks (tasks stuck in review > 24h) */}
+            {productivitySnapshot.blockedTasks.length > 0 && (
+              <div>
+                <p className="font-headline text-[8px] uppercase tracking-widest text-amber-400 mb-2">NEEDS_ATTENTION</p>
+                <div className="space-y-1">
+                  {productivitySnapshot.blockedTasks.slice(0, 4).map((t) => (
+                    <div key={t.id} className="flex items-center gap-2 py-1">
+                      <span className="font-mono text-[8px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 flex-shrink-0 uppercase">
+                        {t.status.replace(/_/g, " ")}
+                      </span>
+                      <span className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate flex-1">{t.title}</span>
+                      <span className="font-mono text-[8px] text-on-surface/30 flex-shrink-0">{t.assignedTo?.name ?? "—"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>

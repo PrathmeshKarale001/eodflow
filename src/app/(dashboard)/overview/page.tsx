@@ -87,8 +87,13 @@ export default async function OverviewPage({
       completedThisWeek,
       weeklyTime,
       lastWeekTime,
-      bottlenecks,
       recentActivities,
+      // Productivity snapshot data
+      completedToday,
+      recentlyCompletedTasks,
+      completedWithRevisions,
+      blockedTasks,
+      topPerformerData,
     ] = await Promise.all([
       getCachedCounts(),
       db.task.count({
@@ -101,26 +106,95 @@ export default async function OverviewPage({
         where: { createdAt: prevDateRangeQuery },
         _sum: { durationMins: true },
       }),
+      db.activityLog.findMany({
+        include: { user: { select: { name: true } }, task: { select: { title: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      // Tasks completed today
+      db.task.count({
+        where: { status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] }, updatedAt: { gte: startOfToday } },
+      }),
+      // Recently completed tasks (this week) for avg completion time calc
+      db.task.findMany({
+        where: {
+          status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
+          completedAt: dateRangeQuery,
+          startedAt: { not: null },
+        },
+        select: { startedAt: true, completedAt: true },
+        take: 100,
+      }),
+      // Completed tasks this week that had revisions
+      db.task.count({
+        where: {
+          status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
+          updatedAt: dateRangeQuery,
+          revisionCount: { gt: 0 },
+        },
+      }),
+      // Tasks stuck in review > 24h
       db.task.findMany({
         where: {
           status: { in: [TaskStatus.IN_REVIEW, TaskStatus.REVISION, TaskStatus.CLIENT_APPROVAL] },
-          updatedAt: { lt: cutoff48h },
+          updatedAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
         },
         include: {
           assignedTo: { select: { name: true } },
           project: { select: { title: true } },
         },
         orderBy: { updatedAt: "asc" },
-        take: 10,
+        take: 6,
       }),
-      db.activityLog.findMany({
-        include: { user: { select: { name: true } }, task: { select: { title: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 20,
+      // Top performers this week (by completed tasks)
+      db.task.groupBy({
+        by: ["assignedToId"],
+        where: {
+          status: { in: [TaskStatus.DONE, TaskStatus.APPROVED] },
+          updatedAt: dateRangeQuery,
+          assignedToId: { not: null },
+        },
+        _count: { id: true },
+        orderBy: { _count: { id: "desc" } },
+        take: 3,
       }),
     ]);
 
     const { activeProjects, totalClients, totalTeam } = cachedCounts;
+
+    // Calculate avg completion hours
+    let avgCompletionHours = 0;
+    if (recentlyCompletedTasks.length > 0) {
+      const totalHours = recentlyCompletedTasks.reduce((sum, t) => {
+        if (t.startedAt && t.completedAt) {
+          return sum + (new Date(t.completedAt).getTime() - new Date(t.startedAt).getTime()) / (1000 * 60 * 60);
+        }
+        return sum;
+      }, 0);
+      avgCompletionHours = Math.round(totalHours / recentlyCompletedTasks.length);
+    }
+
+    // Revision rate
+    const revisionRate = completedThisWeek > 0 ? Math.round((completedWithRevisions / completedThisWeek) * 100) : 0;
+
+    // Resolve top performer names
+    const topPerformerIds = topPerformerData.map((g) => g.assignedToId).filter(Boolean) as string[];
+    const topPerformerUsers = topPerformerIds.length > 0 ? await db.user.findMany({
+      where: { id: { in: topPerformerIds } },
+      select: { id: true, name: true },
+    }) : [];
+    const topPerformers = topPerformerData.map((g) => ({
+      name: topPerformerUsers.find((u) => u.id === g.assignedToId)?.name ?? "Unknown",
+      count: g._count.id,
+    }));
+
+    const productivitySnapshot = {
+      completedToday,
+      avgCompletionHours,
+      revisionRate,
+      topPerformers,
+      blockedTasks: blockedTasks as any,
+    };
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -135,7 +209,7 @@ export default async function OverviewPage({
           lastWeekHours={Math.round((lastWeekTime._sum.durationMins ?? 0) / 60)}
           tasksInReview={tasksInReview}
           completedThisWeek={completedThisWeek}
-          bottlenecks={bottlenecks as any}
+          productivitySnapshot={productivitySnapshot}
           recentActivities={recentActivities as any}
         />
       </div>
@@ -145,7 +219,7 @@ export default async function OverviewPage({
   // ─── ADMIN (formerly MANAGER) ────────────────────────────────────────────────────────────────
   if (role === "ADMIN") {
     // Stage 1: Fetch managed projects + scoped data in parallel
-    const [managedProjects, pendingReview, upcomingDeadlines, weeklyTime, pendingApproval] = await Promise.all([
+    const [managedProjects, pendingReview, upcomingDeadlines, weeklyTime, pendingApproval, managerOwnTasks] = await Promise.all([
       db.project.findMany({
         where: { assignedManagerId: userId },
         include: {
@@ -199,6 +273,16 @@ export default async function OverviewPage({
         },
         orderBy: { createdAt: "desc" },
       }),
+      // Manager's own assigned tasks (for MY_TASKS section)
+      db.task.findMany({
+        where: {
+          assignedToId: userId,
+          status: { notIn: [TaskStatus.APPROVED] },
+        },
+        include: { project: { select: { title: true } } },
+        orderBy: [{ dueDate: "asc" }, { priority: "asc" }],
+        take: 20,
+      }),
     ]);
 
     // Stage 2: Get team workload scoped to THIS manager's managed projects only
@@ -249,6 +333,7 @@ export default async function OverviewPage({
           upcomingDeadlines={upcomingDeadlines as any}
           weeklyHours={Math.round((weeklyTime._sum.durationMins ?? 0) / 60)}
           pendingApproval={pendingApproval as any}
+          myTasks={managerOwnTasks as any}
         />
       </div>
     );

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { PendingApprovalCard } from "./pending-approval-card";
+import { categorizeByTime, isTaskOverdue, isTaskDueToday } from "@/lib/task-group-utils";
 
 function formatMins(mins: number) {
   const h = Math.floor(mins / 60);
@@ -62,6 +63,14 @@ interface Props {
     assignedTo: { id: string; name: string; image: string | null } | null;
     project: { title: string } | null;
   }>;
+  myTasks?: Array<{
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    dueDate: Date | null;
+    project: { title: string } | null;
+  }>;
 }
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -78,8 +87,13 @@ export function ManagerDashboard({
   upcomingDeadlines,
   weeklyHours,
   pendingApproval,
+  myTasks = [],
 }: Props) {
   const maxTasks = Math.max(...teamWorkload.map((m) => m.taskCount), 1);
+
+  // Manager's own active tasks — time-categorized
+  const activeTasks = myTasks.filter((t) => !["DONE", "APPROVED"].includes(t.status));
+  const taskGroups = categorizeByTime(activeTasks);
 
   return (
     <div className="space-y-6">
@@ -102,6 +116,58 @@ export function ManagerDashboard({
       {/* Pending Approval — prominent section when employees claim this manager assigned them */}
       {pendingApproval.length > 0 && (
         <PendingApprovalCard tasks={pendingApproval} />
+      )}
+
+      {/* MY_TASKS — Manager's own assigned tasks, time-categorized */}
+      {activeTasks.length > 0 && (
+        <div className="brutalist-border bg-card overflow-hidden">
+          <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-primary">checklist</span>
+            <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">MY_TASKS</h3>
+            <span className="ml-auto font-mono text-[9px] text-on-surface/40">{activeTasks.length} ACTIVE</span>
+          </div>
+          <div className="max-h-72 overflow-y-auto">
+            {taskGroups.map(({ group, config, tasks: groupTasks }) => (
+              <div key={group}>
+                <div className={`px-4 py-2 flex items-center gap-2 bg-surface-container-high/30 border-l-2 ${config.accentBorder}`}>
+                  <span className={`material-symbols-outlined text-xs ${config.accentText}`}>{config.icon}</span>
+                  <span className={`font-headline text-[8px] uppercase tracking-widest ${config.accentText}`}>{config.label}</span>
+                  <span className={`ml-auto text-[8px] font-mono text-white px-1.5 py-0.5 min-w-[18px] text-center ${config.badgeBg}`}>{groupTasks.length}</span>
+                </div>
+                <div className="divide-y divide-outline-variant/20">
+                  {groupTasks.slice(0, 4).map((t) => {
+                    const overdue = isTaskOverdue(t.dueDate, t.status);
+                    const dueToday = isTaskDueToday(t.dueDate);
+                    return (
+                      <Link key={t.id} href={`/tasks?taskId=${t.id}`} className={`px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block border-l-2 ${config.accentBorder}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
+                          <p className="font-mono text-[8px] text-on-surface/40 truncate">{t.project?.title ?? "No Project"}</p>
+                        </div>
+                        <span className={`font-mono text-[8px] px-1.5 py-0.5 ${
+                          t.status === "IN_PROGRESS" ? "bg-amber-500/20 text-amber-400" :
+                          t.status === "IN_REVIEW" ? "bg-purple-500/20 text-purple-400" :
+                          t.status === "REVISION" ? "bg-red-500/20 text-red-400" :
+                          "bg-blue-500/20 text-blue-400"
+                        }`}>
+                          {t.status.replace(/_/g, " ")}
+                        </span>
+                        {overdue && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-red-600 text-white font-bold">OVERDUE</span>}
+                        {dueToday && !overdue && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-amber-600 text-white font-bold">TODAY</span>}
+                      </Link>
+                    );
+                  })}
+                  {groupTasks.length > 4 && (
+                    <div className={`px-4 py-1.5 font-mono text-[8px] text-on-surface/30 text-center uppercase border-l-2 ${config.accentBorder}`}>+ {groupTasks.length - 4} more</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link href="/tasks" className="block px-4 py-2 text-center font-label text-[9px] uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors border-t border-outline-variant/20">
+            VIEW ALL MY TASKS →
+          </Link>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
