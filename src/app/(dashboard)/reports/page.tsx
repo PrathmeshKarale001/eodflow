@@ -440,6 +440,64 @@ export default async function ReportsPage() {
     });
   }
 
+  // Fetch activity logs for task lifecycle timeline (for Director reports)
+  let taskActivityMap: Record<string, Array<{
+    action: string;
+    metadata: any;
+    createdAt: Date;
+    userName: string;
+    userRole: string;
+  }>> = {};
+
+  if (userRole === Role.SUPER_ADMIN && teamPerformanceReport.length > 0) {
+    // Collect all task IDs from team performance report
+    const allTaskIds = new Set<string>();
+    for (const person of teamPerformanceReport) {
+      for (const task of (person.tasks || [])) {
+        allTaskIds.add(task.id);
+      }
+      for (const task of (person.createdTasksList || [])) {
+        allTaskIds.add(task.id);
+      }
+    }
+    // Also from managementTasksReport
+    for (const task of managementTasksReport) {
+      allTaskIds.add(task.id);
+    }
+
+    if (allTaskIds.size > 0) {
+      const taskActivities = await db.activityLog.findMany({
+        where: {
+          taskId: { in: Array.from(allTaskIds) },
+          action: { in: ["STATUS_CHANGED", "APPROVED", "REVISION_REQUESTED", "CREATED", "ASSIGNED"] },
+        },
+        select: {
+          taskId: true,
+          action: true,
+          metadata: true,
+          createdAt: true,
+          user: { select: { name: true, role: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+
+      // Group by taskId
+      for (const log of taskActivities) {
+        if (!log.taskId) continue;
+        if (!taskActivityMap[log.taskId]) {
+          taskActivityMap[log.taskId] = [];
+        }
+        taskActivityMap[log.taskId].push({
+          action: log.action,
+          metadata: log.metadata,
+          createdAt: log.createdAt,
+          userName: log.user.name,
+          userRole: log.user.role,
+        });
+      }
+    }
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
@@ -480,6 +538,7 @@ export default async function ReportsPage() {
         }))}
         managementTasksReport={managementTasksReport}
         teamPerformanceReport={teamPerformanceReport}
+        taskActivityMap={taskActivityMap}
       />
     </div>
   );

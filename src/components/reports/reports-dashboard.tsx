@@ -48,6 +48,13 @@ interface ReportsDashboardProps {
   recentActivity: Activity[];
   managementTasksReport: any[];
   teamPerformanceReport: any[];
+  taskActivityMap?: Record<string, Array<{
+    action: string;
+    metadata: any;
+    createdAt: Date;
+    userName: string;
+    userRole: string;
+  }>>;
 }
 
 const ACTION_ICONS: Record<string, string> = {
@@ -91,6 +98,7 @@ export function ReportsDashboard({
   recentActivity,
   managementTasksReport,
   teamPerformanceReport,
+  taskActivityMap = {},
 }: ReportsDashboardProps) {
   const [activeTab, setActiveTab] = useState<"DASHBOARD" | "TEAM_AUDIT" | "TASK_AUDIT">("DASHBOARD");
   const [taskFilter, setTaskFilter] = useState<"ALL" | "ONGOING" | "OVERDUE" | "REVISIONS">("ALL");
@@ -770,6 +778,124 @@ export function ReportsDashboard({
                                           </span>
                                         </div>
                                       </div>
+
+                                      {/* Task Lifecycle Timeline */}
+                                      {taskActivityMap[t.id] && taskActivityMap[t.id].length > 0 && (() => {
+                                        const activities = taskActivityMap[t.id];
+                                        const fmtDateTime = (d: any) => d ? new Date(d).toLocaleString("en-IN", {
+                                          month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                                        }) : "—";
+                                        const calcDuration = (from: any, to: any) => {
+                                          if (!from || !to) return null;
+                                          const ms = new Date(to).getTime() - new Date(from).getTime();
+                                          if (ms < 0) return null;
+                                          const mins = Math.floor(ms / 60000);
+                                          if (mins < 60) return `${mins}m`;
+                                          const hrs = Math.floor(mins / 60);
+                                          if (hrs < 24) return `${hrs}h ${mins % 60}m`;
+                                          const days = Math.floor(hrs / 24);
+                                          return `${days}d ${hrs % 24}h`;
+                                        };
+
+                                        // Build timeline events: start with CREATED
+                                        interface TimelineEvent {
+                                          label: string;
+                                          time: Date;
+                                          who: string;
+                                          role: string;
+                                          detail?: string;
+                                          color: string;
+                                        }
+                                        const events: TimelineEvent[] = [{
+                                          label: "CREATED",
+                                          time: new Date(t.createdAt),
+                                          who: t.assignerName || "System",
+                                          role: "",
+                                          color: "bg-blue-500",
+                                        }];
+
+                                        for (const act of activities) {
+                                          const meta = act.metadata as any;
+                                          let label = act.action.replace(/_/g, " ");
+                                          let detail = "";
+                                          let color = "bg-blue-400";
+
+                                          if (act.action === "STATUS_CHANGED" && meta) {
+                                            label = `${(meta.oldStatus || "").replace(/_/g, " ")} → ${(meta.newStatus || "").replace(/_/g, " ")}`;
+                                            if (meta.newStatus === "DONE" || meta.newStatus === "APPROVED") color = "bg-green-500";
+                                            else if (meta.newStatus === "REVISION" || meta.newStatus === "CLIENT_REVISION") { color = "bg-red-500"; detail = "Requested revision"; }
+                                            else if (meta.newStatus === "IN_PROGRESS") color = "bg-amber-500";
+                                            else if (meta.newStatus === "IN_REVIEW" || meta.newStatus === "CLIENT_APPROVAL") color = "bg-purple-500";
+                                            else if (meta.newStatus === "TODO") color = "bg-blue-400";
+                                          } else if (act.action === "APPROVED") {
+                                            label = "APPROVED";
+                                            color = "bg-green-500";
+                                            detail = "Task approved";
+                                          } else if (act.action === "REVISION_REQUESTED") {
+                                            label = "REVISION REQUESTED";
+                                            color = "bg-red-500";
+                                            detail = "Sent back for revision";
+                                          } else if (act.action === "ASSIGNED") {
+                                            label = "ASSIGNED";
+                                            color = "bg-cyan-500";
+                                            detail = "Task assigned";
+                                          }
+
+                                          events.push({
+                                            label,
+                                            time: new Date(act.createdAt),
+                                            who: act.userName,
+                                            role: act.userRole.replace(/_/g, " "),
+                                            detail,
+                                            color,
+                                          });
+                                        }
+
+                                        // Calculate total lifecycle
+                                        const totalDuration = events.length > 1 ? calcDuration(events[0].time, events[events.length - 1].time) : null;
+
+                                        return (
+                                          <div className="mt-3">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="font-headline text-[8px] uppercase tracking-widest text-primary">TASK LIFECYCLE TIMELINE</span>
+                                              {totalDuration && (
+                                                <span className="font-mono text-[8px] text-on-surface/40">
+                                                  TOTAL: {totalDuration} · REV: {t.revisionCount}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="border-l-2 border-primary/20 ml-2 space-y-0">
+                                              {events.map((evt, idx) => {
+                                                const elapsed = idx > 0 ? calcDuration(events[idx - 1].time, evt.time) : null;
+                                                return (
+                                                  <div key={idx} className="relative pl-5 py-1.5">
+                                                    {/* Dot */}
+                                                    <div className={`absolute -left-[5px] top-2.5 w-2 h-2 rounded-full ${evt.color} ring-2 ring-card`} />
+                                                    <div className="flex items-baseline justify-between gap-2">
+                                                      <div className="min-w-0">
+                                                        <span className="font-headline text-[9px] uppercase tracking-wider text-card-text">{evt.label}</span>
+                                                        <span className="font-mono text-[8px] text-on-surface/40 ml-2">
+                                                          by {evt.who}{evt.role ? ` (${evt.role})` : ""}
+                                                        </span>
+                                                        {evt.detail && (
+                                                          <span className="font-mono text-[8px] text-on-surface/30 ml-1">— {evt.detail}</span>
+                                                        )}
+                                                      </div>
+                                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                                        {elapsed && (
+                                                          <span className="font-mono text-[7px] text-primary/60 bg-primary/5 px-1.5 py-0.5">⏱ {elapsed}</span>
+                                                        )}
+                                                        <span className="font-mono text-[8px] text-on-surface/40">{fmtDateTime(evt.time)}</span>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
+
                                     </div>
                                   </div>
                                 )}
