@@ -527,7 +527,7 @@ export async function updateTask(taskId: string, data: {
 
   const task = await db.task.findUnique({
     where: { id: taskId },
-    select: { id: true, assignedToId: true, projectId: true },
+    select: { id: true, assignedToId: true, projectId: true, status: true, startedAt: true, completedAt: true },
   });
 
   if (!task) throw new Error("Task not found");
@@ -546,13 +546,28 @@ export async function updateTask(taskId: string, data: {
     }
   }
 
+  // Auto-set timestamp fields when status changes
+  const statusChanged = data.status && data.status !== task.status;
+  const updateData: any = {
+    ...data,
+    assignedToId: data.assignedToId === "" ? null : data.assignedToId,
+    assignedById: data.assignedById === "" ? null : data.assignedById,
+  };
+
+  if (statusChanged) {
+    // Auto-set startedAt when moving to IN_PROGRESS (if not already set)
+    if (data.status === "IN_PROGRESS" && !task.startedAt) {
+      updateData.startedAt = new Date();
+    }
+    // Auto-set completedAt when moving to DONE or APPROVED (if not already set)
+    if ((data.status === "DONE" || data.status === "APPROVED") && !task.completedAt) {
+      updateData.completedAt = new Date();
+    }
+  }
+
   const updatedTask = await db.task.update({
     where: { id: taskId },
-    data: {
-      ...data,
-      assignedToId: data.assignedToId === "" ? null : data.assignedToId,
-      assignedById: data.assignedById === "" ? null : data.assignedById,
-    },
+    data: updateData,
   });
 
   // Activity log for basic fields
@@ -565,6 +580,19 @@ export async function updateTask(taskId: string, data: {
       metadata: { updatedFields: Object.keys(data) },
     },
   });
+
+  // Also log STATUS_CHANGED separately when status was actually changed
+  if (statusChanged) {
+    await db.activityLog.create({
+      data: {
+        userId: session.user.id,
+        taskId: taskId,
+        projectId: task.projectId,
+        action: "STATUS_CHANGED",
+        metadata: { oldStatus: task.status, newStatus: data.status },
+      },
+    });
+  }
 
   if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   revalidatePath("/tasks");

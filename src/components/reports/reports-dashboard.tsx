@@ -839,6 +839,16 @@ export function ReportsDashboard({
                                             label = "ASSIGNED";
                                             color = "bg-cyan-500";
                                             detail = "Task assigned";
+                                          } else if (act.action === "UPDATED") {
+                                            const fields = meta?.updatedFields as string[] | undefined;
+                                            if (fields?.includes("status")) {
+                                              label = "TASK EDITED (STATUS CHANGED)";
+                                              color = "bg-yellow-500";
+                                              detail = `Fields updated: ${fields.join(", ")}`;
+                                            } else {
+                                              // Skip non-status UPDATED entries to avoid timeline noise
+                                              continue;
+                                            }
                                           }
 
                                           events.push({
@@ -1401,6 +1411,16 @@ export function ReportsDashboard({
                                     } else if (act.action === "APPROVED") { label = "APPROVED"; color = "bg-green-500"; }
                                     else if (act.action === "REVISION_REQUESTED") { label = "REVISION REQUESTED"; color = "bg-red-500"; }
                                     else if (act.action === "ASSIGNED") { label = "ASSIGNED"; color = "bg-cyan-500"; }
+                                    else if (act.action === "UPDATED") {
+                                      const fields = meta?.updatedFields as string[] | undefined;
+                                      if (fields?.includes("status")) {
+                                        label = "TASK EDITED (STATUS CHANGED)";
+                                        color = "bg-yellow-500";
+                                        detail = `Fields: ${fields.join(", ")}`;
+                                      } else {
+                                        continue;
+                                      }
+                                    }
                                     events2.push({ label, time: new Date(act.createdAt), who: act.userName, role: act.userRole.replace(/_/g, " "), detail, color });
                                   }
                                   const totalDur = events2.length > 1 ? calcDuration2(events2[0].time, events2[events2.length - 1].time) : null;

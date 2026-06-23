@@ -469,7 +469,7 @@ export default async function ReportsPage() {
       const taskActivities = await db.activityLog.findMany({
         where: {
           taskId: { in: Array.from(allTaskIds) },
-          action: { in: ["STATUS_CHANGED", "APPROVED", "REVISION_REQUESTED", "CREATED", "ASSIGNED"] },
+          action: { in: ["STATUS_CHANGED", "APPROVED", "REVISION_REQUESTED", "CREATED", "ASSIGNED", "UPDATED"] },
         },
         select: {
           taskId: true,
