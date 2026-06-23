@@ -105,10 +105,10 @@ export function ManagerDashboard({
           { label: "DUE_THIS_WEEK", value: upcomingDeadlines.filter(t => daysUntil(t.dueDate) <= 7).length, icon: "event_upcoming", color: "border-t-red-500", href: "/tasks?filter=due" },
           { label: "HOURS_THIS_WEEK", value: weeklyHours, icon: "timer", color: "border-t-green-500", href: "/reports" },
         ].map((k) => (
-          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} hover:bg-card/80 transition-colors group block`}>
+          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} card-hover-lift group block`}>
             <span className="material-symbols-outlined text-lg text-on-surface/40">{k.icon}</span>
             <p className="font-mono text-3xl font-bold text-on-surface mt-2 group-hover:text-primary transition-colors">{k.value}</p>
-            <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label.replaceAll('_', ' ')}</p>
           </Link>
         ))}
       </div>
@@ -124,15 +124,15 @@ export function ManagerDashboard({
           <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
             <span className="material-symbols-outlined text-sm text-primary">checklist</span>
             <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">MY_TASKS</h3>
-            <span className="ml-auto font-mono text-[9px] text-on-surface/40">{activeTasks.length} ACTIVE</span>
+            <span className="ml-auto font-mono text-[11px] text-on-surface/40">{activeTasks.length} ACTIVE</span>
           </div>
           <div className="max-h-72 overflow-y-auto">
             {taskGroups.map(({ group, config, tasks: groupTasks }) => (
               <div key={group}>
                 <div className={`px-4 py-2 flex items-center gap-2 bg-surface-container-high/30 border-l-2 ${config.accentBorder}`}>
                   <span className={`material-symbols-outlined text-xs ${config.accentText}`}>{config.icon}</span>
-                  <span className={`font-headline text-[8px] uppercase tracking-widest ${config.accentText}`}>{config.label}</span>
-                  <span className={`ml-auto text-[8px] font-mono text-white px-1.5 py-0.5 min-w-[18px] text-center ${config.badgeBg}`}>{groupTasks.length}</span>
+                  <span className={`font-headline text-[10px] uppercase tracking-widest ${config.accentText}`}>{config.label}</span>
+                  <span className={`ml-auto text-[10px] font-mono text-white px-1.5 py-0.5 min-w-[18px] text-center ${config.badgeBg}`}>{groupTasks.length}</span>
                 </div>
                 <div className="divide-y divide-outline-variant/20">
                   {groupTasks.slice(0, 4).map((t) => {
@@ -141,10 +141,10 @@ export function ManagerDashboard({
                     return (
                       <Link key={t.id} href={`/tasks?taskId=${t.id}`} className={`px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block border-l-2 ${config.accentBorder}`}>
                         <div className="flex-1 min-w-0">
-                          <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
-                          <p className="font-mono text-[8px] text-on-surface/40 truncate">{t.project?.title ?? "No Project"}</p>
+                          <p className="font-headline text-[11px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
+                          <p className="font-mono text-[10px] text-on-surface/40 truncate">{t.project?.title ?? "No Project"}</p>
                         </div>
-                        <span className={`font-mono text-[8px] px-1.5 py-0.5 ${
+                        <span className={`font-mono text-[10px] px-1.5 py-0.5 ${
                           t.status === "IN_PROGRESS" ? "bg-amber-500/20 text-amber-400" :
                           t.status === "IN_REVIEW" ? "bg-purple-500/20 text-purple-400" :
                           t.status === "REVISION" ? "bg-red-500/20 text-red-400" :
@@ -152,19 +152,19 @@ export function ManagerDashboard({
                         }`}>
                           {t.status.replace(/_/g, " ")}
                         </span>
-                        {overdue && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-red-600 text-white font-bold">OVERDUE</span>}
-                        {dueToday && !overdue && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-amber-600 text-white font-bold">TODAY</span>}
+                        {overdue && <span className="font-mono text-[11px] px-1.5 py-0.5 bg-red-600 text-white font-bold">OVERDUE</span>}
+                        {dueToday && !overdue && <span className="font-mono text-[11px] px-1.5 py-0.5 bg-amber-600 text-white font-bold">TODAY</span>}
                       </Link>
                     );
                   })}
                   {groupTasks.length > 4 && (
-                    <div className={`px-4 py-1.5 font-mono text-[8px] text-on-surface/30 text-center uppercase border-l-2 ${config.accentBorder}`}>+ {groupTasks.length - 4} more</div>
+                    <div className={`px-4 py-1.5 font-mono text-[10px] text-on-surface/30 text-center uppercase border-l-2 ${config.accentBorder}`}>+ {groupTasks.length - 4} more</div>
                   )}
                 </div>
               </div>
             ))}
           </div>
-          <Link href="/tasks" className="block px-4 py-2 text-center font-label text-[9px] uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors border-t border-outline-variant/20">
+          <Link href="/tasks" className="block px-4 py-2 text-center font-label text-[11px] uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors border-t border-outline-variant/20">
             VIEW ALL MY TASKS →
           </Link>
         </div>
@@ -179,21 +179,21 @@ export function ManagerDashboard({
           </div>
           <div className="divide-y divide-outline-variant/20">
             {managedProjects.length === 0 ? (
-              <p className="px-4 py-6 font-mono text-[9px] text-on-surface/30 text-center uppercase">No projects assigned</p>
+              <p className="px-4 py-6 font-mono text-[11px] text-on-surface/30 text-center uppercase">No projects assigned</p>
             ) : (
               managedProjects.map((p) => {
                 const days = p.deadline ? daysUntil(p.deadline) : null;
                 return (
                   <Link key={p.id} href={`/projects/${p.id}`} className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
-                    <span className={`font-mono text-[8px] px-2 py-0.5 flex-shrink-0 uppercase ${STATUS_COLOR[p.status] ?? ""}`}>
+                    <span className={`font-mono text-[10px] px-2 py-0.5 flex-shrink-0 uppercase ${STATUS_COLOR[p.status] ?? ""}`}>
                       {p.status}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{p.title}</p>
-                      <p className="font-mono text-[8px] text-on-surface/40">{p.client?.companyName ?? "No Client"} · {p._count.tasks} tasks</p>
+                      <p className="font-mono text-[10px] text-on-surface/40">{p.client?.companyName ?? "No Client"} · {p._count.tasks} tasks</p>
                     </div>
                     {days !== null && (
-                      <span className={`font-mono text-[8px] flex-shrink-0 ${days < 0 ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-on-surface/30"}`}>
+                      <span className={`font-mono text-[10px] flex-shrink-0 ${days < 0 ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-on-surface/30"}`}>
                         {days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? "today" : `${days}d`}
                       </span>
                     )}
@@ -212,13 +212,13 @@ export function ManagerDashboard({
           </div>
           <div className="p-4 space-y-3">
             {teamWorkload.length === 0 ? (
-              <p className="font-mono text-[9px] text-on-surface/30 text-center uppercase py-4">No team members</p>
+              <p className="font-mono text-[11px] text-on-surface/30 text-center uppercase py-4">No team members</p>
             ) : (
               teamWorkload.map((m) => (
                 <div key={m.userId} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-headline text-[9px] uppercase tracking-wider text-card-text">{m.userName}</span>
-                    <span className="font-mono text-[8px] text-on-surface/50">{m.taskCount} tasks</span>
+                    <span className="font-headline text-[11px] uppercase tracking-wider text-card-text">{m.userName}</span>
+                    <span className="font-mono text-[10px] text-on-surface/50">{m.taskCount} tasks</span>
                   </div>
                   <div className="h-1.5 bg-card-muted w-full">
                     <div
@@ -240,16 +240,16 @@ export function ManagerDashboard({
           </div>
           <div className="divide-y divide-outline-variant/20 max-h-48 overflow-y-auto">
             {pendingReview.length === 0 ? (
-              <p className="px-4 py-6 font-mono text-[9px] text-on-surface/30 text-center uppercase">Nothing pending review ✓</p>
+              <p className="px-4 py-6 font-mono text-[11px] text-on-surface/30 text-center uppercase">Nothing pending review ✓</p>
             ) : (
               pendingReview.map((t) => (
                 <Link key={t.id} href={`/tasks?taskId=${t.id}`} className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
-                  <span className="font-mono text-[8px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 flex-shrink-0 uppercase">
+                  <span className="font-mono text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 flex-shrink-0 uppercase">
                     {t.status.replace(/_/g, " ")}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
-                    <p className="font-mono text-[8px] text-on-surface/40">{t.project?.title ?? "No Project"} · {t.assignedTo?.name ?? "Unassigned"}</p>
+                    <p className="font-headline text-[11px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
+                    <p className="font-mono text-[10px] text-on-surface/40">{t.project?.title ?? "No Project"} · {t.assignedTo?.name ?? "Unassigned"}</p>
                   </div>
                 </Link>
               ))
@@ -265,18 +265,18 @@ export function ManagerDashboard({
           </div>
           <div className="divide-y divide-outline-variant/20 max-h-48 overflow-y-auto">
             {upcomingDeadlines.length === 0 ? (
-              <p className="px-4 py-6 font-mono text-[9px] text-on-surface/30 text-center uppercase">No upcoming deadlines</p>
+              <p className="px-4 py-6 font-mono text-[11px] text-on-surface/30 text-center uppercase">No upcoming deadlines</p>
             ) : (
               upcomingDeadlines.map((t) => {
                 const days = daysUntil(t.dueDate);
                 return (
                   <Link key={t.id} href={`/tasks?taskId=${t.id}`} className="px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block">
-                    <span className={`font-mono text-[8px] w-12 text-center flex-shrink-0 ${days < 0 ? "text-red-400" : days <= 2 ? "text-amber-400" : "text-on-surface/40"}`}>
+                    <span className={`font-mono text-[10px] w-12 text-center flex-shrink-0 ${days < 0 ? "text-red-400" : days <= 2 ? "text-amber-400" : "text-on-surface/40"}`}>
                       {days < 0 ? "LATE" : days === 0 ? "TODAY" : `${days}d`}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className={`font-headline text-[9px] uppercase tracking-wider truncate group-hover:text-primary transition-colors ${PRIORITY_COLOR[t.priority]}`}>{t.title}</p>
-                      <p className="font-mono text-[8px] text-on-surface/40">{t.assignedTo?.name ?? "Unassigned"}</p>
+                      <p className={`font-headline text-[11px] uppercase tracking-wider truncate group-hover:text-primary transition-colors ${PRIORITY_COLOR[t.priority]}`}>{t.title}</p>
+                      <p className="font-mono text-[10px] text-on-surface/40">{t.assignedTo?.name ?? "Unassigned"}</p>
                     </div>
                   </Link>
                 );

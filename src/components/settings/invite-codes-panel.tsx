@@ -148,7 +148,7 @@ export function InviteCodesPanel({
             <div className="brutalist-border bg-surface-container-lowest p-6 text-center">
               <p className="font-mono text-2xl text-primary font-bold tracking-[0.2em]">{newCode}</p>
             </div>
-            <p className="font-label text-[9px] text-outline uppercase tracking-widest text-center">
+            <p className="font-label text-[11px] text-outline uppercase tracking-widest text-center">
               Share this code with your team
             </p>
             <div className="flex gap-3">
@@ -191,7 +191,7 @@ export function InviteCodesPanel({
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">MAX_USES</label>
+              <label className="font-label text-[11px] text-outline uppercase tracking-widest block">MAX_USES</label>
               <input
                 type="number"
                 min="1"
@@ -202,7 +202,7 @@ export function InviteCodesPanel({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">EXPIRES_IN_DAYS</label>
+              <label className="font-label text-[11px] text-outline uppercase tracking-widest block">EXPIRES_IN_DAYS</label>
               <input
                 type="number"
                 min="1"
@@ -213,7 +213,7 @@ export function InviteCodesPanel({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">DEFAULT_ROLE</label>
+              <label className="font-label text-[11px] text-outline uppercase tracking-widest block">DEFAULT_ROLE</label>
               <AppSelect
                 options={[
                   { value: "EMPLOYEE", label: "EMPLOYEE" },
@@ -243,14 +243,14 @@ export function InviteCodesPanel({
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 font-label text-[9px] uppercase tracking-widest transition-colors ${
+            className={`px-3 py-1.5 font-label text-[11px] uppercase tracking-widest transition-colors ${
               filter === f
                 ? "bg-primary/20 text-primary brutalist-border"
                 : "text-outline hover:text-foreground"
             }`}
           >
             {f === "all" ? "ALL" : f === "CODE" ? "CODES" : "LINKS"}
-            <span className="ml-1.5 text-[8px]">
+            <span className="ml-1.5 text-[10px]">
               ({f === "all" ? invitations.length : invitations.filter((i) => i.type === f).length})
             </span>
           </button>
@@ -272,13 +272,13 @@ export function InviteCodesPanel({
             <table className="w-full">
               <thead>
                 <tr className="bg-surface-container-low border-b border-on-surface/10">
-                  <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">TYPE</th>
-                  <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">TOKEN / EMAIL</th>
-                  <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">ROLE</th>
-                  <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">USES</th>
-                  <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">EXPIRES</th>
-                  <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">STATUS</th>
-                  <th className="px-4 py-3 text-right font-label text-[9px] uppercase tracking-widest text-outline">ACTIONS</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">TYPE</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">TOKEN / EMAIL</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">ROLE</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">USES</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">EXPIRES</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">STATUS</th>
+                  <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-outline">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-on-surface/5">
@@ -287,7 +287,7 @@ export function InviteCodesPanel({
                   return (
                     <tr key={inv.id} className="hover:bg-card/5 transition-colors">
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 text-[8px] font-label uppercase tracking-widest ${inv.type === "CODE" ? "bg-tertiary/20 text-tertiary" : "bg-primary/20 text-primary"}`}>
+                        <span className={`px-2 py-0.5 text-[10px] font-label uppercase tracking-widest ${inv.type === "CODE" ? "bg-tertiary/20 text-tertiary" : "bg-primary/20 text-primary"}`}>
                           {inv.type}
                         </span>
                       </td>
@@ -297,12 +297,12 @@ export function InviteCodesPanel({
                         ) : (
                           <div>
                             <span className="font-headline text-[11px] text-foreground uppercase">{inv.name}</span>
-                            <span className="block font-label text-[9px] text-outline lowercase">{inv.email}</span>
+                            <span className="block font-label text-[11px] text-outline lowercase">{inv.email}</span>
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-label text-[9px] text-foreground uppercase">{ROLE_LABELS[inv.role]}</span>
+                        <span className="font-label text-[11px] text-foreground uppercase">{ROLE_LABELS[inv.role]}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-[11px] text-foreground">
@@ -310,12 +310,12 @@ export function InviteCodesPanel({
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="font-label text-[9px] text-outline uppercase">
+                        <span className="font-label text-[11px] text-outline uppercase">
                           {new Date(inv.expiresAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`font-label text-[9px] uppercase tracking-widest ${status.color}`}>
+                        <span className={`font-label text-[11px] uppercase tracking-widest ${status.color}`}>
                           {status.label}
                         </span>
                       </td>
@@ -323,7 +323,7 @@ export function InviteCodesPanel({
                         {inv.isActive && new Date(inv.expiresAt) > new Date() && inv.usedCount < inv.maxUses && (
                           <button
                             onClick={() => handleDeactivate(inv.id)}
-                            className="brutalist-border px-3 py-1.5 font-label text-[9px] uppercase tracking-widest text-error hover:bg-error/10 transition-colors"
+                            className="brutalist-border px-3 py-1.5 font-label text-[11px] uppercase tracking-widest text-error hover:bg-error/10 transition-colors"
                           >
                             REVOKE
                           </button>
@@ -344,10 +344,10 @@ export function InviteCodesPanel({
                 <div key={inv.id} className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 text-[8px] font-label uppercase tracking-widest ${inv.type === "CODE" ? "bg-tertiary/20 text-tertiary" : "bg-primary/20 text-primary"}`}>
+                      <span className={`px-2 py-0.5 text-[10px] font-label uppercase tracking-widest ${inv.type === "CODE" ? "bg-tertiary/20 text-tertiary" : "bg-primary/20 text-primary"}`}>
                         {inv.type}
                       </span>
-                      <span className={`font-label text-[9px] uppercase tracking-widest ${status.color}`}>
+                      <span className={`font-label text-[11px] uppercase tracking-widest ${status.color}`}>
                         {status.label}
                       </span>
                     </div>
@@ -364,13 +364,13 @@ export function InviteCodesPanel({
                     </div>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="font-label text-[9px] text-outline uppercase">
+                    <span className="font-label text-[11px] text-outline uppercase">
                       Expires {new Date(inv.expiresAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
                     </span>
                     {inv.isActive && new Date(inv.expiresAt) > new Date() && inv.usedCount < inv.maxUses && (
                       <button
                         onClick={() => handleDeactivate(inv.id)}
-                        className="brutalist-border px-3 py-1.5 font-label text-[9px] uppercase tracking-widest text-error active:bg-error/10"
+                        className="brutalist-border px-3 py-1.5 font-label text-[11px] uppercase tracking-widest text-error active:bg-error/10"
                       >
                         REVOKE
                       </button>

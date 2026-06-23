@@ -88,7 +88,7 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
               <button
                 key={f.value}
                 onClick={() => setFilter(f.value)}
-                className={`px-3 py-1.5 font-headline text-[9px] uppercase tracking-widest brutalist-border transition-colors ${
+                className={`px-3 py-1.5 font-headline text-[11px] uppercase tracking-widest brutalist-border transition-colors ${
                   filter === f.value
                     ? "bg-primary text-white border-primary"
                     : "bg-transparent text-on-surface/60 hover:bg-surface-container-high"
@@ -151,7 +151,7 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
                   <span className="font-headline text-sm uppercase tracking-widest text-card-text flex-1">
                     {brandName}
                   </span>
-                  <span className="font-mono text-[9px] text-on-surface/30 uppercase tracking-widest">
+                  <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest">
                     {group.projects.length} {group.projects.length === 1 ? "PROJECT" : "PROJECTS"} · {totalTasks} TASKS
                   </span>
                 </button>
@@ -177,14 +177,14 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
                           <div className="p-4">
                             {/* Top row: status + priority */}
                             <div className="flex items-center gap-2 mb-2.5">
-                              <span className={`px-2 py-0.5 text-[8px] font-headline uppercase tracking-widest ${statusConfig[project.status]?.color}`}>
+                              <span className={`px-2 py-0.5 text-[10px] font-headline uppercase tracking-widest ${statusConfig[project.status]?.color}`}>
                                 {statusConfig[project.status]?.label}
                               </span>
-                              <span className={`px-1.5 py-0.5 text-[7px] font-headline uppercase ${priorityConfig[project.priority]?.color}`}>
+                              <span className={`px-1.5 py-0.5 text-[11px] font-headline uppercase ${priorityConfig[project.priority]?.color}`}>
                                 {priorityConfig[project.priority]?.label}
                               </span>
                               {isOverdue && (
-                                <span className="px-1.5 py-0.5 text-[7px] font-headline uppercase bg-red-600 text-white animate-pulse">
+                                <span className="px-1.5 py-0.5 text-[11px] font-headline uppercase bg-red-600 text-white animate-pulse">
                                   OVERDUE
                                 </span>
                               )}
@@ -197,7 +197,7 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
 
                             {/* Manager */}
                             {project.managerName && (
-                              <p className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30 mb-3">
+                              <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30 mb-3">
                                 MGR: {project.managerName}
                               </p>
                             )}
@@ -205,10 +205,10 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
                             {/* Progress bar */}
                             <div className="mb-2.5">
                               <div className="flex justify-between mb-0.5">
-                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-on-surface/40 tracking-widest">
                                   PROGRESS
                                 </span>
-                                <span className="font-mono text-[8px] text-primary font-bold">
+                                <span className="font-mono text-[10px] text-primary font-bold">
                                   {project.progress}%
                                 </span>
                               </div>
@@ -221,7 +221,7 @@ export function ProjectsListClient({ projects, statusConfig, priorityConfig }: P
                             </div>
 
                             {/* Stats row */}
-                            <div className="flex items-center gap-3 text-[8px] font-mono uppercase text-on-surface/40 tracking-widest">
+                            <div className="flex items-center gap-3 text-[10px] font-mono uppercase text-on-surface/40 tracking-widest">
                               <span className="flex items-center gap-1">
                                 <span className="material-symbols-outlined text-xs">task</span>
                                 {project.tasksDone}/{project.taskCount}

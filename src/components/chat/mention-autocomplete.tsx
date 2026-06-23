@@ -66,7 +66,7 @@ export function MentionAutocomplete({ members, query, position, onSelect, onClos
       ref={listRef}
     >
       <div className="px-2 py-1 border-b border-on-surface/10">
-        <p className="font-headline text-[8px] uppercase tracking-widest text-on-surface/40">MEMBERS</p>
+        <p className="font-headline text-[10px] uppercase tracking-widest text-on-surface/40">MEMBERS</p>
       </div>
       {filtered.map((user, index) => (
         <button
@@ -78,7 +78,7 @@ export function MentionAutocomplete({ members, query, position, onSelect, onClos
               : "hover:bg-surface-container-high text-on-surface/70"
           }`}
         >
-          <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center bg-surface-container-high text-[8px] font-headline font-bold text-on-surface/60 uppercase">
+          <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center bg-surface-container-high text-[10px] font-headline font-bold text-on-surface/60 uppercase">
             {user.name.charAt(0)}
           </div>
           <span className="font-headline text-[10px] uppercase tracking-wider truncate">

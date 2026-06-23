@@ -59,7 +59,7 @@ export function ManualTimeForm({ tasks, defaultTaskId, onLogged }: ManualTimeFor
       </div>
 
       <div>
-        <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
+        <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/50 mb-1">
           TASK
         </label>
         <AppSelect
@@ -76,7 +76,7 @@ export function ManualTimeForm({ tasks, defaultTaskId, onLogged }: ManualTimeFor
 
       {/* Duration */}
       <div>
-        <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
+        <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/50 mb-1">
           DURATION
         </label>
         <div className="flex items-center gap-2">
@@ -108,7 +108,7 @@ export function ManualTimeForm({ tasks, defaultTaskId, onLogged }: ManualTimeFor
 
       {/* Date */}
       <div>
-        <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
+        <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/50 mb-1">
           DATE
         </label>
         <input
@@ -122,7 +122,7 @@ export function ManualTimeForm({ tasks, defaultTaskId, onLogged }: ManualTimeFor
 
       {/* Notes */}
       <div>
-        <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
+        <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/50 mb-1">
           NOTES (OPTIONAL)
         </label>
         <input
@@ -134,7 +134,7 @@ export function ManualTimeForm({ tasks, defaultTaskId, onLogged }: ManualTimeFor
         />
       </div>
 
-      {error && <p className="font-mono text-[9px] text-red-400">{error}</p>}
+      {error && <p className="font-mono text-[11px] text-red-400">{error}</p>}
 
       <button
         type="submit"

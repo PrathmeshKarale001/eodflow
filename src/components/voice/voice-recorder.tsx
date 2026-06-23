@@ -80,7 +80,7 @@ export function VoiceRecorder({
   return (
     <div className="flex items-center gap-2">
       {error && (
-        <span className="font-mono text-[9px] text-error">{error}</span>
+        <span className="font-mono text-[11px] text-error">{error}</span>
       )}
 
       {recording ? (
@@ -95,7 +95,7 @@ export function VoiceRecorder({
 
           <button
             onClick={stopRecording}
-            className="flex h-8 items-center gap-1 px-3 bg-error text-on-primary font-headline text-[9px] uppercase tracking-widest brutalist-border hover:bg-error/80 transition-colors"
+            className="flex h-8 items-center gap-1 px-3 bg-error text-on-primary font-headline text-[11px] uppercase tracking-widest brutalist-border hover:bg-error/80 transition-colors"
           >
             <span className="material-symbols-outlined text-xs">stop</span>
             STOP

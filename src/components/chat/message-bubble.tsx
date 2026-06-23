@@ -197,18 +197,18 @@ export function MessageBubble({
   if (isDeleted) {
     return (
       <div className={`flex gap-2 ${isOwn ? "flex-row-reverse" : ""}`}>
-        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center text-[10px] font-headline font-bold uppercase bg-surface-container-high/50 text-on-surface/30">
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center text-[12px] font-headline font-bold uppercase bg-surface-container-high/50 text-on-surface/30">
           {userName.charAt(0)}
         </div>
         <div className={`max-w-[70%] ${isOwn ? "text-right" : ""}`}>
           <div className="flex items-baseline gap-2 mb-0.5">
-            <span className="font-headline text-[9px] uppercase tracking-widest text-on-surface/30">
+            <span className="font-headline text-[11px] uppercase tracking-widest text-on-surface/30">
               {isOwn ? "YOU" : userName}
             </span>
-            <span className="font-mono text-[8px] text-on-surface/20">{time}</span>
+            <span className="font-mono text-[10px] text-on-surface/20">{time}</span>
           </div>
           <div className="inline-block px-3 py-2 text-xs font-mono leading-relaxed brutalist-border border-on-surface/10 bg-surface-container-high/20">
-            <p className="italic text-on-surface/30 flex items-center gap-1.5">
+            <p className="italic text-on-surface/30 flex items-center gap-1.5 text-[11px]">
               <span className="material-symbols-outlined text-[11px]">delete</span>
               This message was deleted
             </p>
@@ -232,7 +232,7 @@ export function MessageBubble({
     >
       {/* Avatar */}
       <div
-        className={`flex h-7 w-7 flex-shrink-0 items-center justify-center text-[10px] font-headline font-bold uppercase ${
+        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center text-[12px] font-headline font-bold uppercase ${
           isOwn
             ? "bg-primary text-on-primary"
             : "bg-surface-container-high text-on-surface"
@@ -245,10 +245,10 @@ export function MessageBubble({
       <div className={`max-w-[70%] relative ${isOwn ? "text-right" : ""}`}>
         {/* User + time header */}
         <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="font-headline text-[9px] uppercase tracking-widest text-on-surface/60">
+          <span className="font-headline text-[11px] uppercase tracking-widest text-on-surface/60">
             {isOwn ? "YOU" : userName}
           </span>
-          <span className="font-mono text-[8px] text-on-surface/30 flex items-center justify-end gap-1">
+          <span className="font-mono text-[10px] text-on-surface/30 flex items-center justify-end gap-1">
             {time}
             {isOwn && (
               <span className={`material-symbols-outlined text-[10px] select-none font-bold ${isReadByOthers ? "text-primary" : "text-on-surface/30"}`}>
@@ -257,7 +257,7 @@ export function MessageBubble({
             )}
           </span>
           {editedAt && (
-            <span className="font-mono text-[7px] text-on-surface/25 italic">(edited)</span>
+            <span className="font-mono text-[11px] text-on-surface/25 italic">(edited)</span>
           )}
         </div>
 
@@ -266,10 +266,10 @@ export function MessageBubble({
           <div className={`flex items-start gap-1.5 mb-1.5 px-2 py-1.5 border-l-2 border-primary/40 bg-primary/5 ${isOwn ? "ml-auto" : ""}`} style={{ maxWidth: "90%" }}>
             <span className="material-symbols-outlined text-[10px] text-primary/50 flex-shrink-0 mt-0.5">reply</span>
             <div className="min-w-0">
-              <span className="font-headline text-[8px] uppercase tracking-widest text-primary/70 block">
+              <span className="font-headline text-[10px] uppercase tracking-widest text-primary/70 block">
                 {replyTo.user.name}
               </span>
-              <span className="font-mono text-[9px] text-on-surface/50 line-clamp-1 block">
+              <span className="font-mono text-[11px] text-on-surface/50 line-clamp-1 block">
                 {replyTo.isDeleted ? "Message deleted" : replyTo.content}
               </span>
             </div>
@@ -278,7 +278,7 @@ export function MessageBubble({
 
         {/* Message content bubble */}
         <div
-          className={`inline-block px-3 py-2 text-xs font-mono leading-relaxed brutalist-border ${
+          className={`inline-block px-3 py-2 text-[13px] font-mono leading-relaxed brutalist-border ${
             isOwn
               ? "bg-primary/15 text-on-surface border-primary/30"
               : "bg-card text-card-text"
@@ -299,8 +299,8 @@ export function MessageBubble({
                 }}
               />
               <div className="flex gap-1.5 justify-end">
-                <button onClick={() => setIsEditing(false)} className="font-mono text-[8px] uppercase text-on-surface/50 hover:text-on-surface px-2 py-1 brutalist-border">ESC</button>
-                <button onClick={handleEditSave} className="font-mono text-[8px] uppercase text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 brutalist-border">SAVE</button>
+                <button onClick={() => setIsEditing(false)} className="font-mono text-[10px] uppercase text-on-surface/50 hover:text-on-surface px-2 py-1 brutalist-border">ESC</button>
+                <button onClick={handleEditSave} className="font-mono text-[10px] uppercase text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 brutalist-border">SAVE</button>
               </div>
             </div>
           ) : (
@@ -329,8 +329,8 @@ export function MessageBubble({
                 <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mt-1 px-3 py-2 brutalist-border bg-surface-container-high/50 hover:bg-surface-container-high transition-colors group/file max-w-[280px]">
                   <span className="material-symbols-outlined text-base text-primary flex-shrink-0">{getFileIcon(fileUrl)}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-mono text-[9px] uppercase tracking-wider text-on-surface truncate">{getFileName(fileUrl)}</p>
-                    <p className="font-mono text-[8px] text-on-surface/40 uppercase">TAP TO DOWNLOAD</p>
+                    <p className="font-mono text-[11px] uppercase tracking-wider text-on-surface truncate">{getFileName(fileUrl)}</p>
+                    <p className="font-mono text-[10px] text-on-surface/40 uppercase">TAP TO DOWNLOAD</p>
                   </div>
                   <span className="material-symbols-outlined text-xs text-on-surface/30 group-hover/file:text-primary transition-colors flex-shrink-0">download</span>
                 </a>
@@ -354,7 +354,7 @@ export function MessageBubble({
                 }`}
               >
                 <span>{emoji}</span>
-                <span className="font-mono text-[8px]">{group.count}</span>
+                <span className="font-mono text-[10px]">{group.count}</span>
               </button>
             ))}
             {/* Quick add reaction button */}
@@ -430,7 +430,7 @@ export function MessageBubble({
               className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-container-high transition-colors"
             >
               <span className="material-symbols-outlined text-[11px] text-on-surface/50">edit</span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/70">Edit</span>
+              <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface/70">Edit</span>
             </button>
             <button
               onClick={() => {
@@ -440,7 +440,7 @@ export function MessageBubble({
               className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-red-500/10 transition-colors"
             >
               <span className="material-symbols-outlined text-[11px] text-red-400">delete</span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-red-400">Delete</span>
+              <span className="font-mono text-[11px] uppercase tracking-widest text-red-400">Delete</span>
             </button>
           </div>
         )}

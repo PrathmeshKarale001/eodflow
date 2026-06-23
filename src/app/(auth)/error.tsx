@@ -16,7 +16,7 @@ export default function AuthError({
           {error.message || "An unexpected error occurred."}
         </p>
         {error.digest && (
-          <p className="font-mono text-[8px] text-on-surface/30 uppercase">
+          <p className="font-mono text-[10px] text-on-surface/30 uppercase">
             REF: {error.digest}
           </p>
         )}

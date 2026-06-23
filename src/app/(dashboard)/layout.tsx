@@ -13,7 +13,11 @@ import { getUnreadCount } from "@/app/actions/notifications";
 import { db } from "@/lib/db";
 import type { Role } from "@prisma/client";
 
-export const dynamic = "force-dynamic";
+// ─── PERF: No more force-dynamic ───────────────────────────────────────────
+// Layout no longer forces every navigation to re-fetch sidebar data.
+// auth() uses React cache() for per-request dedup; sidebar data refreshes
+// when a server action calls revalidatePath("/"). staleTimes in next.config
+// keeps the client router cache warm for 30s between navigations.
 
 export default async function DashboardLayout({
   children,

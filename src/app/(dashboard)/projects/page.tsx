@@ -134,7 +134,7 @@ export default async function ProjectsPage() {
           {Object.entries(STATUS_CONFIG).map(([status, config]) => (
             <div key={status} className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-sm ${config.color.split(" ")[0]}`} />
-              <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40">{config.label}</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40">{config.label}</span>
             </div>
           ))}
         </div>

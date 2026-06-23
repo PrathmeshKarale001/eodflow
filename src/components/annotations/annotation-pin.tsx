@@ -46,7 +46,7 @@ export function AnnotationPin({
       {/* Tooltip on hover */}
       <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20">
         <div className="bg-card brutalist-border p-2 shadow-lg">
-          <p className="font-headline text-[9px] uppercase tracking-widest text-primary mb-0.5">
+          <p className="font-headline text-[11px] uppercase tracking-widest text-primary mb-0.5">
             {authorName}
           </p>
           <p className="font-mono text-[10px] text-card-text leading-tight line-clamp-3">

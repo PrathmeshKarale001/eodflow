@@ -120,7 +120,7 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask, user
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-primary text-xl">view_kanban</span>
           <h2 className="font-headline text-lg uppercase tracking-tight">TASK_BOARD</h2>
-          <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest">{tasks.length} ITEMS</span>
+          <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[11px] font-mono uppercase tracking-widest">{tasks.length} ITEMS</span>
         </div>
 
         {canCreateTask ? (

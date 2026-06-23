@@ -106,7 +106,7 @@ export function ChatSearch({ channelId, isOpen, onClose, onScrollToMessage }: Ch
         <div className="max-h-64 overflow-y-auto border-t border-on-surface/10">
           {results.length === 0 && !searching ? (
             <div className="p-4 text-center">
-              <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">
+              <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/30">
                 NO_RESULTS_FOUND
               </p>
             </div>
@@ -120,7 +120,7 @@ export function ChatSearch({ channelId, isOpen, onClose, onScrollToMessage }: Ch
                 }}
                 className="w-full flex items-start gap-3 p-3 text-left hover:bg-surface-container-low transition-colors border-b border-on-surface/5"
               >
-                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center bg-primary-container/30 text-[9px] font-headline font-bold text-primary uppercase mt-0.5">
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center bg-primary-container/30 text-[11px] font-headline font-bold text-primary uppercase mt-0.5">
                   {msg.user.name.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -128,7 +128,7 @@ export function ChatSearch({ channelId, isOpen, onClose, onScrollToMessage }: Ch
                     <span className="font-label text-[10px] uppercase tracking-wide text-foreground">
                       {msg.user.name}
                     </span>
-                    <span className="font-mono text-[8px] text-on-surface/30">
+                    <span className="font-mono text-[10px] text-on-surface/30">
                       {formatTime(msg.createdAt)}
                     </span>
                   </div>

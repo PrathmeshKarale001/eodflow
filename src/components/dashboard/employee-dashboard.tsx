@@ -84,10 +84,10 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
           { label: "OVERDUE", value: overdue.length, icon: "warning", color: "border-t-red-500", href: "/tasks?filter=overdue" },
           { label: "DUE_THIS_WEEK", value: upcomingThisWeek.length, icon: "event_upcoming", color: "border-t-purple-500", href: "/tasks?filter=due_this_week" },
         ].map((k) => (
-          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} hover:bg-card/80 transition-colors group block`}>
+          <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} card-hover-lift group block`}>
             <span className="material-symbols-outlined text-lg text-on-surface/40">{k.icon}</span>
             <p className="font-mono text-3xl font-bold text-on-surface mt-2 group-hover:text-primary transition-colors">{k.value}</p>
-            <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label.replaceAll('_', ' ')}</p>
           </Link>
         ))}
       </div>
@@ -102,11 +102,11 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
           <div className="space-y-3">
             <div>
               <p className="font-mono text-4xl font-bold text-on-surface">{formatMins(weekHours * 60)}</p>
-              <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/40 mt-1">THIS WEEK</p>
+              <p className="font-label text-[10px] uppercase tracking-widest text-on-surface/40 mt-1">THIS WEEK</p>
             </div>
             {/* Progress bar */}
             <div>
-              <div className="flex justify-between font-mono text-[8px] text-on-surface/40 mb-1">
+              <div className="flex justify-between font-mono text-[10px] text-on-surface/40 mb-1">
                 <span>{weekPct}% of {weekTarget}h target</span>
                 <span>{formatMins(todayHours * 60)} today</span>
               </div>
@@ -125,19 +125,19 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
           <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
             <span className="material-symbols-outlined text-sm text-primary">checklist</span>
             <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">MY_TASKS</h3>
-            <span className="ml-auto font-mono text-[9px] text-on-surface/40">{activeTasks.length} ACTIVE</span>
+            <span className="ml-auto font-mono text-[11px] text-on-surface/40">{activeTasks.length} ACTIVE</span>
           </div>
           <div className="max-h-80 overflow-y-auto">
             {activeTasks.length === 0 ? (
-              <p className="px-4 py-8 font-mono text-[9px] text-on-surface/30 text-center uppercase">No tasks assigned 🎉</p>
+              <p className="px-4 py-8 font-mono text-[11px] text-on-surface/30 text-center uppercase">No tasks assigned 🎉</p>
             ) : (
               taskGroups.map(({ group, config, tasks: groupTasks }) => (
                 <div key={group}>
                   {/* Group Header */}
                   <div className={`px-4 py-2 flex items-center gap-2 bg-surface-container-high/30 border-l-2 ${config.accentBorder}`}>
                     <span className={`material-symbols-outlined text-xs ${config.accentText}`}>{config.icon}</span>
-                    <span className={`font-headline text-[8px] uppercase tracking-widest ${config.accentText}`}>{config.label}</span>
-                    <span className={`ml-auto text-[8px] font-mono text-white px-1.5 py-0.5 min-w-[18px] text-center ${config.badgeBg}`}>{groupTasks.length}</span>
+                    <span className={`font-headline text-[10px] uppercase tracking-widest ${config.accentText}`}>{config.label}</span>
+                    <span className={`ml-auto text-[10px] font-mono text-white px-1.5 py-0.5 min-w-[18px] text-center ${config.badgeBg}`}>{groupTasks.length}</span>
                   </div>
                   {/* Tasks in Group */}
                   <div className="divide-y divide-outline-variant/20">
@@ -149,20 +149,20 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
                         <Link key={t.id} href={`/tasks?taskId=${t.id}`} className={`px-4 py-3 flex items-center gap-3 hover:bg-card/80 transition-colors group block border-l-2 ${config.accentBorder}`}>
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority] ?? "bg-gray-400"}`} />
                           <div className="flex-1 min-w-0">
-                            <p className="font-headline text-[9px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
-                            <p className="font-mono text-[8px] text-on-surface/40 truncate">{t.project?.title ?? "No Project"}</p>
+                            <p className="font-headline text-[11px] uppercase tracking-wider text-card-text truncate group-hover:text-primary transition-colors">{t.title}</p>
+                            <p className="font-mono text-[10px] text-on-surface/40 truncate">{t.project?.title ?? "No Project"}</p>
                           </div>
-                          <span className={`font-mono text-[8px] px-1.5 py-0.5 ${STATUS_COLOR[t.status] ?? ""}`}>
+                          <span className={`font-mono text-[10px] px-1.5 py-0.5 ${STATUS_COLOR[t.status] ?? ""}`}>
                             {t.status.replace(/_/g, " ")}
                           </span>
                           {overdue && (
-                            <span className="font-mono text-[7px] px-1.5 py-0.5 bg-red-600 text-white font-bold">OVERDUE</span>
+                            <span className="font-mono text-[11px] px-1.5 py-0.5 bg-red-600 text-white font-bold">OVERDUE</span>
                           )}
                           {dueToday && !overdue && (
-                            <span className="font-mono text-[7px] px-1.5 py-0.5 bg-amber-600 text-white font-bold">TODAY</span>
+                            <span className="font-mono text-[11px] px-1.5 py-0.5 bg-amber-600 text-white font-bold">TODAY</span>
                           )}
                           {days !== null && !overdue && !dueToday && (
-                            <span className="font-mono text-[8px] w-10 text-right flex-shrink-0 text-on-surface/30">
+                            <span className="font-mono text-[10px] w-10 text-right flex-shrink-0 text-on-surface/30">
                               {`${days}d`}
                             </span>
                           )}
@@ -170,7 +170,7 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
                       );
                     })}
                     {groupTasks.length > 5 && (
-                      <div className={`px-4 py-1.5 font-mono text-[8px] text-on-surface/30 text-center uppercase border-l-2 ${config.accentBorder}`}>
+                      <div className={`px-4 py-1.5 font-mono text-[10px] text-on-surface/30 text-center uppercase border-l-2 ${config.accentBorder}`}>
                         + {groupTasks.length - 5} more
                       </div>
                     )}
@@ -180,7 +180,7 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
             )}
           </div>
           {myTasks.length > 0 && (
-            <Link href="/tasks" className="block px-4 py-2 text-center font-label text-[9px] uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors border-t border-outline-variant/20">
+            <Link href="/tasks" className="block px-4 py-2 text-center font-label text-[11px] uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors border-t border-outline-variant/20">
               VIEW ALL {myTasks.length} TASKS →
             </Link>
           )}
@@ -197,14 +197,14 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
           <div className="divide-y divide-outline-variant/20">
             {recentComments.slice(0, 5).map((c) => (
               <div key={c.id} className="px-4 py-3 flex items-start gap-3">
-                <div className="flex h-6 w-6 items-center justify-center bg-primary/10 text-primary flex-shrink-0 text-[8px] font-headline">
+                <div className="flex h-6 w-6 items-center justify-center bg-primary/10 text-primary flex-shrink-0 text-[10px] font-headline">
                   {c.user.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-mono text-[9px] text-on-surface/70">
+                  <p className="font-mono text-[11px] text-on-surface/70">
                     <span className="text-on-surface">{c.user.name}</span> on <span className="text-primary">{c.task.title}</span>
                   </p>
-                  <p className="font-mono text-[9px] text-on-surface/50 truncate mt-0.5">{c.content}</p>
+                  <p className="font-mono text-[11px] text-on-surface/50 truncate mt-0.5">{c.content}</p>
                 </div>
               </div>
             ))}

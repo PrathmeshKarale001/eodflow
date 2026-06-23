@@ -99,11 +99,11 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
           REVIEW_PANEL
         </h3>
         <div className="flex items-center gap-2">
-          <span className={`px-2 py-0.5 text-[9px] font-headline uppercase ${PRIORITY_COLORS[task.priority]}`}>
+          <span className={`px-2 py-0.5 text-[11px] font-headline uppercase ${PRIORITY_COLORS[task.priority]}`}>
             {task.priority}
           </span>
           {task.revisionCount > 0 ? (
-            <span className="px-2 py-0.5 text-[9px] font-mono uppercase bg-red-100 text-red-700 brutalist-border border-red-200">
+            <span className="px-2 py-0.5 text-[11px] font-mono uppercase bg-red-100 text-red-700 brutalist-border border-red-200">
               REVISION_COUNT: {task.revisionCount}
             </span>
           ) : null}
@@ -125,7 +125,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
                 href={file.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="brutalist-border p-2 bg-neutral-50 hover:bg-neutral-100 flex items-center gap-2 text-[9px] font-mono uppercase truncate transition-colors"
+                className="brutalist-border p-2 bg-neutral-50 hover:bg-neutral-100 flex items-center gap-2 text-[11px] font-mono uppercase truncate transition-colors"
               >
                 <span className="material-symbols-outlined text-sm text-primary flex-shrink-0">
                   {file.mimeType.includes("image") ? "image" : file.mimeType.includes("pdf") ? "picture_as_pdf" : "description"}

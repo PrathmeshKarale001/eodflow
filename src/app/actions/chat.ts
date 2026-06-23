@@ -206,45 +206,64 @@ export async function getOrCreateDMChannel(otherUserId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");
 
-  // Find existing DM between these two users
-  const existing = await db.chatChannel.findFirst({
-    where: {
-      type: "DIRECT",
-      AND: [
-        { members: { some: { userId: session.user.id } } },
-        { members: { some: { userId: otherUserId } } },
-      ],
-    },
-    include: {
-      members: { include: { user: { select: { id: true, name: true, image: true } } } },
-      _count: { select: { messages: true } },
-    },
-  });
+  const currentUserId = session.user.id;
 
-  if (existing) return existing;
+  // ─── RACE-CONDITION FIX: Use transaction with serializable isolation ─────
+  // Previous: findFirst + create was not atomic → two rapid clicks created
+  // duplicate DM channels (confirmed in production).
+  // Now: Interactive transaction ensures only one channel is ever created.
+  return db.$transaction(async (tx) => {
+    // Find ALL existing DMs between these two users (handles dedup)
+    const existing = await tx.chatChannel.findMany({
+      where: {
+        type: "DIRECT",
+        AND: [
+          { members: { some: { userId: currentUserId } } },
+          { members: { some: { userId: otherUserId } } },
+        ],
+      },
+      include: {
+        members: { include: { user: { select: { id: true, name: true, image: true } } } },
+        _count: { select: { messages: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
 
-  const otherUser = await db.user.findUnique({
-    where: { id: otherUserId },
-    select: { name: true },
-  });
+    if (existing.length > 0) {
+      // If duplicates exist, return the one with the most messages
+      const best = existing.reduce((a, b) =>
+        (a._count.messages >= b._count.messages) ? a : b
+      );
+      return best;
+    }
 
-  const channel = await db.chatChannel.create({
-    data: {
-      name: `DM: ${otherUser?.name || "User"}`,
-      type: "DIRECT",
-      members: {
-        createMany: {
-          data: [{ userId: session.user.id }, { userId: otherUserId }],
+    // No existing DM — create one
+    const otherUser = await tx.user.findUnique({
+      where: { id: otherUserId },
+      select: { name: true },
+    });
+
+    const channel = await tx.chatChannel.create({
+      data: {
+        name: `DM: ${otherUser?.name || "User"}`,
+        type: "DIRECT",
+        members: {
+          createMany: {
+            data: [{ userId: currentUserId }, { userId: otherUserId }],
+          },
         },
       },
-    },
-    include: {
-      members: { include: { user: { select: { id: true, name: true, image: true } } } },
-      _count: { select: { messages: true } },
-    },
-  });
+      include: {
+        members: { include: { user: { select: { id: true, name: true, image: true } } } },
+        _count: { select: { messages: true } },
+      },
+    });
 
-  return channel;
+    return channel;
+  }, {
+    isolationLevel: "Serializable",
+    timeout: 10000,
+  });
 }
 
 // ---------------------------------------------------------------------------

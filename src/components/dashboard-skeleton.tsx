@@ -14,7 +14,7 @@ export function DashboardHeaderSkeleton() {
 
 export function OverviewSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <DashboardHeaderSkeleton />
       
       {/* Stats Grid */}
@@ -43,7 +43,7 @@ export function OverviewSkeleton() {
 
 export function ListSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-10 w-32" />
@@ -113,7 +113,7 @@ export function ChatSkeleton() {
 
 export function ReportsSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <DashboardHeaderSkeleton />
       
       {/* 3 tabs skeleton */}
@@ -141,7 +141,7 @@ export function ReportsSkeleton() {
 
 export function CalendarSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <DashboardHeaderSkeleton />
 
       {/* KPI Row */}
@@ -177,7 +177,7 @@ export function CalendarSkeleton() {
 
 export function TimeSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <DashboardHeaderSkeleton />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -198,7 +198,7 @@ export function TimeSkeleton() {
 
 export function SettingsSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <DashboardHeaderSkeleton />
       <Skeleton className="h-[300px] brutalist-border" />
       <Skeleton className="h-[250px] brutalist-border" />
@@ -208,7 +208,7 @@ export function SettingsSkeleton() {
 
 export function ProjectDetailSkeleton() {
   return (
-    <div className="space-y-8 animate-pulse">
+    <div className="space-y-8">
       {/* Project Header */}
       <div className="brutalist-border bg-surface-container-lowest p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none" />
@@ -239,7 +239,7 @@ export function ProjectDetailSkeleton() {
 
 export function ClientDetailSkeleton() {
   return (
-    <div className="space-y-8 animate-pulse">
+    <div className="space-y-8">
       {/* Client Header */}
       <div className="brutalist-border bg-surface-container-lowest p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none" />

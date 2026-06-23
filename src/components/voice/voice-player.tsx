@@ -67,7 +67,7 @@ export function VoicePlayer({ src, durationSec }: VoicePlayerProps) {
         />
       </div>
 
-      <span className="font-mono text-[9px] text-on-surface/50 tabular-nums flex-shrink-0">
+      <span className="font-mono text-[11px] text-on-surface/50 tabular-nums flex-shrink-0">
         {formatTime(durationSec)}
       </span>
     </div>

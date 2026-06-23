@@ -106,7 +106,7 @@ export function CreateClientForm() {
               onChange={(e) => setBrandColor(e.target.value)}
               className="w-8 h-8 cursor-pointer border-0 bg-transparent"
             />
-            <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40">
+            <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40">
               {brandColor}
             </span>
           </div>

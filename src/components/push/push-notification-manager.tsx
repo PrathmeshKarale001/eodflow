@@ -154,7 +154,7 @@ export function PushNotificationManager() {
           <p className="font-headline text-[10px] uppercase tracking-widest text-card-text mb-1">
             ENABLE_NOTIFICATIONS
           </p>
-          <p className="font-mono text-[9px] text-on-surface/50 leading-relaxed">
+          <p className="font-mono text-[11px] text-on-surface/50 leading-relaxed">
             Get instant alerts for new messages, task assignments, and status changes
           </p>
         </div>
@@ -163,13 +163,13 @@ export function PushNotificationManager() {
         <button
           onClick={requestPermission}
           disabled={subscribing}
-          className="flex-1 py-1.5 bg-primary text-on-primary font-headline text-[9px] uppercase tracking-widest hover:bg-primary/80 transition-colors disabled:opacity-50"
+          className="flex-1 py-1.5 bg-primary text-on-primary font-headline text-[11px] uppercase tracking-widest hover:bg-primary/80 transition-colors disabled:opacity-50"
         >
           {subscribing ? "ENABLING..." : "ENABLE"}
         </button>
         <button
           onClick={dismiss}
-          className="px-4 py-1.5 brutalist-border text-card-text font-headline text-[9px] uppercase tracking-widest hover:bg-card-muted transition-colors"
+          className="px-4 py-1.5 brutalist-border text-card-text font-headline text-[11px] uppercase tracking-widest hover:bg-card-muted transition-colors"
         >
           LATER
         </button>

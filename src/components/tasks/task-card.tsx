@@ -63,27 +63,27 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   return (
     <div
       onClick={() => onClick?.(task.id)}
-      className={`brutalist-border bg-card p-3 cursor-pointer hover:bg-surface-container-high hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none shadow-[2px_2px_0px_rgba(0,0,0,0.1)] transition-all group border-black/10 ${isOverdue ? "border-l-2 border-l-red-500" : dueToday ? "border-l-2 border-l-amber-500" : ""}`}
+      className={`brutalist-border bg-card p-3 cursor-pointer card-hover-lift group ${isOverdue ? "border-l-2 border-l-red-500" : dueToday ? "border-l-2 border-l-amber-500" : ""}`}
     >
       {/* Priority + Badges */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <span className={`inline-block px-2 py-0.5 text-[9px] font-headline uppercase tracking-widest ${PRIORITY_COLORS[task.priority]}`}>
+          <span className={`inline-block px-2 py-0.5 text-[11px] font-headline uppercase tracking-widest ${PRIORITY_COLORS[task.priority]}`}>
             {task.priority}
           </span>
           {isOverdue && (
-            <span className="text-[7px] font-mono uppercase tracking-widest text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">
+            <span className="text-[11px] font-mono uppercase tracking-widest text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">
               OVERDUE
             </span>
           )}
           {dueToday && !isOverdue && (
-            <span className="text-[7px] font-mono uppercase tracking-widest text-white bg-amber-600 px-1.5 py-0.5 font-bold">
+            <span className="text-[11px] font-mono uppercase tracking-widest text-white bg-amber-600 px-1.5 py-0.5 font-bold">
               TODAY
             </span>
           )}
         </div>
         {task.revisionCount > 0 ? (
-          <span className="text-[9px] font-mono uppercase tracking-widest text-red-600 bg-red-500/10 px-2 py-0.5 brutalist-border border-red-200">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-red-600 bg-red-500/10 px-2 py-0.5 brutalist-border border-red-200">
             REV:{task.revisionCount}
           </span>
         ) : null}
@@ -98,15 +98,15 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Avatar */}
-          <div className="w-5 h-5 bg-primary/20 text-primary flex items-center justify-center text-[8px] font-headline border border-primary/30">
+          <div className="w-5 h-5 bg-primary/20 text-primary flex items-center justify-center text-[10px] font-headline border border-primary/30">
             {initials}
           </div>
-          <span className="font-mono text-[9px] text-muted-foreground uppercase">
+          <span className="font-mono text-[11px] text-muted-foreground uppercase">
             {task.assignedTo?.name || "UNASSIGNED"}
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-[9px] font-mono text-muted-foreground">
+        <div className="flex items-center gap-3 text-[11px] font-mono text-muted-foreground">
           {task._count.comments > 0 ? (
             <span className="flex items-center gap-0.5">
               <span className="material-symbols-outlined text-xs">chat_bubble</span>

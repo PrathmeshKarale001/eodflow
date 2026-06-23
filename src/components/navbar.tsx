@@ -22,14 +22,14 @@ export function Navbar() {
           </Link>
           <div className="flex items-center gap-2 ml-3">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-            <span className="font-label text-[9px] text-on-surface/50 uppercase">LIVE_OPS</span>
+            <span className="font-label text-[11px] text-on-surface/50 uppercase">LIVE_OPS</span>
           </div>
         </div>
 
         {/* Right Auth/Theme block on Mobile */}
         <div className="flex lg:hidden items-center gap-2 h-9">
           <ThemeToggle />
-          <NavbarAuthSection className="bg-primary-container text-on-primary-container font-headline text-[9px] uppercase font-bold hover:bg-primary hover:text-on-primary transition-all px-3 h-full flex items-center justify-center mono-clip" />
+          <NavbarAuthSection className="bg-primary-container text-on-primary-container font-headline text-[11px] uppercase font-bold hover:bg-primary hover:text-on-primary transition-all px-3 h-full flex items-center justify-center mono-clip" />
         </div>
       </div>
 

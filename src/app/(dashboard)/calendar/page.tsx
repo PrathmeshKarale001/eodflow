@@ -102,7 +102,7 @@ export default async function CalendarPage() {
           <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} hover:bg-card/80 transition-colors group block`}>
             <span className="material-symbols-outlined text-lg text-on-surface/40">{k.icon}</span>
             <p className="font-mono text-3xl font-bold text-on-surface mt-2 group-hover:text-primary transition-colors">{k.value}</p>
-            <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface/50 mt-1">{k.label}</p>
           </Link>
         ))}
       </div>

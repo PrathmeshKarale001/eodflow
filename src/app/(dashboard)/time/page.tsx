@@ -42,7 +42,7 @@ export default async function TimePage() {
         <div className="space-y-4">
           {/* Live Timer */}
           <div>
-            <p className="font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-2">
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface/40 mb-2">
               LIVE_TIMER
             </p>
             <TimeTrackerWidget
@@ -50,7 +50,7 @@ export default async function TimePage() {
               tasks={myTasks as any}
             />
             {!runningTimer && myTasks.length === 0 && (
-              <p className="font-mono text-[8px] text-on-surface/30 mt-2 text-center uppercase">
+              <p className="font-mono text-[10px] text-on-surface/30 mt-2 text-center uppercase">
                 No active tasks assigned to you
               </p>
             )}

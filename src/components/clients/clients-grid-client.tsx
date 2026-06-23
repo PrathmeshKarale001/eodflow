@@ -46,7 +46,7 @@ export function ClientsGridClient({ clients }: ClientsGridProps) {
             <span className="material-symbols-outlined text-sm">close</span>
           </button>
         )}
-        <span className="font-mono text-[9px] text-on-surface/30 uppercase">
+        <span className="font-mono text-[11px] text-on-surface/30 uppercase">
           {filtered.length}/{clients.length}
         </span>
       </div>
@@ -72,7 +72,7 @@ export function ClientsGridClient({ clients }: ClientsGridProps) {
                   {client.companyName}
                 </h3>
                 {client.industry && (
-                  <p className="font-label text-[9px] text-outline uppercase tracking-widest mt-0.5">
+                  <p className="font-label text-[11px] text-outline uppercase tracking-widest mt-0.5">
                     {client.industry}
                   </p>
                 )}
@@ -88,21 +88,21 @@ export function ClientsGridClient({ clients }: ClientsGridProps) {
             <div className="grid grid-cols-3 gap-2 mb-3">
               <div className="brutalist-border p-2 text-center">
                 <span className="font-headline text-lg font-bold text-foreground block">{client.activeProjects}</span>
-                <span className="font-label text-[8px] text-outline uppercase tracking-widest">ACTIVE</span>
+                <span className="font-label text-[10px] text-outline uppercase tracking-widest">ACTIVE</span>
               </div>
               <div className="brutalist-border p-2 text-center">
                 <span className="font-headline text-lg font-bold text-foreground block">{client.totalProjects}</span>
-                <span className="font-label text-[8px] text-outline uppercase tracking-widest">TOTAL</span>
+                <span className="font-label text-[10px] text-outline uppercase tracking-widest">TOTAL</span>
               </div>
               <div className="brutalist-border p-2 text-center">
                 <span className="font-headline text-lg font-bold text-foreground block">{client.fileCount}</span>
-                <span className="font-label text-[8px] text-outline uppercase tracking-widest">FILES</span>
+                <span className="font-label text-[10px] text-outline uppercase tracking-widest">FILES</span>
               </div>
             </div>
 
             {/* Footer */}
             <div className="flex items-center justify-between border-t border-on-surface/10 pt-3">
-              <span className="font-label text-[9px] text-outline uppercase tracking-widest">
+              <span className="font-label text-[11px] text-outline uppercase tracking-widest">
                 POC: {client.pocAdminName ?? "UNASSIGNED"}
               </span>
               <span className="material-symbols-outlined text-sm text-outline group-hover:text-primary transition-colors">

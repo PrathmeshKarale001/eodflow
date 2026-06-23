@@ -365,19 +365,19 @@ export function MyTasksList({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-2 brutalist-border text-[9px] font-headline uppercase tracking-widest transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-2 brutalist-border text-[11px] font-headline uppercase tracking-widest transition-colors ${
                 showFilters || hasAnyFilter ? "bg-primary/10 text-primary border-primary/30" : "text-on-surface/60 hover:text-foreground"
               }`}
             >
               <span className="material-symbols-outlined text-sm">tune</span>
               FILTERS
               {hasAnyFilter && (
-                <span className="bg-primary text-on-primary text-[8px] px-1.5 py-0.5 font-mono min-w-[18px] text-center">
+                <span className="bg-primary text-on-primary text-[10px] px-1.5 py-0.5 font-mono min-w-[18px] text-center">
                   {[searchQuery, priorityFilter !== "ALL", statusFilter !== "ALL", assigneeFilter !== "ALL", projectFilter !== "ALL", dueFilter !== "ALL", activeFilter].filter(Boolean).length}
                 </span>
               )}
             </button>
-            <span className="font-mono text-[9px] text-on-surface/40 uppercase tracking-widest hidden sm:inline">
+            <span className="font-mono text-[11px] text-on-surface/40 uppercase tracking-widest hidden sm:inline">
               {filteredTasks.length}/{tasks.length}
             </span>
             {/* Sort Controls */}
@@ -385,7 +385,7 @@ export function MyTasksList({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="bg-transparent font-mono text-[9px] text-on-surface/60 uppercase tracking-wider border-none focus:outline-none cursor-pointer"
+                className="bg-transparent font-mono text-[11px] text-on-surface/60 uppercase tracking-wider border-none focus:outline-none cursor-pointer"
               >
                 <option value="priority">SORT: PRIORITY</option>
                 <option value="due_date">SORT: DUE DATE</option>
@@ -406,7 +406,7 @@ export function MyTasksList({
             <div className="flex items-center brutalist-border overflow-hidden">
               <button
                 onClick={() => setGroupView("STATUS")}
-                className={`px-2.5 py-1.5 font-headline text-[8px] uppercase tracking-widest transition-colors flex items-center gap-1 ${
+                className={`px-2.5 py-1.5 font-headline text-[10px] uppercase tracking-widest transition-colors flex items-center gap-1 ${
                   groupView === "STATUS" ? "bg-primary text-white" : "text-on-surface/50 hover:bg-surface-container-high"
                 }`}
               >
@@ -415,7 +415,7 @@ export function MyTasksList({
               </button>
               <button
                 onClick={() => setGroupView("TIMELINE")}
-                className={`px-2.5 py-1.5 font-headline text-[8px] uppercase tracking-widest transition-colors flex items-center gap-1 border-l border-on-surface/10 ${
+                className={`px-2.5 py-1.5 font-headline text-[10px] uppercase tracking-widest transition-colors flex items-center gap-1 border-l border-on-surface/10 ${
                   groupView === "TIMELINE" ? "bg-primary text-white" : "text-on-surface/50 hover:bg-surface-container-high"
                 }`}
               >
@@ -426,7 +426,7 @@ export function MyTasksList({
             {hasAnyFilter && (
               <button
                 onClick={clearAllFilters}
-                className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-headline uppercase tracking-widest text-error/60 hover:text-error transition-colors"
+                className="flex items-center gap-1 px-2 py-1.5 text-[11px] font-headline uppercase tracking-widest text-error/60 hover:text-error transition-colors"
               >
                 <span className="material-symbols-outlined text-xs">delete_sweep</span>
                 CLEAR
@@ -440,7 +440,7 @@ export function MyTasksList({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 animate-in slide-in-from-top-2 duration-200">
             {/* Priority */}
             <div>
-              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Priority</label>
+              <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Priority</label>
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value as Priority | "ALL")}
@@ -456,7 +456,7 @@ export function MyTasksList({
 
             {/* Status */}
             <div>
-              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Status</label>
+              <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as TaskStatus | "ALL")}
@@ -471,7 +471,7 @@ export function MyTasksList({
 
             {/* Assignee — for all roles */}
             <div>
-              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Assignee</label>
+              <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Assignee</label>
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
@@ -488,7 +488,7 @@ export function MyTasksList({
 
             {/* Project */}
             <div>
-              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Project</label>
+              <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Project</label>
               <select
                 value={projectFilter}
                 onChange={(e) => setProjectFilter(e.target.value)}
@@ -503,7 +503,7 @@ export function MyTasksList({
 
             {/* Due Date */}
             <div>
-              <label className="block font-label text-[8px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Due Date</label>
+              <label className="block font-label text-[10px] uppercase tracking-widest text-on-surface/40 mb-1 px-0.5">Due Date</label>
               <select
                 value={dueFilter}
                 onChange={(e) => setDueFilter(e.target.value as typeof dueFilter)}
@@ -523,44 +523,44 @@ export function MyTasksList({
         {hasAnyFilter && (
           <div className="flex flex-wrap items-center gap-1.5">
             {activeFilter && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/15 text-amber-400 text-[8px] font-headline uppercase tracking-widest brutalist-border border-amber-500/30">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/15 text-amber-400 text-[10px] font-headline uppercase tracking-widest brutalist-border border-amber-500/30">
                 <span className="material-symbols-outlined text-[10px]">filter_alt</span>
                 {activeFilter === "review" ? "PENDING_REVIEW" : activeFilter === "due" ? "DUE_THIS_WEEK" : activeFilter.toUpperCase()}
                 <button onClick={clearFilter} className="ml-0.5 hover:text-amber-200"><span className="material-symbols-outlined text-[10px]">close</span></button>
               </span>
             )}
             {searchQuery && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 SEARCH: &quot;{searchQuery.toUpperCase()}&quot;
                 <button onClick={() => setSearchQuery("")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
               </span>
             )}
             {priorityFilter !== "ALL" && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 PRIORITY: {priorityFilter}
                 <button onClick={() => setPriorityFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
               </span>
             )}
             {statusFilter !== "ALL" && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 STATUS: {statusFilter}
                 <button onClick={() => setStatusFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
               </span>
             )}
             {assigneeFilter !== "ALL" && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 ASSIGNEE: {assigneeFilter === "MINE" ? "MY_TASKS" : assigneeFilter === "UNASSIGNED" ? "UNASSIGNED" : uniqueAssignees.find(([id]) => id === assigneeFilter)?.[1]?.toUpperCase() || assigneeFilter}
                 <button onClick={() => setAssigneeFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
               </span>
             )}
             {projectFilter !== "ALL" && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 PROJECT: {uniqueProjects.find(([id]) => id === projectFilter)?.[1]?.toUpperCase() || projectFilter}
                 <button onClick={() => setProjectFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
               </span>
             )}
             {dueFilter !== "ALL" && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[8px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 DUE: {dueFilter.replace("_", " ")}
                 <button onClick={() => setDueFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
               </span>
@@ -621,7 +621,7 @@ export function MyTasksList({
                     className={`px-4 py-4 md:px-5 md:py-3 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors group gap-3`}
                   >
                     <div className="flex items-start gap-3 min-w-0">
-                      <span className={`inline-block px-1.5 py-0.5 text-[8px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0 mt-1 sm:mt-0`}>
+                      <span className={`inline-block px-1.5 py-0.5 text-[10px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0 mt-1 sm:mt-0`}>
                         {task.priority[0]}
                       </span>
                       <div className="min-w-0">
@@ -630,7 +630,7 @@ export function MyTasksList({
                         </span>
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                           {/* Status badge */}
-                          <span className={`px-1.5 py-0.5 text-[7px] font-headline uppercase tracking-widest ${
+                          <span className={`px-1.5 py-0.5 text-[11px] font-headline uppercase tracking-widest ${
                             task.status === "TODO" ? "bg-blue-500/20 text-blue-400" :
                             task.status === "IN_PROGRESS" ? "bg-amber-500/20 text-amber-400" :
                             task.status === "IN_REVIEW" ? "bg-purple-500/20 text-purple-400" :
@@ -641,17 +641,17 @@ export function MyTasksList({
                             {task.status.replace(/_/g, " ")}
                           </span>
                           {task.project?.client?.companyName && (
-                            <span className="font-mono text-[8px] uppercase text-primary/70 tracking-widest font-bold">
+                            <span className="font-mono text-[10px] uppercase text-primary/70 tracking-widest font-bold">
                               {task.project.client.companyName}
                             </span>
                           )}
                           {task.project && (
-                            <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                            <span className="font-mono text-[10px] uppercase text-on-surface/40 tracking-widest">
                               {task.project.title}
                             </span>
                           )}
                           {task.assignedTo && (
-                            <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                            <span className="font-mono text-[10px] uppercase text-primary/60 tracking-widest">
                               → {task.assignedTo.name}
                             </span>
                           )}
@@ -660,18 +660,18 @@ export function MyTasksList({
                     </div>
                     <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 ml-8 sm:ml-0">
                       {taskOverdue && (
-                        <span className="text-[7px] font-mono uppercase text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">OVERDUE</span>
+                        <span className="text-[11px] font-mono uppercase text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">OVERDUE</span>
                       )}
                       {taskToday && !taskOverdue && (
-                        <span className="text-[7px] font-mono uppercase text-white bg-amber-600 px-1.5 py-0.5 font-bold">TODAY</span>
+                        <span className="text-[11px] font-mono uppercase text-white bg-amber-600 px-1.5 py-0.5 font-bold">TODAY</span>
                       )}
                       {dueLabel && (
-                        <span className={`font-mono text-[9px] ${taskOverdue ? "text-red-500 font-bold" : "text-on-surface/40"}`}>
+                        <span className={`font-mono text-[11px] ${taskOverdue ? "text-red-500 font-bold" : "text-on-surface/40"}`}>
                           {dueLabel}
                         </span>
                       )}
                       {task._count.files > 0 && (
-                        <span className="flex items-center gap-0.5 font-mono text-[9px] text-on-surface/30">
+                        <span className="flex items-center gap-0.5 font-mono text-[11px] text-on-surface/30">
                           <span className="material-symbols-outlined text-xs">attach_file</span>
                           {task._count.files}
                         </span>
@@ -715,7 +715,7 @@ export function MyTasksList({
                       }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
-                        <span className={`inline-block px-1.5 py-0.5 text-[8px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0 mt-1 sm:mt-0`}>
+                        <span className={`inline-block px-1.5 py-0.5 text-[10px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0 mt-1 sm:mt-0`}>
                           {task.priority[0]}
                         </span>
                         <div className="min-w-0">
@@ -726,30 +726,30 @@ export function MyTasksList({
                           {canAssign && (
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                               {task.project?.client?.companyName && (
-                                <span className="font-mono text-[8px] uppercase text-primary/70 tracking-widest font-bold">
+                                <span className="font-mono text-[10px] uppercase text-primary/70 tracking-widest font-bold">
                                   {task.project.client.companyName}
                                 </span>
                               )}
                               {task.project && (
-                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-on-surface/40 tracking-widest">
                                   {task.project.client?.companyName ? "• " : ""}{task.project.title}
                                 </span>
                               )}
                               {task.assignees && task.assignees.length > 0 ? (
-                                <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-primary/60 tracking-widest">
                                   → {task.assignees.map((a) => a.name).join(", ")}
                                 </span>
                               ) : task.assignedTo ? (
-                                <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-primary/60 tracking-widest">
                                   → {task.assignedTo.name}
                                 </span>
                               ) : (
-                                <span className="font-mono text-[8px] uppercase text-error/60 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-error/60 tracking-widest">
                                   UNASSIGNED
                                 </span>
                               )}
                               {task.assignedBy && (
-                                <span className="font-mono text-[8px] uppercase text-on-surface/30 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-on-surface/30 tracking-widest">
                                   BY {task.assignedBy.name}
                                 </span>
                               )}
@@ -759,22 +759,22 @@ export function MyTasksList({
                           {!canAssign && (
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                               {task.project?.client?.companyName && (
-                                <span className="font-mono text-[8px] uppercase text-primary/70 tracking-widest font-bold">
+                                <span className="font-mono text-[10px] uppercase text-primary/70 tracking-widest font-bold">
                                   {task.project.client.companyName}
                                 </span>
                               )}
                               {task.project && (
-                                <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-on-surface/40 tracking-widest">
                                   {task.project.client?.companyName ? "• " : ""}{task.project.title}
                                 </span>
                               )}
                               {task.assignedBy && (
-                                <span className="font-mono text-[8px] uppercase text-on-surface/30 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-on-surface/30 tracking-widest">
                                   {task.project ? "• " : ""}BY {task.assignedBy.id === userId ? "MYSELF" : task.assignedBy.name}
                                 </span>
                               )}
                               {task.assignees && task.assignees.length > 1 && (
-                                <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                                <span className="font-mono text-[10px] uppercase text-primary/60 tracking-widest">
                                   • WITH {task.assignees.filter((a) => a.id !== userId).map((a) => a.name).join(", ")}
                                 </span>
                               )}
@@ -782,12 +782,12 @@ export function MyTasksList({
                           )}
                         </div>
                         {task.revisionCount > 0 ? (
-                          <span className="text-[8px] font-mono text-red-600 bg-red-500/10 px-1.5 py-0.5 brutalist-border border-red-200 flex-shrink-0">
+                          <span className="text-[10px] font-mono text-red-600 bg-red-500/10 px-1.5 py-0.5 brutalist-border border-red-200 flex-shrink-0">
                             R{task.revisionCount}
                           </span>
                         ) : null}
                       </div>
-                      <div className="flex items-center justify-between sm:justify-end gap-4 text-[9px] font-mono text-muted-foreground uppercase flex-shrink-0">
+                      <div className="flex items-center justify-between sm:justify-end gap-4 text-[11px] font-mono text-muted-foreground uppercase flex-shrink-0">
                         <div className="flex items-center gap-3">
                           {task.subtasks && task.subtasks.length > 0 ? (
                             <span className="flex items-center gap-0.5" title={`${task.subtasks.filter((s: any) => s.isDone).length}/${task.subtasks.length} subtasks done`}>
@@ -807,10 +807,10 @@ export function MyTasksList({
                             <span className={isOverdue ? "text-red-600 font-bold" : ""}>{dueLabel}</span>
                           ) : null}
                           {isOverdue && (
-                            <span className="text-[7px] font-mono uppercase text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">OVERDUE</span>
+                            <span className="text-[11px] font-mono uppercase text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">OVERDUE</span>
                           )}
                           {!isOverdue && isTaskDueToday(task.dueDate) && (
-                            <span className="text-[7px] font-mono uppercase text-white bg-amber-600 px-1.5 py-0.5 font-bold">TODAY</span>
+                            <span className="text-[11px] font-mono uppercase text-white bg-amber-600 px-1.5 py-0.5 font-bold">TODAY</span>
                           )}
                         </div>
                         
@@ -822,7 +822,7 @@ export function MyTasksList({
                                 e.stopPropagation();
                                 setAssigningTaskId(assigningTaskId === task.id ? null : task.id);
                               }}
-                              className="flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1 brutalist-border text-[9px] sm:text-[8px] hover:bg-primary/10 hover:text-primary transition-colors bg-card sm:bg-transparent"
+                              className="flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1 brutalist-border text-[11px] sm:text-[10px] hover:bg-primary/10 hover:text-primary transition-colors bg-card sm:bg-transparent"
                               title="Assign task"
                             >
                               <span className="material-symbols-outlined text-xs">person_add</span>
@@ -841,7 +841,7 @@ export function MyTasksList({
                       <div className="px-4 md:px-5 pb-3 animate-in slide-in-from-top-2 duration-200">
                         <div className="brutalist-border bg-surface-container-lowest p-4 md:p-3 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="font-headline text-[9px] uppercase tracking-widest text-on-surface/60">
+                            <span className="font-headline text-[11px] uppercase tracking-widest text-on-surface/60">
                               ASSIGN_TO → {selectedAssignees.length > 0 && (
                                 <span className="text-primary">{selectedAssignees.length} SELECTED</span>
                               )}
@@ -860,7 +860,7 @@ export function MyTasksList({
                                     setSelectedAssignees([]);
                                   }}
                                   disabled={reassigning}
-                                  className="flex items-center gap-1 px-3 py-1 bg-primary text-on-primary font-headline text-[8px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+                                  className="flex items-center gap-1 px-3 py-1 bg-primary text-on-primary font-headline text-[10px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
                                 >
                                   <span className="material-symbols-outlined text-xs">check</span>
                                   CONFIRM
@@ -898,7 +898,7 @@ export function MyTasksList({
                                       : "hover:bg-primary/10 hover:border-primary/30"
                                   }`}
                                 >
-                                  <div className={`h-6 w-6 flex items-center justify-center text-[9px] font-headline font-bold uppercase flex-shrink-0 ${
+                                  <div className={`h-6 w-6 flex items-center justify-center text-[11px] font-headline font-bold uppercase flex-shrink-0 ${
                                     isSelected ? "bg-primary text-on-primary" : "bg-surface-container-high"
                                   }`}>
                                     {isSelected ? "✓" : member.name.charAt(0)}
@@ -907,7 +907,7 @@ export function MyTasksList({
                                     <p className="font-headline text-[10px] uppercase tracking-wider truncate text-on-surface">
                                       {member.name}
                                     </p>
-                                    <p className="font-mono text-[7px] uppercase text-on-surface/40">
+                                    <p className="font-mono text-[11px] uppercase text-on-surface/40">
                                       {member.role} · {member.department || "—"}
                                     </p>
                                   </div>
@@ -921,7 +921,7 @@ export function MyTasksList({
                           {reassigning && (
                             <div className="flex items-center gap-2 text-primary">
                               <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
-                              <span className="font-mono text-[9px] uppercase tracking-widest">REASSIGNING...</span>
+                              <span className="font-mono text-[11px] uppercase tracking-widest">REASSIGNING...</span>
                             </div>
                           )}
                         </div>

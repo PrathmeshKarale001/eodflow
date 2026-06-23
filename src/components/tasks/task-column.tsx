@@ -41,7 +41,7 @@ export function TaskColumn({ status, tasks, onTaskClick }: TaskColumnProps) {
         <h3 className="font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60">
           {style.label}
         </h3>
-        <span className="bg-primary/20 text-primary px-2 py-0.5 text-[9px] font-mono min-w-[20px] text-center border border-primary/30">
+        <span className="bg-primary/20 text-primary px-2 py-0.5 text-[11px] font-mono min-w-[20px] text-center border border-primary/30">
           {tasks.length}
         </span>
       </div>
@@ -51,7 +51,7 @@ export function TaskColumn({ status, tasks, onTaskClick }: TaskColumnProps) {
         {tasks.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center opacity-20">
             <span className="material-symbols-outlined text-3xl mb-2">dashboard_customize</span>
-            <p className="font-mono text-[8px] uppercase tracking-[0.2em]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em]">
               NO_TASKS_IN_QUEUE
             </p>
           </div>

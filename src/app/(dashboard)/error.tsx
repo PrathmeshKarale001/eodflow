@@ -21,7 +21,7 @@ export default function DashboardError({
           {error.message || "An unexpected error occurred while loading this page."}
         </p>
         {error.digest && (
-          <p className="font-mono text-[8px] text-on-surface/30 uppercase">
+          <p className="font-mono text-[10px] text-on-surface/30 uppercase">
             DIGEST: {error.digest}
           </p>
         )}

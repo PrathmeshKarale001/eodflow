@@ -35,7 +35,7 @@ export function AgencyOverview({ statusCounts, totalTasks }: AgencyOverviewProps
 
           return (
             <div key={status} className="flex items-center gap-3">
-              <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/50 w-16 text-right flex-shrink-0">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/50 w-16 text-right flex-shrink-0">
                 {config.label}
               </span>
               <div className="flex-1 h-5 bg-card-muted brutalist-border overflow-hidden">

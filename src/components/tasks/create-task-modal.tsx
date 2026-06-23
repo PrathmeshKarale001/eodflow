@@ -193,7 +193,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
               {/* Brand Selector */}
               {brands.length > 0 && (
                 <div className="space-y-1">
-                  <label className="font-label text-[9px] uppercase text-primary tracking-widest">BRAND <span className="text-on-surface/30">(OPTIONAL)</span></label>
+                  <label className="font-label text-[11px] uppercase text-primary tracking-widest">BRAND <span className="text-on-surface/30">(OPTIONAL)</span></label>
                   <AppSelect
                     options={brandOptions}
                     value={selectedBrandId}
@@ -209,7 +209,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
 
               {/* Project Selector */}
               <div className="space-y-1">
-                <label className="font-label text-[9px] uppercase text-primary tracking-widest">PROJECT <span className="text-on-surface/30">(OPTIONAL)</span></label>
+                <label className="font-label text-[11px] uppercase text-primary tracking-widest">PROJECT <span className="text-on-surface/30">(OPTIONAL)</span></label>
                 <Controller
                   name="selectedProjectId"
                   control={control}
@@ -228,19 +228,19 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
 
           {/* Title */}
           <div className="space-y-1">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">TASK_TITLE</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">TASK_TITLE</label>
             <input
               {...register("title")}
               autoFocus
               className="w-full h-10 bg-transparent brutalist-border px-3 py-2 font-body text-sm focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase"
               placeholder="E.G. DESIGN SOCIAL MEDIA CAROUSEL"
             />
-            {errors.title && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.title.message}</p>}
+            {errors.title && <p className="text-red-500 text-[11px] font-mono uppercase">{errors.title.message}</p>}
           </div>
 
           {/* Description */}
           <div className="space-y-1">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">DESCRIPTION</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">DESCRIPTION</label>
             <textarea
               {...register("description")}
               rows={2}
@@ -252,7 +252,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
           {/* Priority + Due Date/Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">PRIORITY</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">PRIORITY</label>
               <Controller
                 name="priority"
                 control={control}
@@ -269,7 +269,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
               <input
                 type="datetime-local"
                 {...register("dueDate")}
@@ -280,7 +280,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
 
           {/* Assigned By — shown for ALL roles (everyone can say who gave them the task) */}
           <div className="space-y-1.5">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">
               ASSIGNED_BY {isEmployee && <span className="text-red-500">*</span>}
             </label>
             <Controller
@@ -296,13 +296,13 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                 />
               )}
             />
-            {errors.assignedById && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.assignedById.message}</p>}
+            {errors.assignedById && <p className="text-red-500 text-[11px] font-mono uppercase">{errors.assignedById.message}</p>}
           </div>
 
           {/* Assignees — only for managers/directors who can assign to others */}
           {!isEmployee && (
             <div className="space-y-1 relative" ref={assigneeRef}>
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGN_TO</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">ASSIGN_TO</label>
               {/* Selected Assignees Chips */}
               <div
                 className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
@@ -317,7 +317,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                     return (
                       <span
                         key={id}
-                        className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-headline uppercase tracking-wider border border-primary/20"
+                        className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-headline uppercase tracking-wider border border-primary/20"
                       >
                         {member.name}
                         <button
@@ -359,14 +359,14 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                         </div>
                         <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
                         {member.department && (
-                          <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
+                          <span className="font-mono text-[10px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
                         )}
                       </button>
                     );
                   })}
                   {filteredMembers.length === 0 && (
                     <div className="p-3 text-center">
-                      <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">NO_MEMBERS_FOUND</p>
+                      <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/30">NO_MEMBERS_FOUND</p>
                     </div>
                   )}
                 </div>

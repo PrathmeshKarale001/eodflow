@@ -121,7 +121,7 @@ export function SearchDialog() {
             className="flex-1 bg-transparent text-foreground font-body text-sm focus:outline-none placeholder:text-outline"
             placeholder="Search tasks, projects, clients, files..."
           />
-          <kbd className="px-2 py-0.5 brutalist-border text-[9px] font-label text-outline uppercase">ESC</kbd>
+          <kbd className="px-2 py-0.5 brutalist-border text-[11px] font-label text-outline uppercase">ESC</kbd>
         </div>
 
         {/* Results */}
@@ -154,11 +154,11 @@ export function SearchDialog() {
                 <p className="font-headline text-xs uppercase tracking-tight text-foreground truncate">
                   {result.title}
                 </p>
-                <p className="font-label text-[9px] text-outline uppercase tracking-widest truncate">
+                <p className="font-label text-[11px] text-outline uppercase tracking-widest truncate">
                   {result.subtitle}
                 </p>
               </div>
-              <span className="px-2 py-0.5 text-[8px] font-label text-outline uppercase tracking-widest brutalist-border">
+              <span className="px-2 py-0.5 text-[10px] font-label text-outline uppercase tracking-widest brutalist-border">
                 {TYPE_LABELS[result.type]}
               </span>
             </button>
@@ -168,14 +168,14 @@ export function SearchDialog() {
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-2 border-t border-on-surface/10">
           <div className="flex items-center gap-4">
-            <span className="font-label text-[8px] text-outline uppercase tracking-widest">
+            <span className="font-label text-[10px] text-outline uppercase tracking-widest">
               ↑↓ NAVIGATE
             </span>
-            <span className="font-label text-[8px] text-outline uppercase tracking-widest">
+            <span className="font-label text-[10px] text-outline uppercase tracking-widest">
               ↵ OPEN
             </span>
           </div>
-          <span className="font-label text-[8px] text-outline uppercase tracking-widest">
+          <span className="font-label text-[10px] text-outline uppercase tracking-widest">
             GLOBAL_SEARCH
           </span>
         </div>

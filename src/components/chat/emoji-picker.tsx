@@ -90,7 +90,7 @@ export function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
       {/* Emoji grid */}
       <div className="px-2 pb-2 max-h-40 overflow-y-auto">
         {!search && (
-          <p className="font-headline text-[8px] uppercase tracking-widest text-on-surface/30 mb-1 px-1">
+          <p className="font-headline text-[10px] uppercase tracking-widest text-on-surface/30 mb-1 px-1">
             {EMOJI_CATEGORIES[activeCategory].label}
           </p>
         )}

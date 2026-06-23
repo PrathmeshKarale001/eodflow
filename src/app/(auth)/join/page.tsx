@@ -184,7 +184,7 @@ function JoinForm() {
       <div className={`w-full ${step === "set-password" && invitation ? "max-w-3xl" : "max-w-md"} brutalist-border bg-surface-container-lowest p-5 sm:p-8 flex flex-col relative z-10 box-border transition-all duration-300`}>
 
         {/* Decorative ID */}
-        <div className="absolute top-0 right-0 p-2 border-l border-b border-on-surface/10 font-label text-[8px] uppercase">
+        <div className="absolute top-0 right-0 p-2 border-l border-b border-on-surface/10 font-label text-[10px] uppercase">
           {step === "enter-code" && <span className="text-primary">CODE_ENTRY</span>}
           {step === "set-password" && <span className="text-primary">INVITE_VERIFIED</span>}
           {step === "loading" && <span className="text-outline">VALIDATING...</span>}
@@ -278,15 +278,15 @@ function JoinForm() {
               {/* Invitation info badge */}
               <div className="md:col-span-2 brutalist-border bg-primary/5 p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-label text-[9px] text-outline uppercase tracking-widest">ROLE</span>
-                  <span className="font-label text-[9px] text-primary font-bold uppercase tracking-widest">
+                  <span className="font-label text-[11px] text-outline uppercase tracking-widest">ROLE</span>
+                  <span className="font-label text-[11px] text-primary font-bold uppercase tracking-widest">
                     {ROLE_LABELS[invitation.role] || invitation.role}
                   </span>
                 </div>
                 {invitation.department && invitation.type === "LINK" && (
                   <div className="flex items-center justify-between border-t border-on-surface/10 pt-2">
-                    <span className="font-label text-[9px] text-outline uppercase tracking-widest">DEPT</span>
-                    <span className="font-label text-[9px] text-foreground uppercase tracking-widest">
+                    <span className="font-label text-[11px] text-outline uppercase tracking-widest">DEPT</span>
+                    <span className="font-label text-[11px] text-foreground uppercase tracking-widest">
                       {invitation.department}
                     </span>
                   </div>

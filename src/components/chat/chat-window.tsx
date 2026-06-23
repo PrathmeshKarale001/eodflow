@@ -127,12 +127,44 @@ export function ChatWindow({
   const [presenceUsers, setPresenceUsers] = useState<Record<string, { userId: string; userName: string; lastReadMessageId: string; lastReadTime: string }>>({});
   const presenceChannelRef = useRef<any>(null);
 
-  // Auto-scroll
+  // ─── SMART AUTO-SCROLL: Only scroll down for NEW messages, not history ────
+  const prevMessageCountRef = useRef(initialMessages.length);
+  const isNearBottomRef = useRef(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  // Track whether user is near the bottom of the chat
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    const nearBottom = distanceFromBottom < 80;
+    isNearBottomRef.current = nearBottom;
+    setShowScrollButton(!nearBottom);
+  }, []);
+
+  // Auto-scroll only when a new message is appended AND user is near bottom
   useEffect(() => {
-    if (scrollRef.current) {
+    const currentCount = messages.length;
+    const wasNewMessageAdded = currentCount > prevMessageCountRef.current;
+    prevMessageCountRef.current = currentCount;
+
+    if (wasNewMessageAdded && isNearBottomRef.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, typingUsers]);
+  }, [messages]);
+
+  // Scroll to bottom on typing indicator (only if already near bottom)
+  useEffect(() => {
+    if (typingUsers.length > 0 && isNearBottomRef.current && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [typingUsers]);
+
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, []);
 
   const channelRef = useRef<any>(null);
 
@@ -435,7 +467,7 @@ export function ChatWindow({
             <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text truncate">
               {channelName}
             </h2>
-            <span className="font-mono text-[8px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase flex-shrink-0">
+            <span className="font-mono text-[10px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase flex-shrink-0">
               {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "CHANNEL" : "PROJECT"}
             </span>
           </div>
@@ -446,7 +478,7 @@ export function ChatWindow({
             <button onClick={() => setShowInfoPanel((v) => !v)} className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${showInfoPanel ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"}`}>
               <span className="material-symbols-outlined text-sm">info</span>
             </button>
-            <span className="font-mono text-[9px] text-on-surface/40 uppercase hidden sm:inline">
+            <span className="font-mono text-[11px] text-on-surface/40 uppercase hidden sm:inline">
               {memberCount} member{memberCount !== 1 ? "s" : ""}
             </span>
           </div>
@@ -492,12 +524,12 @@ export function ChatWindow({
           const maxOtherReadTime = otherUsersReadReceipts.length > 0 ? Math.max(...otherUsersReadReceipts) : 0;
 
           return (
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-container-lowest">
+            <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-container-lowest relative">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <span className="material-symbols-outlined text-4xl text-on-surface/20 mb-2">chat_bubble_outline</span>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">NO_MESSAGES_YET</p>
-                  <p className="font-mono text-[9px] text-on-surface/20 mt-1">Start the conversation</p>
+                  <span className="material-symbols-outlined text-5xl text-on-surface/15 mb-3">forum</span>
+                  <p className="font-headline text-sm text-on-surface/40 mb-1">Start a conversation</p>
+                  <p className="font-mono text-[11px] text-on-surface/25">Send a message to get things going</p>
                 </div>
               ) : (
                 messages.map((msg, idx) => {
@@ -508,7 +540,7 @@ export function ChatWindow({
                       {showDateSep && (
                         <div className="flex items-center gap-3 my-4">
                           <div className="flex-1 h-px bg-on-surface/10" />
-                          <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30 px-2">
+                          <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30 px-2">
                             {getDateLabel(msg.createdAt)}
                           </span>
                           <div className="flex-1 h-px bg-on-surface/10" />
@@ -544,12 +576,25 @@ export function ChatWindow({
           );
         })()}
 
+        {/* Scroll to bottom FAB */}
+        {showScrollButton && (
+          <div className="flex justify-center py-1 flex-shrink-0">
+            <button
+              onClick={scrollToBottom}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-container/90 text-white text-[11px] font-headline uppercase tracking-wider rounded-full shadow-lg hover:bg-primary-container transition-all hover:scale-105"
+            >
+              <span className="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+              New messages
+            </button>
+          </div>
+        )}
+
         {/* Upload progress */}
         {uploadProgress && (
           <div className="px-4 py-2 bg-primary/10 brutalist-border border-x-0 border-b-0 flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-xs text-primary animate-spin">progress_activity</span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-primary">{uploadProgress}</span>
+              <span className="font-mono text-[11px] uppercase tracking-widest text-primary">{uploadProgress}</span>
             </div>
           </div>
         )}
@@ -557,7 +602,7 @@ export function ChatWindow({
         {/* Typing indicator */}
         {typingUsers.length > 0 && (
           <div className="px-4 py-1.5 bg-surface-container-low/40 border-t border-outline-variant/10 flex-shrink-0">
-            <p className="font-mono text-[9px] text-primary/80 lowercase tracking-wider animate-pulse flex items-center gap-1.5">
+            <p className="font-mono text-[11px] text-primary/80 lowercase tracking-wider animate-pulse flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[11px] animate-bounce">keyboard</span>
               {typingUsers.map((u) => u.userName).join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing...
             </p>
@@ -569,10 +614,10 @@ export function ChatWindow({
           <div className="px-4 py-2 bg-primary/5 border-t border-primary/20 flex items-center gap-2 flex-shrink-0">
             <span className="material-symbols-outlined text-xs text-primary">reply</span>
             <div className="flex-1 min-w-0">
-              <span className="font-headline text-[8px] uppercase tracking-widest text-primary block">
+              <span className="font-headline text-[10px] uppercase tracking-widest text-primary block">
                 Replying to {replyingTo.userName}
               </span>
-              <span className="font-mono text-[9px] text-on-surface/50 line-clamp-1 block">
+              <span className="font-mono text-[11px] text-on-surface/50 line-clamp-1 block">
                 {replyingTo.content}
               </span>
             </div>

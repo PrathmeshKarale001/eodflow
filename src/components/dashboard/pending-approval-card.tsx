@@ -82,7 +82,7 @@ export function PendingApprovalCard({ tasks }: { tasks: PendingTask[] }) {
                 <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">
                   {task.title}
                 </p>
-                <p className="font-mono text-[8px] text-on-surface/40">
+                <p className="font-mono text-[10px] text-on-surface/40">
                   <span className="text-amber-400">{task.assignedTo?.name || "Unknown"}</span>
                   {" says you assigned this"}
                   {task.project && <> · {task.project.title}</>}
@@ -95,7 +95,7 @@ export function PendingApprovalCard({ tasks }: { tasks: PendingTask[] }) {
                 <button
                   onClick={() => handleApprove(task.id)}
                   disabled={!!isProcessing}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors disabled:opacity-50 font-headline text-[8px] uppercase tracking-wider"
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors disabled:opacity-50 font-headline text-[10px] uppercase tracking-wider"
                 >
                   <span className="material-symbols-outlined text-[12px]">
                     {isProcessing === "approve" ? "progress_activity" : "check_circle"}
@@ -105,7 +105,7 @@ export function PendingApprovalCard({ tasks }: { tasks: PendingTask[] }) {
                 <button
                   onClick={() => handleReject(task.id)}
                   disabled={!!isProcessing}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors disabled:opacity-50 font-headline text-[8px] uppercase tracking-wider"
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors disabled:opacity-50 font-headline text-[10px] uppercase tracking-wider"
                 >
                   <span className="material-symbols-outlined text-[12px]">
                     {isProcessing === "reject" ? "progress_activity" : "cancel"}

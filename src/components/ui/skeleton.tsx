@@ -1,14 +1,21 @@
 import { cn } from "@/lib/utils";
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Optional stagger delay index (0, 1, 2...) for cascading shimmer */
+  delay?: number;
+}
 
-export function Skeleton({ className, ...props }: SkeletonProps) {
+export function Skeleton({ className, delay = 0, style, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse bg-surface-container-high/40 brutalist-border",
+        "shimmer brutalist-border",
         className
       )}
+      style={{
+        ...style,
+        animationDelay: delay ? `${delay * 100}ms` : undefined,
+      }}
       {...props}
     />
   );

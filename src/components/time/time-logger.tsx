@@ -146,7 +146,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
           <span className="font-mono text-3xl md:text-3xl text-green-400 tracking-[0.15em] tabular-nums leading-none">
             {formatTime(seconds)}
           </span>
-          <p className="font-mono text-[9px] text-neutral-500 uppercase tracking-widest mt-1.5">
+          <p className="font-mono text-[11px] text-neutral-500 uppercase tracking-widest mt-1.5">
             TOTAL_LOGGED: {totalLogged}m
           </p>
         </div>
@@ -184,7 +184,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
         <div className="brutalist-border bg-card p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest block">MINUTES</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest block">MINUTES</label>
               <input
                 type="number"
                 min="1"
@@ -195,7 +195,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest block">NOTES</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest block">NOTES</label>
               <input
                 type="text"
                 value={manualNotes}
@@ -255,7 +255,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
                     <span className="font-headline text-[11px] uppercase text-on-surface">
                       {entry.user.name}
                     </span>
-                    <span className="font-mono text-[9px] text-muted-foreground">
+                    <span className="font-mono text-[11px] text-muted-foreground">
                       {new Date(entry.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </span>
                   </div>

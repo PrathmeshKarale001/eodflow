@@ -258,25 +258,25 @@ export function ReportsDashboard({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={exportProjectProgress}
-                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                className="px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 Export Projects CSV
               </button>
               <button
                 onClick={exportTeamPerformance}
-                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                className="px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 Export Team CSV
               </button>
               <button
                 onClick={exportActivityLog}
-                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                className="px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-surface hover:bg-surface-container-high border brutalist-border shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 Export Activities CSV
               </button>
               <button
                 onClick={() => window.print()}
-                className="px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider bg-primary text-white border brutalist-border hover:bg-primary/90 shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                className="px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-primary text-white border brutalist-border hover:bg-primary/90 shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 Print PDF / Save
               </button>
@@ -295,7 +295,7 @@ export function ReportsDashboard({
           <div className="brutalist-border bg-card p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">TASK PIPELINE</h3>
-              <span className="font-mono text-[9px] text-on-surface/40 uppercase">{totalTasks} total</span>
+              <span className="font-mono text-[11px] text-on-surface/40 uppercase">{totalTasks} total</span>
             </div>
             {totalTasks > 0 && (
               <div className="h-7 brutalist-border flex overflow-hidden mb-4">
@@ -309,7 +309,7 @@ export function ReportsDashboard({
                     if (pct < 1) return null;
                     return (
                       <div key={status} className={`${TASK_STATUS_COLORS[status] || "bg-neutral-500"} h-full transition-all relative group cursor-default`} style={{ width: `${pct}%` }} title={`${status}: ${count}`}>
-                        {pct > 6 && <span className="absolute inset-0 flex items-center justify-center font-mono text-[8px] text-white/90 font-bold">{count}</span>}
+                        {pct > 6 && <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] text-white/90 font-bold">{count}</span>}
                       </div>
                     );
                   })}
@@ -325,7 +325,7 @@ export function ReportsDashboard({
                 <div key={status} className="flex items-center gap-2">
                   <div className={`w-2.5 h-2.5 flex-shrink-0 ${TASK_STATUS_COLORS[status] || "bg-neutral-500"}`} />
                   <div className="min-w-0">
-                    <span className="font-mono text-[8px] uppercase tracking-wider text-on-surface/50 block truncate">{status.replace(/_/g, " ")}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-on-surface/50 block truncate">{status.replace(/_/g, " ")}</span>
                     <span className="font-mono text-[10px] text-card-text font-bold">{count}</span>
                   </div>
                 </div>
@@ -338,11 +338,11 @@ export function ReportsDashboard({
             <div className="brutalist-border bg-card p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">PROJECT HEALTH</h3>
-                <span className="font-mono text-[9px] text-on-surface/40 uppercase">{projectProgress.length} active</span>
+                <span className="font-mono text-[11px] text-on-surface/40 uppercase">{projectProgress.length} active</span>
               </div>
               <div className="space-y-3">
                 {projectProgress.length === 0 ? (
-                  <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-8">NO ACTIVE PROJECTS</p>
+                  <p className="font-mono text-[11px] uppercase text-on-surface/30 tracking-widest text-center py-8">NO ACTIVE PROJECTS</p>
                 ) : (
                   projectProgress.map((p) => {
                     const isOverdue = p.deadline && new Date(p.deadline) < new Date() && p.status !== "COMPLETED";
@@ -355,15 +355,15 @@ export function ReportsDashboard({
                           <div className="min-w-0 flex-1">
                             <span className="font-headline text-[11px] uppercase tracking-wider text-card-text group-hover:text-primary transition-colors truncate block">{p.title}</span>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="font-mono text-[8px] text-on-surface/30 uppercase">{p.clientName}</span>
-                              {p.deadline && <span className="font-mono text-[8px] text-on-surface/30">· {new Date(p.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</span>}
-                              {isOverdue && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-red-500/15 text-red-400 font-bold">OVERDUE</span>}
-                              {isAtRisk && <span className="font-mono text-[7px] px-1.5 py-0.5 bg-amber-500/15 text-amber-400 font-bold">AT RISK</span>}
+                              <span className="font-mono text-[10px] text-on-surface/30 uppercase">{p.clientName}</span>
+                              {p.deadline && <span className="font-mono text-[10px] text-on-surface/30">· {new Date(p.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</span>}
+                              {isOverdue && <span className="font-mono text-[11px] px-1.5 py-0.5 bg-red-500/15 text-red-400 font-bold">OVERDUE</span>}
+                              {isAtRisk && <span className="font-mono text-[11px] px-1.5 py-0.5 bg-amber-500/15 text-amber-400 font-bold">AT RISK</span>}
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
                             <span className="font-headline text-sm text-primary">{p.progress}%</span>
-                            <span className="font-mono text-[8px] text-on-surface/30 block">{p.completedCount}/{p.taskCount}</span>
+                            <span className="font-mono text-[10px] text-on-surface/30 block">{p.completedCount}/{p.taskCount}</span>
                           </div>
                         </div>
                         <div className="h-1.5 bg-surface-container-high overflow-hidden rounded-sm">
@@ -380,11 +380,11 @@ export function ReportsDashboard({
             <div className="brutalist-border bg-card p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">TEAM LEADERBOARD</h3>
-                <span className="font-mono text-[9px] text-on-surface/40 uppercase">This Month</span>
+                <span className="font-mono text-[11px] text-on-surface/40 uppercase">This Month</span>
               </div>
               <div className="space-y-1">
                 {teamPerformance.length === 0 ? (
-                  <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-8">NO TEAM DATA</p>
+                  <p className="font-mono text-[11px] uppercase text-on-surface/30 tracking-widest text-center py-8">NO TEAM DATA</p>
                 ) : (
                   teamPerformance
                     .sort((a, b) => b.completedThisMonth - a.completedThisMonth)
@@ -393,19 +393,19 @@ export function ReportsDashboard({
                       const ratio = m.totalTasks > 0 ? Math.round((m.completedThisMonth / m.totalTasks) * 100) : 0;
                       return (
                         <div key={m.id} className="flex items-center gap-3 py-2 hover:bg-surface-container-lowest/50 transition-colors px-1 -mx-1">
-                          <span className={`w-5 h-5 flex items-center justify-center font-headline text-[9px] font-bold flex-shrink-0 ${idx < 3 ? "bg-primary/20 text-primary" : "bg-surface-container-high text-on-surface/40"}`}>{idx + 1}</span>
+                          <span className={`w-5 h-5 flex items-center justify-center font-headline text-[11px] font-bold flex-shrink-0 ${idx < 3 ? "bg-primary/20 text-primary" : "bg-surface-container-high text-on-surface/40"}`}>{idx + 1}</span>
                           <div className="h-7 w-7 flex items-center justify-center bg-surface-container-high text-[10px] font-headline font-bold uppercase flex-shrink-0">{m.name.charAt(0)}</div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-baseline justify-between">
                               <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">{m.name}</span>
-                              <span className="font-mono text-[8px] text-on-surface/30 ml-2 flex-shrink-0">{m.department || "—"}</span>
+                              <span className="font-mono text-[10px] text-on-surface/30 ml-2 flex-shrink-0">{m.department || "—"}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
                               <div className="flex-1 h-1 bg-surface-container-high overflow-hidden rounded-sm">
                                 <div className="h-full bg-green-500/70 transition-all duration-500" style={{ width: `${ratio}%` }} />
                               </div>
-                              <span className="font-mono text-[8px] text-green-400 font-bold flex-shrink-0">{m.completedThisMonth}</span>
-                              <span className="font-mono text-[8px] text-on-surface/25 flex-shrink-0">/ {m.totalTasks}</span>
+                              <span className="font-mono text-[10px] text-green-400 font-bold flex-shrink-0">{m.completedThisMonth}</span>
+                              <span className="font-mono text-[10px] text-on-surface/25 flex-shrink-0">/ {m.totalTasks}</span>
                             </div>
                           </div>
                         </div>
@@ -426,7 +426,7 @@ export function ReportsDashboard({
                   const colors: Record<string, string> = { ACTIVE: "text-green-400", DRAFT: "text-blue-400", COMPLETED: "text-purple-400", ARCHIVED: "text-on-surface/30", ON_HOLD: "text-amber-400" };
                   return (
                     <div key={status} className="flex items-center justify-between py-1.5">
-                      <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/50">{status.replace(/_/g, " ")}</span>
+                      <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface/50">{status.replace(/_/g, " ")}</span>
                       <span className={`font-headline text-lg ${colors[status] || "text-card-text"}`}>{count}</span>
                     </div>
                   );
@@ -440,16 +440,16 @@ export function ReportsDashboard({
               <div className="space-y-4">
                 <div className="text-center py-3">
                   <span className="font-headline text-5xl text-primary">{monthlyCompletions}</span>
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mt-1">Tasks This Month</p>
+                  <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mt-1">Tasks This Month</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
                     <span className="font-headline text-lg text-card-text block">{(monthlyCompletions / 4).toFixed(1)}</span>
-                    <span className="font-mono text-[8px] text-on-surface/40 uppercase">Weekly Avg</span>
+                    <span className="font-mono text-[10px] text-on-surface/40 uppercase">Weekly Avg</span>
                   </div>
                   <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
                     <span className="font-headline text-lg text-card-text block">{weeklyCompletions}</span>
-                    <span className="font-mono text-[8px] text-on-surface/40 uppercase">This Week</span>
+                    <span className="font-mono text-[10px] text-on-surface/40 uppercase">This Week</span>
                   </div>
                 </div>
               </div>
@@ -462,7 +462,7 @@ export function ReportsDashboard({
               </h3>
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {activitiesList.length === 0 ? (
-                  <p className="font-mono text-[9px] uppercase text-on-surface/30 tracking-widest text-center py-4">
+                  <p className="font-mono text-[11px] uppercase text-on-surface/30 tracking-widest text-center py-4">
                     NO_RECENT_ACTIVITY
                   </p>
                 ) : (
@@ -472,7 +472,7 @@ export function ReportsDashboard({
                         {ACTION_ICONS[a.action] || "radio_button_unchecked"}
                       </span>
                       <div className="min-w-0">
-                        <p className="font-mono text-[9px] text-on-surface/70 leading-tight">
+                        <p className="font-mono text-[11px] text-on-surface/70 leading-tight">
                           <span className="font-bold text-card-text">{a.userName}</span>
                           {" "}
                           <span className="lowercase">{a.action.replace(/_/g, " ")}</span>
@@ -480,7 +480,7 @@ export function ReportsDashboard({
                             <span className="text-primary"> {a.taskTitle}</span>
                           )}
                         </p>
-                        <p className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest mt-0.5">
+                        <p className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest mt-0.5">
                           {new Date(a.createdAt).toLocaleString("en-IN", {
                             month: "short",
                             day: "numeric",
@@ -496,7 +496,7 @@ export function ReportsDashboard({
                   <button
                     onClick={handleLoadMoreActivities}
                     disabled={isLoadingMoreActivities}
-                    className="w-full text-center py-1.5 font-mono text-[9px] uppercase tracking-wider border brutalist-border bg-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 mt-2"
+                    className="w-full text-center py-1.5 font-mono text-[11px] uppercase tracking-wider border brutalist-border bg-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 mt-2"
                   >
                     {isLoadingMoreActivities ? "LOADING..." : "LOAD MORE ACTIVITIES"}
                   </button>
@@ -584,7 +584,7 @@ export function ReportsDashboard({
                     </div>
                     <div>
                       <span className="font-headline text-sm uppercase tracking-wider text-card-text block">{person.name}</span>
-                      <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40">
                         {person.department || person.role?.replace("_", " ") || "—"}
                       </span>
                     </div>
@@ -602,7 +602,7 @@ export function ReportsDashboard({
                     <div key={chip.label} className={`${chip.color} px-3 py-2 text-center`}>
                       <span className="material-symbols-outlined text-sm block mb-0.5">{chip.icon}</span>
                       <span className="font-headline text-lg block">{chip.value}</span>
-                      <span className="font-mono text-[7px] uppercase tracking-widest block">{chip.label.replace(/_/g, " ")}</span>
+                      <span className="font-mono text-[11px] uppercase tracking-widest block">{chip.label.replace(/_/g, " ")}</span>
                     </div>
                   ))}
                 </div>
@@ -622,7 +622,7 @@ export function ReportsDashboard({
                     <button
                       key={f}
                       onClick={() => setPersonTaskFilter(f)}
-                      className={`px-3 py-1 font-mono text-[8px] uppercase tracking-wider transition-all duration-150 border brutalist-border ${
+                      className={`px-3 py-1 font-mono text-[10px] uppercase tracking-wider transition-all duration-150 border brutalist-border ${
                         personTaskFilter === f
                           ? "bg-primary text-white"
                           : "bg-card text-on-surface/60 hover:bg-surface-container-high"
@@ -638,7 +638,7 @@ export function ReportsDashboard({
               {filteredTasks.length === 0 ? (
                 <div className="px-4 py-8 text-center">
                   <span className="material-symbols-outlined text-2xl text-on-surface/20 block mb-2">search_off</span>
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/30">NO TASKS MATCH THIS FILTER</p>
+                  <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/30">NO TASKS MATCH THIS FILTER</p>
                 </div>
               ) : (
                 <>
@@ -646,7 +646,7 @@ export function ReportsDashboard({
                   <div className="hidden md:block overflow-x-auto max-h-[500px] overflow-y-auto">
                     <table className="w-full text-left font-mono text-[10px] border-collapse">
                       <thead className="sticky top-0 z-10">
-                        <tr className="bg-surface-container-low border-b border-on-surface/10 uppercase text-on-surface/40 text-[8px]">
+                        <tr className="bg-surface-container-low border-b border-on-surface/10 uppercase text-on-surface/40 text-[10px]">
                           <th className="px-3 py-2 font-headline">Task</th>
                           <th className="px-3 py-2 font-headline">Project</th>
                           <th className="px-3 py-2 font-headline text-center">Status</th>
@@ -678,12 +678,12 @@ export function ReportsDashboard({
                                   <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate flex-1 min-w-0 px-1" style={{ maxWidth: 180 }}>{t.title}</span>
                                   <span className="text-on-surface/50 uppercase truncate px-2" style={{ maxWidth: 110 }}>{t.projectTitle}</span>
                                   <span className="px-2 text-center" style={{ minWidth: 80 }}>
-                                    <span className={`inline-block px-2 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
+                                    <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
                                       {t.status.replace(/_/g, " ")}
                                     </span>
                                   </span>
                                   <span className="px-2 text-center" style={{ minWidth: 60 }}>
-                                    <span className={`inline-block px-1.5 py-0.5 text-[7px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>
+                                    <span className={`inline-block px-1.5 py-0.5 text-[11px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>
                                       {t.priority}
                                     </span>
                                   </span>
@@ -722,10 +722,10 @@ export function ReportsDashboard({
                                         <div className="flex-1 min-w-0">
                                           <h4 className="font-headline text-sm uppercase tracking-wider text-card-text">{t.title}</h4>
                                           <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                            <span className={`px-2 py-0.5 text-[8px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
-                                            <span className={`px-1.5 py-0.5 text-[8px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
-                                            {t.revisionCount > 0 && <span className="px-1.5 py-0.5 text-[8px] uppercase font-bold bg-amber-500/20 text-amber-400">REV: {t.revisionCount}</span>}
-                                            {t.isOverdue && <span className="px-1.5 py-0.5 text-[8px] uppercase font-bold bg-red-500/20 text-red-400">OVERDUE</span>}
+                                            <span className={`px-2 py-0.5 text-[10px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
+                                            <span className={`px-1.5 py-0.5 text-[10px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
+                                            {t.revisionCount > 0 && <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-amber-500/20 text-amber-400">REV: {t.revisionCount}</span>}
+                                            {t.isOverdue && <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-red-500/20 text-red-400">OVERDUE</span>}
                                           </div>
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); setSelectedTaskId(null); }} className="p-1 hover:bg-surface-container-high transition-colors flex-shrink-0">
@@ -736,43 +736,43 @@ export function ReportsDashboard({
                                       {/* Description */}
                                       {t.description ? (
                                         <div className="border-l-2 border-primary/40 pl-3 py-1">
-                                          <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 block mb-1">DESCRIPTION</span>
+                                          <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40 block mb-1">DESCRIPTION</span>
                                           <p className="font-mono text-[11px] text-on-surface/80 leading-relaxed whitespace-pre-wrap">{t.description}</p>
                                         </div>
                                       ) : (
                                         <div className="border-l-2 border-on-surface/10 pl-3 py-1">
-                                          <span className="font-mono text-[9px] text-on-surface/25 uppercase tracking-widest">NO DESCRIPTION PROVIDED</span>
+                                          <span className="font-mono text-[11px] text-on-surface/25 uppercase tracking-widest">NO DESCRIPTION PROVIDED</span>
                                         </div>
                                       )}
 
                                       {/* Detail Grid */}
                                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                         <div className="brutalist-border bg-card p-2.5">
-                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">PROJECT</span>
+                                          <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">PROJECT</span>
                                           <span className="font-headline text-[10px] text-card-text uppercase block mt-0.5">{t.projectTitle}</span>
                                         </div>
                                         <div className="brutalist-border bg-card p-2.5">
-                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">{isManager && t.assigneeName ? "ASSIGNED TO" : "ASSIGNED BY"}</span>
+                                          <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">{isManager && t.assigneeName ? "ASSIGNED TO" : "ASSIGNED BY"}</span>
                                           <span className="font-headline text-[10px] text-primary uppercase block mt-0.5">{isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}</span>
                                         </div>
                                         <div className="brutalist-border bg-card p-2.5">
-                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">CREATED</span>
+                                          <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">CREATED</span>
                                           <span className="font-headline text-[10px] text-on-surface/70 uppercase block mt-0.5">{fmtDate(t.createdAt)}</span>
                                         </div>
                                         <div className="brutalist-border bg-card p-2.5">
-                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">STARTED</span>
+                                          <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">STARTED</span>
                                           <span className={`font-headline text-[10px] uppercase block mt-0.5 ${t.startedAt ? "text-blue-400" : "text-on-surface/20"}`}>{t.startedAt ? fmtDate(t.startedAt) : "NOT STARTED"}</span>
                                         </div>
                                       </div>
                                       <div className="grid grid-cols-2 gap-2">
                                         <div className={`brutalist-border p-2.5 ${t.isOverdue ? "bg-red-500/5 border-red-500/20" : "bg-card"}`}>
-                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">DUE DATE</span>
+                                          <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">DUE DATE</span>
                                           <span className={`font-headline text-[10px] uppercase block mt-0.5 ${t.isOverdue ? "text-red-400 font-bold" : t.dueDate ? "text-on-surface/70" : "text-on-surface/20"}`}>
                                             {t.dueDate ? fmtDate(t.dueDate) : "NO DUE DATE"}
                                           </span>
                                         </div>
                                         <div className={`brutalist-border p-2.5 ${isDone ? (t.isOverdue ? "bg-red-500/5" : "bg-green-500/5") : "bg-card"}`}>
-                                          <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">COMPLETED</span>
+                                          <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">COMPLETED</span>
                                           <span className={`font-headline text-[10px] uppercase block mt-0.5 ${isDone ? (t.isOverdue ? "text-red-400 font-bold" : "text-green-400 font-bold") : "text-on-surface/20"}`}>
                                             {isDone ? fmtDate(t.completedAt) : "PENDING"}
                                           </span>
@@ -867,9 +867,9 @@ export function ReportsDashboard({
                                         return (
                                           <div className="mt-3">
                                             <div className="flex items-center justify-between mb-2">
-                                              <span className="font-headline text-[8px] uppercase tracking-widest text-primary">TASK LIFECYCLE TIMELINE</span>
+                                              <span className="font-headline text-[10px] uppercase tracking-widest text-primary">TASK LIFECYCLE TIMELINE</span>
                                               {totalDuration && (
-                                                <span className="font-mono text-[8px] text-on-surface/40">
+                                                <span className="font-mono text-[10px] text-on-surface/40">
                                                   TOTAL: {totalDuration} · REV: {t.revisionCount}
                                                 </span>
                                               )}
@@ -883,19 +883,19 @@ export function ReportsDashboard({
                                                     <div className={`absolute -left-[5px] top-2.5 w-2 h-2 rounded-full ${evt.color} ring-2 ring-card`} />
                                                     <div className="flex items-baseline justify-between gap-2">
                                                       <div className="min-w-0">
-                                                        <span className="font-headline text-[9px] uppercase tracking-wider text-card-text">{evt.label}</span>
-                                                        <span className="font-mono text-[8px] text-on-surface/40 ml-2">
+                                                        <span className="font-headline text-[11px] uppercase tracking-wider text-card-text">{evt.label}</span>
+                                                        <span className="font-mono text-[10px] text-on-surface/40 ml-2">
                                                           by {evt.who}{evt.role ? ` (${evt.role})` : ""}
                                                         </span>
                                                         {evt.detail && (
-                                                          <span className="font-mono text-[8px] text-on-surface/30 ml-1">— {evt.detail}</span>
+                                                          <span className="font-mono text-[10px] text-on-surface/30 ml-1">— {evt.detail}</span>
                                                         )}
                                                       </div>
                                                       <div className="flex items-center gap-2 flex-shrink-0">
                                                         {elapsed && (
-                                                          <span className="font-mono text-[7px] text-primary/60 bg-primary/5 px-1.5 py-0.5">⏱ {elapsed}</span>
+                                                          <span className="font-mono text-[11px] text-primary/60 bg-primary/5 px-1.5 py-0.5">⏱ {elapsed}</span>
                                                         )}
-                                                        <span className="font-mono text-[8px] text-on-surface/40">{fmtDateTime(evt.time)}</span>
+                                                        <span className="font-mono text-[10px] text-on-surface/40">{fmtDateTime(evt.time)}</span>
                                                       </div>
                                                     </div>
                                                   </div>
@@ -933,14 +933,14 @@ export function ReportsDashboard({
                                 <span className={`material-symbols-outlined text-xs text-on-surface/25 transition-transform duration-200 flex-shrink-0 ${isTaskSelected ? "rotate-90" : ""}`}>chevron_right</span>
                                 <div className="min-w-0 flex-1">
                                   <span className="font-headline text-[10px] uppercase tracking-wider text-card-text block truncate">{t.title}</span>
-                                  <span className="font-mono text-[8px] text-on-surface/40 uppercase">{t.projectTitle}</span>
+                                  <span className="font-mono text-[10px] text-on-surface/40 uppercase">{t.projectTitle}</span>
                                 </div>
                               </div>
-                              <span className={`px-1.5 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
+                              <span className={`px-1.5 py-0.5 text-[11px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
                                 {t.status.replace(/_/g, " ")}
                               </span>
                             </div>
-                            <div className="grid grid-cols-4 gap-1.5 text-center font-mono text-[8px] uppercase brutalist-border bg-surface-container-lowest p-2">
+                            <div className="grid grid-cols-4 gap-1.5 text-center font-mono text-[10px] uppercase brutalist-border bg-surface-container-lowest p-2">
                               <div>
                                 <span className="text-on-surface/30 block">Created</span>
                                 <span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span>
@@ -958,7 +958,7 @@ export function ReportsDashboard({
                                 {isDone ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">—</span>}
                               </div>
                             </div>
-                            <div className="flex items-center gap-3 text-[8px] font-mono uppercase text-on-surface/40">
+                            <div className="flex items-center gap-3 text-[10px] font-mono uppercase text-on-surface/40">
                               <span className={`px-1 py-0.5 ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
                               <span>{isManager && t.assigneeName ? `→ ${t.assigneeName}` : `BY ${t.assignerName || "—"}`}</span>
                               {t.revisionCount > 0 && <span className="text-amber-400 font-bold">{t.revisionCount} rev</span>}
@@ -969,22 +969,22 @@ export function ReportsDashboard({
                             <div className="animate-in slide-in-from-top-1 fade-in duration-200 bg-surface-container-lowest border-t border-primary/20 p-3 space-y-3">
                               {t.description ? (
                                 <div className="border-l-2 border-primary/40 pl-3 py-1">
-                                  <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 block mb-1">DESCRIPTION</span>
+                                  <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40 block mb-1">DESCRIPTION</span>
                                   <p className="font-mono text-[11px] text-on-surface/80 leading-relaxed whitespace-pre-wrap">{t.description}</p>
                                 </div>
                               ) : (
                                 <div className="border-l-2 border-on-surface/10 pl-3 py-1">
-                                  <span className="font-mono text-[9px] text-on-surface/25 uppercase tracking-widest">NO DESCRIPTION PROVIDED</span>
+                                  <span className="font-mono text-[11px] text-on-surface/25 uppercase tracking-widest">NO DESCRIPTION PROVIDED</span>
                                 </div>
                               )}
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="brutalist-border bg-card p-2">
-                                  <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">PROJECT</span>
-                                  <span className="font-headline text-[9px] text-card-text uppercase block mt-0.5">{t.projectTitle}</span>
+                                  <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">PROJECT</span>
+                                  <span className="font-headline text-[11px] text-card-text uppercase block mt-0.5">{t.projectTitle}</span>
                                 </div>
                                 <div className="brutalist-border bg-card p-2">
-                                  <span className="font-mono text-[7px] text-on-surface/30 uppercase tracking-widest block">{isManager && t.assigneeName ? "ASSIGNED TO" : "ASSIGNED BY"}</span>
-                                  <span className="font-headline text-[9px] text-primary uppercase block mt-0.5">{isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}</span>
+                                  <span className="font-mono text-[11px] text-on-surface/30 uppercase tracking-widest block">{isManager && t.assigneeName ? "ASSIGNED TO" : "ASSIGNED BY"}</span>
+                                  <span className="font-headline text-[11px] text-primary uppercase block mt-0.5">{isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}</span>
                                 </div>
                               </div>
                             </div>
@@ -1013,7 +1013,7 @@ export function ReportsDashboard({
           <div className="brutalist-border bg-card p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-headline text-sm uppercase tracking-[0.2em] text-card-text">EMPLOYEE PERFORMANCE AUDIT</h3>
-              <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">CLICK ROW TO EXPAND</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">CLICK ROW TO EXPAND</span>
             </div>
             {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
@@ -1066,7 +1066,7 @@ export function ReportsDashboard({
                                 <span className="text-center w-24">{emp.completedCount}</span>
                                 <span className={`text-center w-28 ${properlyRateColor}`}>
                                   {emp.doneProperlyRate}%
-                                  <span className="text-[9px] block text-on-surface/30 uppercase tracking-tighter">
+                                  <span className="text-[11px] block text-on-surface/30 uppercase tracking-tighter">
                                     {emp.totalRevisions} revisions
                                   </span>
                                 </span>
@@ -1119,7 +1119,7 @@ export function ReportsDashboard({
                               <span className="font-headline font-bold text-card-text block uppercase leading-snug">
                                 {emp.name}
                               </span>
-                              <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
+                              <span className="text-[11px] text-on-surface/40 uppercase tracking-wider block">
                                 {emp.department || "—"}
                               </span>
                             </div>
@@ -1127,7 +1127,7 @@ export function ReportsDashboard({
                           <span className="text-primary font-bold">{emp.hoursLogged.toFixed(1)} hrs</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-on-surface/5 text-[9px] uppercase">
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-on-surface/5 text-[11px] uppercase">
                           <div>
                             <span className="text-on-surface/40 block">ACTIVE / DONE</span>
                             <span className="text-foreground font-bold">{emp.ongoingCount} / {emp.completedCount}</span>
@@ -1135,7 +1135,7 @@ export function ReportsDashboard({
                           <div>
                             <span className="text-on-surface/40 block">PROPERLY RATE</span>
                             <span className={properlyRateColor}>{emp.doneProperlyRate}%</span>
-                            <span className="text-[7px] text-on-surface/30 block">({emp.totalRevisions} revisions)</span>
+                            <span className="text-[11px] text-on-surface/30 block">({emp.totalRevisions} revisions)</span>
                           </div>
                           <div>
                             <span className="text-on-surface/40 block">OVERDUE RATE</span>
@@ -1156,7 +1156,7 @@ export function ReportsDashboard({
               <h3 className="font-headline text-sm uppercase tracking-[0.2em] text-card-text">
                 MANAGEMENT & POC OVERSIGHT ACTIVITY
               </h3>
-              <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">CLICK ROW TO EXPAND</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">CLICK ROW TO EXPAND</span>
             </div>
             
             {/* Desktop View */}
@@ -1226,7 +1226,7 @@ export function ReportsDashboard({
                               <span className="font-headline font-bold text-card-text block uppercase leading-snug">
                                 {mgr.name}
                               </span>
-                              <span className="text-[9px] text-on-surface/40 uppercase tracking-wider block">
+                              <span className="text-[11px] text-on-surface/40 uppercase tracking-wider block">
                                 {mgr.role.replace("_", " ")}
                               </span>
                             </div>
@@ -1234,7 +1234,7 @@ export function ReportsDashboard({
                           <span className="text-primary font-bold">{mgr.hoursLogged.toFixed(1)} hrs</span>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-on-surface/5 text-[9px] uppercase text-center">
+                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-on-surface/5 text-[11px] uppercase text-center">
                           <div className="border-r border-on-surface/5 last:border-0 pr-1">
                             <span className="text-on-surface/40 block">PROJECTS</span>
                             <span className="text-foreground font-bold">{mgr.projectsManaged}</span>
@@ -1318,13 +1318,13 @@ export function ReportsDashboard({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-headline text-xs uppercase tracking-wider text-card-text">{grp.title}</span>
-                        <span className="font-mono text-[9px] px-2 py-0.5 bg-surface-container-highest text-on-surface/50">{grp.total} tasks</span>
-                        {grp.overdue > 0 && <span className="font-mono text-[9px] px-2 py-0.5 bg-red-500/15 text-red-400 font-bold">{grp.overdue} overdue</span>}
-                        {grp.revisions > 0 && <span className="font-mono text-[9px] px-2 py-0.5 bg-amber-500/15 text-amber-400">{grp.revisions} rev</span>}
+                        <span className="font-mono text-[11px] px-2 py-0.5 bg-surface-container-highest text-on-surface/50">{grp.total} tasks</span>
+                        {grp.overdue > 0 && <span className="font-mono text-[11px] px-2 py-0.5 bg-red-500/15 text-red-400 font-bold">{grp.overdue} overdue</span>}
+                        {grp.revisions > 0 && <span className="font-mono text-[11px] px-2 py-0.5 bg-amber-500/15 text-amber-400">{grp.revisions} rev</span>}
                       </div>
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="flex-1 h-1 bg-surface-container-highest overflow-hidden"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} /></div>
-                        <span className="font-mono text-[8px] text-on-surface/40 w-8 text-right">{pct}%</span>
+                        <span className="font-mono text-[10px] text-on-surface/40 w-8 text-right">{pct}%</span>
                       </div>
                     </div>
                   </button>
@@ -1337,9 +1337,9 @@ export function ReportsDashboard({
                             <div className="flex items-start gap-4">
                               <div className="flex-1 min-w-0">
                                 <span className="font-headline text-[11px] uppercase tracking-wider text-card-text block truncate">{t.title}</span>
-                                <span className="font-mono text-[9px] text-on-surface/40 uppercase tracking-wider">{t.creatorName} <span className="text-primary">→</span> {t.assigneeName}{t.assigneeDept && <span className="text-on-surface/25 ml-1">({t.assigneeDept})</span>}</span>
+                                <span className="font-mono text-[11px] text-on-surface/40 uppercase tracking-wider">{t.creatorName} <span className="text-primary">→</span> {t.assigneeName}{t.assigneeDept && <span className="text-on-surface/25 ml-1">({t.assigneeDept})</span>}</span>
                               </div>
-                              <span className={`px-2 py-0.5 text-[8px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
+                              <span className={`px-2 py-0.5 text-[10px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
                               <div className="w-16 text-center flex-shrink-0">{t.revisionCount > 0 ? <span className="text-amber-400 font-bold font-mono text-[10px]">{t.revisionCount} rev</span> : <span className="text-green-400/60 font-mono text-[10px]">0 rev</span>}</div>
                               <div className="w-14 text-center flex-shrink-0"><span className="font-mono text-[10px] text-on-surface/40">{info.ageDays !== null ? `${info.ageDays}d` : "—"}</span></div>
                               <div className={`w-28 text-right flex-shrink-0 flex items-center justify-end gap-1 ${info.delayColor}`}><span className="material-symbols-outlined text-xs">{info.delayIcon}</span><span className="font-mono text-[10px] font-bold">{info.delayText}</span></div>
@@ -1347,31 +1347,31 @@ export function ReportsDashboard({
                             <div className="mt-2 flex items-center gap-2">
                               <div className="grid grid-cols-4 gap-3 font-mono text-[10px] uppercase tracking-wider flex-shrink-0 min-w-[340px]">
                                 <div className="flex flex-col">
-                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Created</span>
+                                  <span className="text-[10px] text-on-surface/30 mb-0.5">Created</span>
                                   <span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Started</span>
+                                  <span className="text-[10px] text-on-surface/30 mb-0.5">Started</span>
                                   {t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">Not started</span>}
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Due</span>
+                                  <span className="text-[10px] text-on-surface/30 mb-0.5">Due</span>
                                   {t.dueDate ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span> : <span className="text-on-surface/20">No due date</span>}
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-[8px] text-on-surface/30 mb-0.5">Completed</span>
+                                  <span className="text-[10px] text-on-surface/30 mb-0.5">Completed</span>
                                   {isComp ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">Pending</span>}
                                 </div>
                               </div>
                               <div className="flex-1 h-2 bg-surface-container-high overflow-hidden rounded-sm"><div className={`h-full transition-all duration-700 ${info.barColor}`} style={{ width: `${Math.min(info.pct, 100)}%` }} /></div>
-                              <span className="font-mono text-[9px] text-on-surface/30 w-8 text-right flex-shrink-0">{Math.min(info.pct, 100)}%</span>
+                              <span className="font-mono text-[11px] text-on-surface/30 w-8 text-right flex-shrink-0">{Math.min(info.pct, 100)}%</span>
                             </div>
                             {/* Expand/collapse timeline toggle */}
                             {taskActivityMap[t.id] && taskActivityMap[t.id].length > 0 && (
                               <div className="mt-1">
                                 <button
                                   onClick={() => setSelectedTaskId(selectedTaskId === t.id ? null : t.id)}
-                                  className="flex items-center gap-1 font-mono text-[8px] uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-1"
+                                  className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-1"
                                 >
                                   <span className="material-symbols-outlined text-xs">
                                     {selectedTaskId === t.id ? "expand_less" : "timeline"}
@@ -1427,8 +1427,8 @@ export function ReportsDashboard({
                                   return (
                                     <div className="mt-2 mb-1 pl-2 border-l-2 border-primary/20 space-y-0 animate-in slide-in-from-top-2 duration-200">
                                       <div className="flex items-center justify-between mb-1.5">
-                                        <span className="font-headline text-[8px] uppercase tracking-widest text-primary">LIFECYCLE</span>
-                                        {totalDur && <span className="font-mono text-[8px] text-on-surface/40">TOTAL: {totalDur} · REV: {t.revisionCount}</span>}
+                                        <span className="font-headline text-[10px] uppercase tracking-widest text-primary">LIFECYCLE</span>
+                                        {totalDur && <span className="font-mono text-[10px] text-on-surface/40">TOTAL: {totalDur} · REV: {t.revisionCount}</span>}
                                       </div>
                                       {events2.map((evt, idx) => {
                                         const elapsed = idx > 0 ? calcDuration2(events2[idx - 1].time, evt.time) : null;
@@ -1437,13 +1437,13 @@ export function ReportsDashboard({
                                             <div className={`absolute -left-[4px] top-2 w-2 h-2 rounded-full ${evt.color} ring-2 ring-card`} />
                                             <div className="flex items-baseline justify-between gap-2">
                                               <div className="min-w-0">
-                                                <span className="font-headline text-[9px] uppercase tracking-wider text-card-text">{evt.label}</span>
-                                                <span className="font-mono text-[8px] text-on-surface/40 ml-2">by {evt.who}{evt.role ? ` (${evt.role})` : ""}</span>
-                                                {evt.detail && <span className="font-mono text-[8px] text-on-surface/30 ml-1">— {evt.detail}</span>}
+                                                <span className="font-headline text-[11px] uppercase tracking-wider text-card-text">{evt.label}</span>
+                                                <span className="font-mono text-[10px] text-on-surface/40 ml-2">by {evt.who}{evt.role ? ` (${evt.role})` : ""}</span>
+                                                {evt.detail && <span className="font-mono text-[10px] text-on-surface/30 ml-1">— {evt.detail}</span>}
                                               </div>
                                               <div className="flex items-center gap-2 flex-shrink-0">
-                                                {elapsed && <span className="font-mono text-[7px] text-primary/60 bg-primary/5 px-1.5 py-0.5">⏱ {elapsed}</span>}
-                                                <span className="font-mono text-[8px] text-on-surface/40">{fmtDateTime2(evt.time)}</span>
+                                                {elapsed && <span className="font-mono text-[11px] text-primary/60 bg-primary/5 px-1.5 py-0.5">⏱ {elapsed}</span>}
+                                                <span className="font-mono text-[10px] text-on-surface/40">{fmtDateTime2(evt.time)}</span>
                                               </div>
                                             </div>
                                           </div>
@@ -1457,17 +1457,17 @@ export function ReportsDashboard({
                           </div>
                           <div className="md:hidden p-4 space-y-3">
                             <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1"><span className="font-headline text-[11px] uppercase tracking-wider text-card-text block truncate">{t.title}</span><span className="font-mono text-[9px] text-on-surface/40 uppercase">{t.creatorName} <span className="text-primary">→</span> {t.assigneeName}</span></div>
-                              <span className={`px-2 py-0.5 text-[7px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
+                              <div className="min-w-0 flex-1"><span className="font-headline text-[11px] uppercase tracking-wider text-card-text block truncate">{t.title}</span><span className="font-mono text-[11px] text-on-surface/40 uppercase">{t.creatorName} <span className="text-primary">→</span> {t.assigneeName}</span></div>
+                              <span className={`px-2 py-0.5 text-[11px] uppercase tracking-widest text-white font-bold flex-shrink-0 ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
                             </div>
                             <div className="grid grid-cols-4 gap-2 text-center font-mono text-[10px] uppercase brutalist-border bg-surface-container-lowest p-2">
-                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Created</span><span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span></div>
-                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Started</span>{t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}</div>
-                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Due</span><span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span></div>
-                              <div><span className="text-[8px] text-on-surface/30 block mb-0.5">Completed</span>{isComp ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">Pending</span>}</div>
+                              <div><span className="text-[10px] text-on-surface/30 block mb-0.5">Created</span><span className="text-on-surface/60 font-bold">{fmtDate(t.createdAt)}</span></div>
+                              <div><span className="text-[10px] text-on-surface/30 block mb-0.5">Started</span>{t.startedAt ? <span className="text-blue-400 font-bold">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}</div>
+                              <div><span className="text-[10px] text-on-surface/30 block mb-0.5">Due</span><span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-on-surface/60"}`}>{fmtDate(t.dueDate)}</span></div>
+                              <div><span className="text-[10px] text-on-surface/30 block mb-0.5">Completed</span>{isComp ? <span className={`font-bold ${t.isOverdue ? "text-red-400" : "text-green-400"}`}>{fmtDate(t.completedAt)}</span> : <span className="text-on-surface/20">Pending</span>}</div>
                             </div>
                             <div className="h-1.5 bg-surface-container-high overflow-hidden rounded-sm"><div className={`h-full transition-all duration-700 ${info.barColor}`} style={{ width: `${Math.min(info.pct, 100)}%` }} /></div>
-                            <div className="flex items-center justify-between pt-1 border-t border-on-surface/5 text-[9px]">
+                            <div className="flex items-center justify-between pt-1 border-t border-on-surface/5 text-[11px]">
                               <div className="flex items-center gap-3">{t.revisionCount > 0 ? <span className="text-amber-400 font-bold font-mono">{t.revisionCount} rev</span> : <span className="text-green-400/60 font-mono">0 rev</span>}{info.ageDays !== null && <span className="text-on-surface/30 font-mono">{info.ageDays}d old</span>}</div>
                               <div className={`flex items-center gap-1 ${info.delayColor}`}><span className="material-symbols-outlined text-xs">{info.delayIcon}</span><span className="font-mono font-bold">{info.delayText}</span></div>
                             </div>
@@ -1505,10 +1505,10 @@ function KPICard({
     <div className="brutalist-border bg-card p-4 relative overflow-hidden group hover:bg-card/80 transition-colors">
       <div className="flex items-start justify-between mb-2">
         <span className={`material-symbols-outlined text-xl ${accent}`}>{icon}</span>
-        <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">{label}</span>
+        <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">{label}</span>
       </div>
       <p className="font-headline text-2xl md:text-3xl text-card-text tracking-tight">{value}</p>
-      <p className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 mt-1">{sub}</p>
+      <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40 mt-1">{sub}</p>
     </div>
   );
 }

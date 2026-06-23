@@ -67,7 +67,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
             <h2 className="font-headline text-base uppercase tracking-tight text-on-surface">
               EDIT_CLIENT
             </h2>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mt-0.5">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mt-0.5">
               {client.id.slice(-8)}
             </p>
           </div>
@@ -142,7 +142,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
                   onChange={(e) => setBrandColor(e.target.value)}
                   className="w-7 h-7 cursor-pointer border-0 bg-transparent"
                 />
-                <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40">
+                <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40">
                   {brandColor}
                 </span>
               </div>

@@ -149,7 +149,7 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
           {/* Association Selectors */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-label text-[9px] uppercase tracking-widest text-on-surface/50 block mb-1">
+              <label className="font-label text-[11px] uppercase tracking-widest text-on-surface/50 block mb-1">
                 CLIENT (OPTIONAL)
               </label>
               <AppSelect
@@ -164,7 +164,7 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
               />
             </div>
             <div>
-              <label className="font-label text-[9px] uppercase tracking-widest text-on-surface/50 block mb-1">
+              <label className="font-label text-[11px] uppercase tracking-widest text-on-surface/50 block mb-1">
                 PROJECT (OPTIONAL)
               </label>
               <AppSelect
@@ -221,13 +221,13 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
                         />
                       </div>
                     </div>
-                    <span className="font-mono text-[8px] uppercase text-on-surface/50">
+                    <span className="font-mono text-[10px] uppercase text-on-surface/50">
                       {uf.status === "done" ? "DONE" : uf.status === "error" ? "FAIL" : `${uf.progress}%`}
                     </span>
                   </div>
                   {/* Show exact Supabase error for debugging */}
                   {uf.status === "error" && uf.error && (
-                    <p className="font-mono text-[9px] text-red-400 pl-7 break-all">{uf.error}</p>
+                    <p className="font-mono text-[11px] text-red-400 pl-7 break-all">{uf.error}</p>
                   )}
                 </div>
               ))}

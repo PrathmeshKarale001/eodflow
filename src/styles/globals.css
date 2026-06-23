@@ -51,16 +51,16 @@
   --color-card-text: var(--clr-card-text);
   --color-card-border: var(--clr-card-border);
 
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
 }
 
 /* ===== DARK MODE (default) ===== */
 :root {
   color-scheme: dark;
-  --bg: #0A0A0A;
+  --bg: #0C0C10;
   --fg: #e5e2e1;
   --clr-primary: #c6bfff;
   --clr-on-primary: #2900a0;
@@ -74,21 +74,21 @@
   --clr-on-tertiary: #4d2600;
   --clr-tertiary-container: #ac5d00;
   --clr-on-tertiary-container: #fff5f1;
-  --clr-surface: #131313;
+  --clr-surface: #111115;
   --clr-on-surface: #e5e2e1;
-  --clr-surface-lowest: #0e0e0e;
-  --clr-surface-low: #1c1b1b;
-  --clr-surface-container: #201f1f;
-  --clr-surface-high: #2a2a2a;
-  --clr-surface-highest: #353534;
+  --clr-surface-lowest: #0C0C10;
+  --clr-surface-low: #18181E;
+  --clr-surface-container: #1E1E26;
+  --clr-surface-high: #282832;
+  --clr-surface-highest: #33333D;
   --clr-outline: #928ea0;
-  --clr-outline-variant: #474554;
+  --clr-outline-variant: #3E3D4D;
   --clr-error: #ffb4ab;
   --clr-on-error: #690005;
-  --clr-card: #181818;
-  --clr-card-muted: #1e1e1e;
+  --clr-card: #14141A;
+  --clr-card-muted: #1A1A22;
   --clr-card-text: #c6bfff;
-  --clr-card-border: rgba(255, 255, 255, 0.15);
+  --clr-card-border: rgba(255, 255, 255, 0.10);
 }
 
 /* ===== LIGHT MODE ===== */
@@ -128,6 +128,7 @@
 /* Custom Utilities */
 @utility brutalist-border {
   border: 1px solid var(--clr-card-border);
+  border-radius: var(--radius-md);
 }
 
 @utility scanline {
@@ -138,6 +139,29 @@
 
 @utility mono-clip {
   clip-path: polygon(0 0, 100% 0, 100% 90%, 95% 100%, 0 100%);
+}
+
+@utility accent-glow {
+  text-shadow: 0 0 12px var(--clr-primary);
+}
+
+@utility card-hover-lift {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(108, 92, 231, 0.15), 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@utility shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--clr-surface-high) 0%,
+    var(--clr-surface-highest) 40%,
+    var(--clr-surface-high) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.5s ease-in-out infinite;
 }
 
 @utility data-grid {
@@ -192,7 +216,28 @@ input,
 select,
 textarea,
 .brutalist-border {
-  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
+}
+
+/* ─── Page transition animations ──────────────────────────────── */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes page-exit {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
+
+.page-transition-enter {
+  animation: page-enter 250ms ease-out both;
+}
+
+/* ─── Shimmer sweep keyframes ──────────────────────────────── */
+@keyframes shimmer-sweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Theme-switch animation: apply globally only during active transition */
@@ -251,7 +296,7 @@ select {
   border: 1px solid var(--clr-card-border);
   font-family: var(--font-mono);
   cursor: pointer;
-  border-radius: 0px;
+  border-radius: var(--radius-md);
   padding: 0.25rem 1.75rem 0.25rem 0.5rem;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23c6bfff'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
   background-repeat: no-repeat;

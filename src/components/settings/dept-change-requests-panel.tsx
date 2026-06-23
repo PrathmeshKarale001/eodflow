@@ -37,7 +37,7 @@ export function DeptChangeRequestsPanel({ initialRequests }: { initialRequests: 
         <h2 className="font-headline text-sm uppercase tracking-widest text-card-text">
           DEPARTMENT_CHANGE_REQUESTS
         </h2>
-        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 font-mono text-[9px] uppercase">
+        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 font-mono text-[11px] uppercase">
           {requests.length} PENDING
         </span>
       </div>
@@ -56,7 +56,7 @@ export function DeptChangeRequestsPanel({ initialRequests }: { initialRequests: 
                 <p className="font-label text-xs uppercase tracking-wide text-foreground truncate">
                   {req.user.name}
                 </p>
-                <p className="font-mono text-[8px] text-on-surface/40 truncate">
+                <p className="font-mono text-[10px] text-on-surface/40 truncate">
                   {req.currentDept ?? "NONE"} → <span className="text-primary">{req.requestedDept}</span>
                 </p>
               </div>
@@ -66,7 +66,7 @@ export function DeptChangeRequestsPanel({ initialRequests }: { initialRequests: 
               <button
                 onClick={() => handleReview(req.id, "APPROVED")}
                 disabled={processing === req.id}
-                className="flex h-7 items-center gap-1 px-3 brutalist-border bg-green-900/30 text-green-300 text-[9px] font-label uppercase tracking-wider hover:bg-green-900/50 disabled:opacity-50 transition-colors"
+                className="flex h-7 items-center gap-1 px-3 brutalist-border bg-green-900/30 text-green-300 text-[11px] font-label uppercase tracking-wider hover:bg-green-900/50 disabled:opacity-50 transition-colors"
               >
                 <span className="material-symbols-outlined text-xs">check</span>
                 APPROVE
@@ -74,7 +74,7 @@ export function DeptChangeRequestsPanel({ initialRequests }: { initialRequests: 
               <button
                 onClick={() => handleReview(req.id, "REJECTED")}
                 disabled={processing === req.id}
-                className="flex h-7 items-center gap-1 px-3 brutalist-border bg-red-900/30 text-red-300 text-[9px] font-label uppercase tracking-wider hover:bg-red-900/50 disabled:opacity-50 transition-colors"
+                className="flex h-7 items-center gap-1 px-3 brutalist-border bg-red-900/30 text-red-300 text-[11px] font-label uppercase tracking-wider hover:bg-red-900/50 disabled:opacity-50 transition-colors"
               >
                 <span className="material-symbols-outlined text-xs">close</span>
                 REJECT

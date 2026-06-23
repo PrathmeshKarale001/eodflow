@@ -118,18 +118,18 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
         <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5">
           {/* Title */}
           <div className="space-y-1">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">TASK_TITLE</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">TASK_TITLE</label>
             <input
               {...register("title")}
               className="w-full h-10 bg-transparent brutalist-border px-3 py-2 font-body text-sm focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase"
               placeholder="E.G. DESIGN SOCIAL MEDIA CAROUSEL"
             />
-            {errors.title && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.title.message}</p>}
+            {errors.title && <p className="text-red-500 text-[11px] font-mono uppercase">{errors.title.message}</p>}
           </div>
 
           {/* Description */}
           <div className="space-y-1">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">DESCRIPTION</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">DESCRIPTION</label>
             <textarea
               {...register("description")}
               rows={2}
@@ -141,7 +141,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
           {/* Priority + Due Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">PRIORITY</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">PRIORITY</label>
               <Controller
                 name="priority"
                 control={control}
@@ -158,7 +158,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
               <input
                 type="datetime-local"
                 {...register("dueDate")}
@@ -170,7 +170,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
           {/* Status + Assign To */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">STATUS</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">STATUS</label>
               <Controller
                 name="status"
                 control={control}
@@ -187,7 +187,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGN_TO</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">ASSIGN_TO</label>
               <Controller
                 name="assignedToId"
                 control={control}
@@ -207,7 +207,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
           {/* Assigned By — Director only */}
           {isDirector && (
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">
                 ASSIGNED_BY <span className="text-error/60">(DIRECTOR_ONLY)</span>
               </label>
               <Controller

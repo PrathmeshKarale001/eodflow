@@ -159,7 +159,7 @@ export function ProfileEditForm({ user, pendingDeptRequest }: ProfileEditFormPro
             <p className="font-headline text-sm uppercase tracking-tight text-foreground">
               {user.name}
             </p>
-            <p className="font-mono text-[9px] text-on-surface/40 uppercase tracking-widest mt-0.5">
+            <p className="font-mono text-[11px] text-on-surface/40 uppercase tracking-widest mt-0.5">
               {uploading ? "UPLOADING..." : "CLICK_AVATAR_TO_CHANGE"}
             </p>
           </div>
@@ -199,19 +199,19 @@ export function ProfileEditForm({ user, pendingDeptRequest }: ProfileEditFormPro
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mb-1">EMAIL</p>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mb-1">EMAIL</p>
             <p className="font-body text-sm text-foreground">{user.email}</p>
           </div>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mb-1">ROLE</p>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mb-1">ROLE</p>
             <p className="font-body text-sm text-foreground">{ROLE_LABELS[user.role]}</p>
           </div>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mb-1">DEPARTMENT</p>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mb-1">DEPARTMENT</p>
             <p className="font-body text-sm text-foreground">{user.department ?? "—"}</p>
           </div>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mb-1">MEMBER_SINCE</p>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mb-1">MEMBER_SINCE</p>
             <p className="font-body text-sm text-foreground">{joinDate}</p>
           </div>
         </div>
@@ -230,7 +230,7 @@ export function ProfileEditForm({ user, pendingDeptRequest }: ProfileEditFormPro
                 <p className="font-label text-[10px] uppercase tracking-wider text-amber-300">
                   PENDING_APPROVAL
                 </p>
-                <p className="font-mono text-[9px] text-on-surface/40 mt-0.5">
+                <p className="font-mono text-[11px] text-on-surface/40 mt-0.5">
                   Requested: {pendingReq.requestedDept} — waiting for Director approval
                 </p>
               </div>

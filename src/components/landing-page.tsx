@@ -323,11 +323,11 @@ export function LandingPage() {
           </div>
           
           <div className="absolute inset-0 grid grid-cols-12 gap-1 opacity-10 pointer-events-none p-4">
-            <div className="flex flex-col gap-2 font-label text-[8px] text-white"><span>0101</span><span>1100</span><span>1010</span><span>0001</span><span>1111</span><span>0101</span></div>
-            <div className="flex flex-col gap-2 font-label text-[8px] text-white pt-10"><span>0111</span><span>1000</span><span>1110</span><span>0101</span><span>1010</span><span>0001</span></div>
-            <div className="flex flex-col gap-2 font-label text-[8px] text-white"><span>1010</span><span>1100</span><span>0101</span><span>1111</span><span>1010</span><span>0001</span></div>
-            <div className="hidden lg:flex flex-col gap-2 font-label text-[8px] text-white pt-20"><span>0101</span><span>1100</span><span>1010</span><span>0001</span><span>1111</span><span>0101</span></div>
-            <div className="hidden lg:flex flex-col gap-2 font-label text-[8px] text-white"><span>0111</span><span>1000</span><span>1110</span><span>0101</span><span>1010</span><span>0001</span></div>
+            <div className="flex flex-col gap-2 font-label text-[10px] text-white"><span>0101</span><span>1100</span><span>1010</span><span>0001</span><span>1111</span><span>0101</span></div>
+            <div className="flex flex-col gap-2 font-label text-[10px] text-white pt-10"><span>0111</span><span>1000</span><span>1110</span><span>0101</span><span>1010</span><span>0001</span></div>
+            <div className="flex flex-col gap-2 font-label text-[10px] text-white"><span>1010</span><span>1100</span><span>0101</span><span>1111</span><span>1010</span><span>0001</span></div>
+            <div className="hidden lg:flex flex-col gap-2 font-label text-[10px] text-white pt-20"><span>0101</span><span>1100</span><span>1010</span><span>0001</span><span>1111</span><span>0101</span></div>
+            <div className="hidden lg:flex flex-col gap-2 font-label text-[10px] text-white"><span>0111</span><span>1000</span><span>1110</span><span>0101</span><span>1010</span><span>0001</span></div>
           </div>
         </section>
 

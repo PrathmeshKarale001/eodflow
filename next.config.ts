@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb", // For file uploads
     },
+    // ─── PERF: Client-side router cache ────────────────────────────
+    // Reuse fetched page data for 30s (dynamic) / 180s (static)
+    // instead of refetching on every navigation click
+    staleTimes: { dynamic: 30, static: 180 },
     // ─── PERF: Optimize large package imports ─────────────────────
     // Tree-shakes barrel exports so only used icons/components are bundled
     optimizePackageImports: [

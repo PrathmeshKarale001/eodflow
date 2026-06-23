@@ -71,7 +71,7 @@ export function TimeLogTable({ entries, showUser }: TimeLogTableProps) {
       <div className="brutalist-border p-8 text-center bg-card">
         <span className="material-symbols-outlined text-3xl text-on-surface/20 block mb-2">timer_off</span>
         <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">NO_TIME_LOGGED</p>
-        <p className="font-mono text-[9px] text-on-surface/20 mt-1">Start a timer or log time manually above</p>
+        <p className="font-mono text-[11px] text-on-surface/20 mt-1">Start a timer or log time manually above</p>
       </div>
     );
   }
@@ -92,10 +92,10 @@ export function TimeLogTable({ entries, showUser }: TimeLogTableProps) {
           <div key={dateStr} className="brutalist-border bg-card overflow-hidden">
             {/* Day header */}
             <div className="px-4 py-2 bg-card-muted flex items-center justify-between brutalist-border border-t-0 border-x-0">
-              <span className="font-headline text-[9px] uppercase tracking-widest text-card-text">
+              <span className="font-headline text-[11px] uppercase tracking-widest text-card-text">
                 {formatDate(dateStr)}
               </span>
-              <span className="font-mono text-[9px] text-primary">{formatMins(dayTotal)}</span>
+              <span className="font-mono text-[11px] text-primary">{formatMins(dayTotal)}</span>
             </div>
 
             {/* Entries */}
@@ -113,16 +113,16 @@ export function TimeLogTable({ entries, showUser }: TimeLogTableProps) {
                       {entry.task?.title ?? "Unknown task"}
                     </p>
                     {entry.task?.project && (
-                      <p className="font-mono text-[8px] text-on-surface/40 truncate">
+                      <p className="font-mono text-[10px] text-on-surface/40 truncate">
                         {entry.task.project.client?.companyName && `${entry.task.project.client.companyName} · `}
                         {entry.task.project?.title || "No Project"}
                       </p>
                     )}
                     {entry.notes && (
-                      <p className="font-mono text-[8px] text-on-surface/50 mt-0.5 italic">{entry.notes}</p>
+                      <p className="font-mono text-[10px] text-on-surface/50 mt-0.5 italic">{entry.notes}</p>
                     )}
                     {entry.startedAt && (
-                      <p className="font-mono text-[7px] text-on-surface/30 mt-0.5 uppercase">
+                      <p className="font-mono text-[11px] text-on-surface/30 mt-0.5 uppercase">
                         <span className="text-primary/50">●</span> TIMER
                       </p>
                     )}

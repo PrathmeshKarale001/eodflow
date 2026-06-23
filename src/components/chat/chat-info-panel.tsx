@@ -65,7 +65,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
           <h3 className="font-headline text-xs uppercase tracking-widest text-foreground">
             CHANNEL_INFO
           </h3>
-          <p className="font-mono text-[9px] text-on-surface/40 uppercase tracking-widest mt-0.5">
+          <p className="font-mono text-[11px] text-on-surface/40 uppercase tracking-widest mt-0.5">
             {channelName} — {memberCount} MEMBERS
           </p>
         </div>
@@ -83,7 +83,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2.5 font-label text-[9px] uppercase tracking-widest text-center transition-colors ${
+            className={`flex-1 py-2.5 font-label text-[11px] uppercase tracking-widest text-center transition-colors ${
               activeTab === tab.id
                 ? "text-primary border-b-2 border-primary"
                 : "text-on-surface/40 hover:text-on-surface/70"
@@ -91,7 +91,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
           >
             {tab.label}
             {tab.count > 0 && (
-              <span className="ml-1 text-[8px] opacity-60">({tab.count})</span>
+              <span className="ml-1 text-[10px] opacity-60">({tab.count})</span>
             )}
           </button>
         ))}
@@ -146,7 +146,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
                     <span className="material-symbols-outlined text-lg text-primary flex-shrink-0">description</span>
                     <div className="min-w-0 flex-1">
                       <p className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{name}</p>
-                      <p className="font-mono text-[8px] text-on-surface/40">{item.user.name}</p>
+                      <p className="font-mono text-[10px] text-on-surface/40">{item.user.name}</p>
                     </div>
                     <span className="material-symbols-outlined text-sm text-on-surface/30">download</span>
                   </a>
@@ -173,7 +173,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
                     <span className="material-symbols-outlined text-lg text-blue-400 flex-shrink-0">link</span>
                     <div className="min-w-0 flex-1">
                       <p className="font-label text-[10px] text-foreground truncate">{domain}</p>
-                      <p className="font-mono text-[8px] text-on-surface/40">{link.sentBy}</p>
+                      <p className="font-mono text-[10px] text-on-surface/40">{link.sentBy}</p>
                     </div>
                   </a>
                 );
@@ -190,7 +190,7 @@ function EmptyState({ icon, label }: { icon: string; label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <span className="material-symbols-outlined text-3xl text-on-surface/15 mb-2">{icon}</span>
-      <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">{label}</p>
+      <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/30">{label}</p>
     </div>
   );
 }

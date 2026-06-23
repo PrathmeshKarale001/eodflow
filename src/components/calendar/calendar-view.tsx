@@ -108,7 +108,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
           </button>
           <button
             onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelectedDay(today.getDate()); }}
-            className="brutalist-border px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest hover:bg-card-muted transition-colors"
+            className="brutalist-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest hover:bg-card-muted transition-colors"
           >
             TODAY
           </button>
@@ -120,7 +120,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest transition-colors ${
+              className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-colors ${
                 filter === f ? "bg-primary text-on-primary" : "hover:bg-card-muted text-on-surface/60"
               }`}
             >
@@ -136,7 +136,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
           {/* Day headers */}
           <div className="grid grid-cols-7 brutalist-border border-t-0 border-x-0">
             {DAYS.map((d) => (
-              <div key={d} className="py-2 text-center font-label text-[8px] uppercase tracking-widest text-on-surface/40 border-r border-outline-variant/20 last:border-r-0">
+              <div key={d} className="py-2 text-center font-label text-[10px] uppercase tracking-widest text-on-surface/40 border-r border-outline-variant/20 last:border-r-0">
                 {d}
               </div>
             ))}
@@ -174,7 +174,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
                     {dayTasks.slice(0, 3).map((t) => (
                       <div
                         key={t.id}
-                        className={`text-[7px] font-mono px-1 py-0.5 truncate border-l-2 leading-tight
+                        className={`text-[11px] font-mono px-1 py-0.5 truncate border-l-2 leading-tight
                           ${STATUS_DONE.has(t.status) ? "opacity-40 bg-gray-500/20 border-gray-400" : PRIORITY_BG[t.priority] ?? "bg-gray-500/20 border-gray-400"}
                         `}
                       >
@@ -182,7 +182,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
                       </div>
                     ))}
                     {dayTasks.length > 3 && (
-                      <p className="font-mono text-[7px] text-on-surface/40 pl-1">+{dayTasks.length - 3} more</p>
+                      <p className="font-mono text-[11px] text-on-surface/40 pl-1">+{dayTasks.length - 3} more</p>
                     )}
                   </div>
                 </div>
@@ -199,7 +199,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
                 <h3 className="font-headline text-sm uppercase tracking-tighter text-card-text">
                   {MONTHS[month].substring(0, 3).toUpperCase()} {selectedDay}
                 </h3>
-                <p className="font-mono text-[8px] text-on-surface/40 uppercase">{selectedTasks.length} TASKS</p>
+                <p className="font-mono text-[10px] text-on-surface/40 uppercase">{selectedTasks.length} TASKS</p>
               </div>
               <button onClick={() => setSelectedDay(null)} className="text-on-surface/30 hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined text-sm">close</span>
@@ -209,7 +209,7 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
             {selectedTasks.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <span className="material-symbols-outlined text-2xl text-on-surface/20 block">event_available</span>
-                <p className="font-mono text-[9px] text-on-surface/30 uppercase mt-2">No tasks due</p>
+                <p className="font-mono text-[11px] text-on-surface/30 uppercase mt-2">No tasks due</p>
               </div>
             ) : (
               <div className="divide-y divide-outline-variant/20">
@@ -225,12 +225,12 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
                         <p className={`font-headline text-[10px] uppercase tracking-wider text-card-text ${STATUS_DONE.has(t.status) ? "line-through" : ""}`}>
                           {t.title}
                         </p>
-                        <p className="font-mono text-[8px] text-on-surface/40 mt-0.5 truncate">{t.project?.title ?? "No Project"}</p>
+                        <p className="font-mono text-[10px] text-on-surface/40 mt-0.5 truncate">{t.project?.title ?? "No Project"}</p>
                         {t.assignedTo && (
-                          <p className="font-mono text-[8px] text-on-surface/30">{t.assignedTo.name}</p>
+                          <p className="font-mono text-[10px] text-on-surface/30">{t.assignedTo.name}</p>
                         )}
                       </div>
-                      <span className={`font-mono text-[7px] px-1.5 py-0.5 flex-shrink-0 ${
+                      <span className={`font-mono text-[11px] px-1.5 py-0.5 flex-shrink-0 ${
                         STATUS_DONE.has(t.status) ? "bg-green-500/20 text-green-400" :
                         t.status === "IN_PROGRESS" ? "bg-amber-500/20 text-amber-400" :
                         "bg-gray-500/20 text-gray-400"
@@ -248,11 +248,11 @@ export function CalendarView({ tasks, userId }: CalendarViewProps) {
 
       {/* Legend */}
       <div className="flex items-center gap-4 flex-wrap">
-        <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">PRIORITY:</span>
+        <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">PRIORITY:</span>
         {[["URGENT","bg-red-500"],["HIGH","bg-amber-500"],["MEDIUM","bg-blue-500"],["LOW","bg-gray-400"]].map(([label, color]) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`w-2 h-2 ${color}`} />
-            <span className="font-mono text-[8px] text-on-surface/40 uppercase">{label}</span>
+            <span className="font-mono text-[10px] text-on-surface/40 uppercase">{label}</span>
           </div>
         ))}
       </div>

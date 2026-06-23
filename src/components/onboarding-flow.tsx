@@ -185,21 +185,21 @@ function StepTwo() {
               <div className="w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-tertiary text-sm">schedule</span>
               </div>
-              <p className="text-[9px] text-outline font-label uppercase tracking-widest">Assigned</p>
+              <p className="text-[11px] text-outline font-label uppercase tracking-widest">Assigned</p>
               <p className="text-xs font-headline font-bold uppercase tracking-tight">UX Research</p>
             </div>
             <div className="bg-surface-container-lowest rounded-xl p-4 border border-primary/30 shadow-[0_0_15px_rgba(108,92,231,0.1)] flex flex-col items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
               </div>
-              <p className="text-[9px] text-primary font-label uppercase tracking-widest">Completed</p>
+              <p className="text-[11px] text-primary font-label uppercase tracking-widest">Completed</p>
               <p className="text-xs font-headline font-bold uppercase tracking-tight">Brand Audit</p>
             </div>
             <div className="bg-surface-container-lowest rounded-xl p-4 border border-white/5 flex flex-col items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
                 <span className="material-symbols-outlined text-outline text-sm">schedule</span>
               </div>
-              <p className="text-[9px] text-outline font-label uppercase tracking-widest">Queued</p>
+              <p className="text-[11px] text-outline font-label uppercase tracking-widest">Queued</p>
               <p className="text-xs font-headline font-bold uppercase tracking-tight">SEO Setup</p>
             </div>
           </div>
@@ -238,7 +238,7 @@ function StepThree() {
               <span className="material-symbols-outlined text-white text-xl">check_circle</span>
             </div>
             <div>
-              <p className="text-[8px] font-bold text-primary-container uppercase tracking-widest mb-0.5">Status</p>
+              <p className="text-[10px] font-bold text-primary-container uppercase tracking-widest mb-0.5">Status</p>
               <p className="text-white font-headline font-bold uppercase text-sm tracking-tight">Delivered</p>
             </div>
           </div>

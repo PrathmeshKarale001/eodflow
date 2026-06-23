@@ -199,7 +199,7 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
           >
             <span className="material-symbols-outlined text-sm text-primary mb-2 block">{tf.icon}</span>
             <span className="font-headline text-2xl font-bold text-on-surface block">{tf.count}</span>
-            <span className="font-label text-[8px] text-on-surface/50 uppercase tracking-widest">{tf.label}</span>
+            <span className="font-label text-[10px] text-on-surface/50 uppercase tracking-widest">{tf.label}</span>
           </button>
         ))}
       </div>
@@ -227,14 +227,14 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
           <table className="w-full">
             <thead>
               <tr className="bg-card-muted border-b-2 border-on-surface/10">
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-on-surface/50">FILE</th>
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-on-surface/50">CLIENT</th>
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-on-surface/50">PROJECT</th>
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-on-surface/50">UPLOADER</th>
-                <th className="px-4 py-3 text-right font-label text-[9px] uppercase tracking-widest text-on-surface/50">SIZE</th>
-                <th className="px-4 py-3 text-right font-label text-[9px] uppercase tracking-widest text-on-surface/50">DATE</th>
-                <th className="px-4 py-3 text-center font-label text-[9px] uppercase tracking-widest text-on-surface/50">VER</th>
-                <th className="px-4 py-3 text-center font-label text-[9px] uppercase tracking-widest text-on-surface/50">ACTIONS</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">FILE</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">CLIENT</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">PROJECT</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">UPLOADER</th>
+                <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-on-surface/50">SIZE</th>
+                <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-on-surface/50">DATE</th>
+                <th className="px-4 py-3 text-center font-label text-[11px] uppercase tracking-widest text-on-surface/50">VER</th>
+                <th className="px-4 py-3 text-center font-label text-[11px] uppercase tracking-widest text-on-surface/50">ACTIONS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-on-surface/5">
@@ -250,7 +250,7 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
                         <span className="font-label text-[11px] uppercase tracking-wide text-on-surface block truncate max-w-[200px] group-hover:text-primary transition-colors">
                           {file.originalName}
                         </span>
-                        <span className="font-label text-[8px] text-on-surface/40 uppercase">{file.mimeType.split("/")[1]}</span>
+                        <span className="font-label text-[10px] text-on-surface/40 uppercase">{file.mimeType.split("/")[1]}</span>
                       </div>
                     </button>
                   </td>

@@ -74,7 +74,7 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
             <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text truncate">
               {activeFile.originalName}
             </h3>
-            <span className="font-mono text-[9px] bg-primary text-on-primary px-2 py-0.5 flex-shrink-0">
+            <span className="font-mono text-[11px] bg-primary text-on-primary px-2 py-0.5 flex-shrink-0">
               v{activeFile.version}
             </span>
           </div>
@@ -134,11 +134,11 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
             <div className="flex-1 overflow-y-auto divide-y divide-outline-variant/20">
               {loadingVersions ? (
                 <div className="p-4 text-center">
-                  <p className="font-mono text-[9px] text-on-surface/50 uppercase">LOADING...</p>
+                  <p className="font-mono text-[11px] text-on-surface/50 uppercase">LOADING...</p>
                 </div>
               ) : versions.length <= 1 ? (
                 <div className="p-4 text-center">
-                  <p className="font-mono text-[9px] text-on-surface/50 uppercase">SINGLE_VERSION</p>
+                  <p className="font-mono text-[11px] text-on-surface/50 uppercase">SINGLE_VERSION</p>
                 </div>
               ) : (
                 versions.map((v) => (
@@ -153,11 +153,11 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
                       <span className="font-headline text-[10px] uppercase text-card-text">
                         v{v.version}
                       </span>
-                      <span className="font-mono text-[8px] text-on-surface/50">
+                      <span className="font-mono text-[10px] text-on-surface/50">
                         {formatBytes(v.fileSize)}
                       </span>
                     </div>
-                    <p className="font-mono text-[8px] text-on-surface/40">
+                    <p className="font-mono text-[10px] text-on-surface/40">
                       {v.uploadedBy?.name || "SYSTEM"} • {new Date(v.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
                     </p>
                   </button>
@@ -168,18 +168,18 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
             {/* File Meta */}
             <div className="p-4 brutalist-border border-b-0 border-x-0 bg-card-muted space-y-2">
               <div className="flex justify-between">
-                <span className="font-mono text-[8px] uppercase text-on-surface/50">TYPE</span>
-                <span className="font-mono text-[8px] uppercase text-on-surface">{activeFile.mimeType.split("/")[1]}</span>
+                <span className="font-mono text-[10px] uppercase text-on-surface/50">TYPE</span>
+                <span className="font-mono text-[10px] uppercase text-on-surface">{activeFile.mimeType.split("/")[1]}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-mono text-[8px] uppercase text-on-surface/50">SIZE</span>
-                <span className="font-mono text-[8px] uppercase text-on-surface">{formatBytes(activeFile.fileSize)}</span>
+                <span className="font-mono text-[10px] uppercase text-on-surface/50">SIZE</span>
+                <span className="font-mono text-[10px] uppercase text-on-surface">{formatBytes(activeFile.fileSize)}</span>
               </div>
               <a
                 href={activeFile.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-center mono-clip bg-primary text-on-primary py-2 font-headline text-[9px] uppercase hover:bg-primary/80 transition-colors mt-3"
+                className="block w-full text-center mono-clip bg-primary text-on-primary py-2 font-headline text-[11px] uppercase hover:bg-primary/80 transition-colors mt-3"
               >
                 DOWNLOAD
               </a>

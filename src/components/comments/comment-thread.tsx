@@ -297,7 +297,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
       {/* Reply indicator */}
       {replyTo ? (
         <div className="px-4 py-2 bg-primary/10 border-t border-primary/30 flex items-center justify-between">
-          <span className="font-mono text-[9px] uppercase tracking-widest text-primary">
+          <span className="font-mono text-[11px] uppercase tracking-widest text-primary">
             REPLYING_TO: {replyTo.name}
           </span>
           <button
@@ -322,12 +322,12 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
                   idx === mentionIndex ? "bg-primary/10 text-primary" : "hover:bg-card-muted text-on-surface"
                 }`}
               >
-                <div className="w-6 h-6 flex-shrink-0 bg-primary text-on-primary flex items-center justify-center font-headline text-[9px]">
+                <div className="w-6 h-6 flex-shrink-0 bg-primary text-on-primary flex items-center justify-center font-headline text-[11px]">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
                   <span className="font-headline text-[10px] uppercase tracking-widest block truncate">{user.name}</span>
-                  <span className="font-mono text-[8px] text-on-surface/40">{user.email}</span>
+                  <span className="font-mono text-[10px] text-on-surface/40">{user.email}</span>
                 </div>
               </button>
             ))}
@@ -338,7 +338,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
         {attachedFiles.length > 0 && (
           <div className="px-4 py-2 bg-surface-container-highest border-t border-on-surface/20 space-y-1">
             {attachedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wider">
+              <div key={idx} className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider">
                 <span className="flex items-center gap-1.5 text-primary truncate">
                   <span className="material-symbols-outlined text-sm">attachment</span>
                   {file.name} ({(file.size / 1024).toFixed(1)} KB)
@@ -373,7 +373,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
           >
             <span className="material-symbols-outlined text-base">attach_file</span>
             {attachedFiles.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-on-primary text-[8px] font-bold w-4 h-4 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-primary text-on-primary text-[10px] font-bold w-4 h-4 flex items-center justify-center">
                 {attachedFiles.length}
               </span>
             )}
@@ -481,7 +481,7 @@ function CommentBubble({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="font-headline text-[10px] uppercase tracking-widest text-on-surface">{comment.user.name}</span>
-            <span className="font-mono text-[8px] text-on-surface/40">{formatTime(comment.createdAt)}</span>
+            <span className="font-mono text-[10px] text-on-surface/40">{formatTime(comment.createdAt)}</span>
           </div>
           <p className="font-body text-sm text-on-surface/80 leading-relaxed whitespace-pre-wrap">
             {isEditing ? (
@@ -506,11 +506,11 @@ function CommentBubble({
                 <span className="flex gap-2">
                   <button
                     onClick={() => { onEdit(comment.id, editContent); setIsEditing(false); }}
-                    className="font-mono text-[8px] uppercase tracking-widest text-primary hover:underline"
+                    className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline"
                   >SAVE</button>
                   <button
                     onClick={() => { setEditContent(comment.content); setIsEditing(false); }}
-                    className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-on-surface"
+                    className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40 hover:text-on-surface"
                   >CANCEL</button>
                 </span>
               </span>
@@ -531,10 +531,10 @@ function CommentBubble({
                   {comment.fileName?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg)$/) ? "image" : "attachment"}
                 </span>
                 <div className="min-w-0">
-                  <span className="font-label text-[9px] uppercase tracking-wide text-foreground truncate block max-w-[200px]" title={comment.fileName || "attachment"}>
+                  <span className="font-label text-[11px] uppercase tracking-wide text-foreground truncate block max-w-[200px]" title={comment.fileName || "attachment"}>
                     {comment.fileName || "attachment"}
                   </span>
-                  <span className="font-mono text-[7px] text-outline uppercase">click to view</span>
+                  <span className="font-mono text-[11px] text-outline uppercase">click to view</span>
                 </div>
               </a>
             </div>
@@ -543,7 +543,7 @@ function CommentBubble({
           <div className="flex items-center gap-3 mt-1.5">
             <button
               onClick={onReply}
-              className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-on-surface transition-colors"
+              className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40 hover:text-on-surface transition-colors"
             >
               REPLY
             </button>
@@ -551,13 +551,13 @@ function CommentBubble({
               <>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-primary transition-colors"
+                  className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40 hover:text-primary transition-colors"
                 >
                   EDIT
                 </button>
                 <button
                   onClick={() => onDelete(comment.id)}
-                  className="font-mono text-[8px] uppercase tracking-widest text-on-surface/40 hover:text-red-500 transition-colors"
+                  className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40 hover:text-red-500 transition-colors"
                 >
                   DELETE
                 </button>

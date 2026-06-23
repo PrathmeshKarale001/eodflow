@@ -187,7 +187,7 @@ export function UserManagementPanel({
                 <h2 className="font-headline text-sm uppercase tracking-widest text-foreground">
                   INVITE_SENT
                 </h2>
-                <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+                <p className="font-label text-[11px] text-outline uppercase tracking-widest">
                   Email sent via Resend • Link valid for 48h
                 </p>
               </div>
@@ -211,7 +211,7 @@ export function UserManagementPanel({
               </div>
             </div>
 
-            <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+            <p className="font-label text-[11px] text-outline uppercase tracking-widest">
               📧 Email was sent automatically. Share the link below as a backup.
             </p>
 
@@ -264,7 +264,7 @@ export function UserManagementPanel({
                 <h2 className="font-headline text-sm uppercase tracking-widest text-foreground">
                   USER_REACTIVATED
                 </h2>
-                <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+                <p className="font-label text-[11px] text-outline uppercase tracking-widest">
                   Share these credentials with the user
                 </p>
               </div>
@@ -287,7 +287,7 @@ export function UserManagementPanel({
               </div>
             </div>
 
-            <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+            <p className="font-label text-[11px] text-outline uppercase tracking-widest">
               ⚠ This password is shown ONCE. Copy and share it now.
             </p>
 
@@ -349,13 +349,13 @@ export function UserManagementPanel({
             <h3 className="font-headline text-[10px] uppercase tracking-widest text-foreground">
               INVITE_VIA_MAGIC_LINK
             </h3>
-            <span className="font-label text-[8px] text-primary uppercase tracking-widest">
+            <span className="font-label text-[10px] text-primary uppercase tracking-widest">
               📧 Email sent automatically
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+              <label className="font-label text-[11px] text-outline uppercase tracking-widest block">
                 FULL_NAME
               </label>
               <input
@@ -367,7 +367,7 @@ export function UserManagementPanel({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+              <label className="font-label text-[11px] text-outline uppercase tracking-widest block">
                 EMAIL
               </label>
               <input
@@ -379,7 +379,7 @@ export function UserManagementPanel({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+              <label className="font-label text-[11px] text-outline uppercase tracking-widest block">
                 ROLE
               </label>
               <AppSelect
@@ -396,7 +396,7 @@ export function UserManagementPanel({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest block">
+              <label className="font-label text-[11px] text-outline uppercase tracking-widest block">
                 DEPARTMENT
               </label>
               <AppSelect
@@ -427,12 +427,12 @@ export function UserManagementPanel({
           <table className="w-full">
             <thead>
               <tr className="bg-surface-container-low border-b border-on-surface/10">
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">USER</th>
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">ROLE</th>
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">DEPT</th>
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">STATUS</th>
-                <th className="px-4 py-3 text-left font-label text-[9px] uppercase tracking-widest text-outline">LAST_LOGIN</th>
-                <th className="px-4 py-3 text-right font-label text-[9px] uppercase tracking-widest text-outline">ACTIONS</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">USER</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">ROLE</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">DEPT</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">STATUS</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">LAST_LOGIN</th>
+                <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-outline">ACTIONS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-on-surface/5">
@@ -450,16 +450,16 @@ export function UserManagementPanel({
                         <p className="font-headline text-[11px] uppercase tracking-tight text-foreground">
                           {user.name}
                           {user.id === currentUserId && (
-                            <span className="ml-2 text-[8px] text-primary">(YOU)</span>
+                            <span className="ml-2 text-[10px] text-primary">(YOU)</span>
                           )}
                         </p>
-                        <p className="font-label text-[9px] text-outline lowercase">{user.email}</p>
+                        <p className="font-label text-[11px] text-outline lowercase">{user.email}</p>
                       </div>
 
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 text-[8px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+                    <span className={`px-2 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
                       {ROLE_LABELS[user.role]}
                     </span>
                   </td>
@@ -479,7 +479,7 @@ export function UserManagementPanel({
                             setError(err.message || "Failed to change department");
                           }
                         }}
-                        className="bg-transparent brutalist-border px-2 py-1 font-label text-[9px] text-foreground uppercase tracking-wide cursor-pointer focus:outline-none focus:border-primary"
+                        className="bg-transparent brutalist-border px-2 py-1 font-label text-[11px] text-foreground uppercase tracking-wide cursor-pointer focus:outline-none focus:border-primary"
                       >
                         <option value="">—</option>
                         {DEPARTMENTS.map((d) => (
@@ -487,19 +487,19 @@ export function UserManagementPanel({
                         ))}
                       </select>
                     ) : (
-                      <span className="font-label text-[9px] text-foreground uppercase">
+                      <span className="font-label text-[11px] text-foreground uppercase">
                         {user.department ?? "—"}
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`flex items-center gap-1.5 font-label text-[9px] uppercase tracking-widest ${user.isActive ? "text-primary font-bold" : "text-error"}`}>
+                    <span className={`flex items-center gap-1.5 font-label text-[11px] uppercase tracking-widest ${user.isActive ? "text-primary font-bold" : "text-error"}`}>
                       <span className={`w-1.5 h-1.5 ${user.isActive ? "bg-primary" : "bg-error"}`} />
                       {user.isActive ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="font-label text-[9px] text-outline uppercase">
+                    <span className="font-label text-[11px] text-outline uppercase">
                       {user.lastLoginAt
                         ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", {
                             day: "2-digit",
@@ -516,14 +516,14 @@ export function UserManagementPanel({
                         {user.isActive ? (
                           <button
                             onClick={() => handleDeactivate(user.id, user.name)}
-                            className="brutalist-border px-3 py-1.5 font-label text-[9px] uppercase tracking-widest text-error hover:bg-error/10 transition-colors"
+                            className="brutalist-border px-3 py-1.5 font-label text-[11px] uppercase tracking-widest text-error hover:bg-error/10 transition-colors"
                           >
                             DEACTIVATE
                           </button>
                         ) : (
                           <button
                             onClick={() => handleReactivate(user.id)}
-                            className="brutalist-border px-3 py-1.5 font-label text-[9px] uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+                            className="brutalist-border px-3 py-1.5 font-label text-[11px] uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                           >
                             REACTIVATE
                           </button>
@@ -561,20 +561,20 @@ export function UserManagementPanel({
                   <div>
                     <p className="font-headline text-[13px] uppercase tracking-tight text-foreground leading-none">
                       {user.name}
-                      {user.id === currentUserId && <span className="ml-1.5 text-[9px] text-primary">(YOU)</span>}
+                      {user.id === currentUserId && <span className="ml-1.5 text-[11px] text-primary">(YOU)</span>}
                     </p>
                     <p className="font-label text-[10px] text-outline lowercase mt-1">{user.email}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className={`px-1.5 py-0.5 text-[8px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+                      <span className={`px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
                         {ROLE_LABELS[user.role]}
                       </span>
-                      <span className="font-label text-[8px] text-outline uppercase tracking-widest">
+                      <span className="font-label text-[10px] text-outline uppercase tracking-widest">
                         {user.department ?? "—"}
                       </span>
                     </div>
                   </div>
                 </div>
-                <span className={`flex items-center gap-1 font-label text-[9px] uppercase tracking-widest ${user.isActive ? "text-primary font-bold" : "text-error"}`}>
+                <span className={`flex items-center gap-1 font-label text-[11px] uppercase tracking-widest ${user.isActive ? "text-primary font-bold" : "text-error"}`}>
                   <span className={`w-1.5 h-1.5 ${user.isActive ? "bg-primary" : "bg-error"}`} />
                   {user.isActive ? "ACTIVE" : "INACTIVE"}
                 </span>
@@ -584,8 +584,8 @@ export function UserManagementPanel({
               {user.id !== currentUserId && (
                 <div className="flex items-center justify-between pt-4 border-t border-on-surface/5">
                   <div className="flex flex-col">
-                    <span className="font-label text-[8px] text-outline uppercase tracking-widest">LAST_LOGIN</span>
-                    <span className="font-mono text-[9px] text-on-surface">
+                    <span className="font-label text-[10px] text-outline uppercase tracking-widest">LAST_LOGIN</span>
+                    <span className="font-mono text-[11px] text-on-surface">
                       {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : "NEVER"}
                     </span>
                   </div>
@@ -593,14 +593,14 @@ export function UserManagementPanel({
                     {user.isActive ? (
                       <button
                         onClick={() => handleDeactivate(user.id, user.name)}
-                        className="brutalist-border px-3 py-2 font-label text-[9px] uppercase tracking-widest text-error active:bg-error/10 transition-colors"
+                        className="brutalist-border px-3 py-2 font-label text-[11px] uppercase tracking-widest text-error active:bg-error/10 transition-colors"
                       >
                         DEACTIVATE
                       </button>
                     ) : (
                       <button
                         onClick={() => handleReactivate(user.id)}
-                        className="brutalist-border px-3 py-2 font-label text-[9px] uppercase tracking-widest text-primary active:bg-primary/10 transition-colors"
+                        className="brutalist-border px-3 py-2 font-label text-[11px] uppercase tracking-widest text-primary active:bg-primary/10 transition-colors"
                       >
                         REACTIVATE
                       </button>
@@ -637,31 +637,31 @@ export function UserManagementPanel({
                   <p className="font-headline text-[11px] uppercase tracking-tight text-foreground font-bold">
                     {user.name}
                     {user.id === currentUserId && (
-                      <span className="ml-1.5 text-[7px] text-primary">(YOU)</span>
+                      <span className="ml-1.5 text-[11px] text-primary">(YOU)</span>
                     )}
                   </p>
-                  <p className="font-label text-[8px] text-outline">{user.email}</p>
+                  <p className="font-label text-[10px] text-outline">{user.email}</p>
                 </div>
               </div>
               
-              <span className={`flex items-center gap-1 font-label text-[8px] uppercase tracking-widest ${user.isActive ? "text-primary" : "text-error"}`}>
+              <span className={`flex items-center gap-1 font-label text-[10px] uppercase tracking-widest ${user.isActive ? "text-primary" : "text-error"}`}>
                 <span className={`w-1.5 h-1.5 ${user.isActive ? "bg-primary" : "bg-error"}`} />
                 {user.isActive ? "ACTIVE" : "INACTIVE"}
               </span>
             </div>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              <span className={`px-1.5 py-0.5 text-[8px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+              <span className={`px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
                 {ROLE_LABELS[user.role]}
               </span>
               {user.department && (
-                <span className="px-1.5 py-0.5 text-[8px] font-label uppercase tracking-widest bg-surface-container-high text-foreground">
+                <span className="px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest bg-surface-container-high text-foreground">
                   {user.department}
                 </span>
               )}
             </div>
 
-            <div className="text-[9px] font-label text-outline uppercase tracking-wider flex justify-between border-t border-white/5 pt-2 font-mono">
+            <div className="text-[11px] font-label text-outline uppercase tracking-wider flex justify-between border-t border-white/5 pt-2 font-mono">
               <span>LAST_LOGIN</span>
               <span>
                 {user.lastLoginAt
@@ -680,14 +680,14 @@ export function UserManagementPanel({
                 {user.isActive ? (
                   <button
                     onClick={() => handleDeactivate(user.id, user.name)}
-                    className="flex-1 brutalist-border py-2 text-center font-label text-[9px] uppercase tracking-widest text-error hover:bg-error/10 transition-colors"
+                    className="flex-1 brutalist-border py-2 text-center font-label text-[11px] uppercase tracking-widest text-error hover:bg-error/10 transition-colors"
                   >
                     DEACTIVATE
                   </button>
                 ) : (
                   <button
                     onClick={() => handleReactivate(user.id)}
-                    className="flex-1 brutalist-border py-2 text-center font-label text-[9px] uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+                    className="flex-1 brutalist-border py-2 text-center font-label text-[11px] uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                   >
                     REACTIVATE
                   </button>

@@ -97,7 +97,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
           <div className="flex items-center gap-2">
             <button
               onClick={handleMarkAllRead}
-              className="font-mono text-[9px] uppercase tracking-widest text-card-text hover:underline"
+              className="font-mono text-[11px] uppercase tracking-widest text-card-text hover:underline"
             >
               MARK_ALL_READ
             </button>
@@ -121,7 +121,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
                 notifications_active
               </span>
               <p className="font-mono text-xs uppercase tracking-widest text-green-600">ALL_CAUGHT_UP</p>
-              <p className="font-mono text-[9px] text-muted-foreground mt-1">No new notifications</p>
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">No new notifications</p>
             </div>
           ) : (
             <div className="divide-y divide-outline-variant/30">
@@ -154,7 +154,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
                           {notif.body}
                         </p>
                       ) : null}
-                      <span className="font-mono text-[8px] text-muted-foreground mt-1 block">
+                      <span className="font-mono text-[10px] text-muted-foreground mt-1 block">
                         {formatTime(notif.createdAt)}
                         {notif.linkUrl && " • TAP TO OPEN"}
                       </span>
@@ -171,7 +171,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
 
         {/* Footer — notification count */}
         <div className="absolute bottom-0 left-0 right-0 px-5 py-3 brutalist-border border-b-0 border-x-0 bg-card-muted">
-          <p className="font-mono text-[9px] text-center uppercase tracking-widest text-on-surface/40">
+          <p className="font-mono text-[11px] text-center uppercase tracking-widest text-on-surface/40">
             {notifications.filter((n) => !n.isRead).length} UNREAD · {notifications.length} TOTAL
           </p>
         </div>

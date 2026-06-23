@@ -157,7 +157,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
               <div className="absolute top-full left-0 right-0 mt-1 z-50 brutalist-border bg-surface-container-lowest max-h-40 overflow-y-auto shadow-lg">
                 {chatSearchResults.length === 0 && !chatSearching ? (
                   <div className="p-3 text-center">
-                    <p className="font-label text-[9px] uppercase tracking-widest text-on-surface/30">NO_USERS_FOUND</p>
+                    <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/30">NO_USERS_FOUND</p>
                   </div>
                 ) : (
                   chatSearchResults.map((u) => (
@@ -172,7 +172,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                         router.push(`/chat?dm=${u.id}`);
                       }}
                     >
-                      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center bg-primary-container/30 text-[9px] font-headline font-bold text-primary uppercase overflow-hidden">
+                      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center bg-primary-container/30 text-[11px] font-headline font-bold text-primary uppercase overflow-hidden">
                         {u.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={u.image} alt={u.name} className="w-full h-full object-cover" />
@@ -254,16 +254,16 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                   key={item.href + item.label}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors font-label uppercase text-[11px] tracking-widest",
+                    "flex items-center gap-2.5 px-3 py-2 text-sm font-label uppercase text-[12px] tracking-widest rounded-lg transition-all duration-200 ease-out",
                     isActive
-                      ? "bg-primary-container/20 text-primary border-l-2 border-l-primary"
-                      : "text-outline hover:bg-card/5 hover:text-foreground border-l-2 border-l-transparent"
+                      ? "bg-gradient-to-r from-primary-container/25 to-primary/10 text-primary border-l-2 border-l-primary shadow-sm"
+                      : "text-outline hover:bg-surface-container-high/40 hover:text-foreground hover:translate-x-0.5 border-l-2 border-l-transparent"
                   )}
                 >
                   <span className="material-symbols-outlined text-base flex-shrink-0">{iconName}</span>
                   {!collapsed && <span className="flex-1">{item.label}</span>}
                   {isChatNav && totalChatUnread > 0 && (
-                    <span className="min-w-[18px] h-[18px] bg-primary text-on-primary text-[8px] font-bold font-mono rounded-full flex items-center justify-center px-1 animate-pulse">
+                    <span className="min-w-[18px] h-[18px] bg-primary text-on-primary text-[11px] font-bold font-mono rounded-full flex items-center justify-center px-1 animate-pulse">
                       {totalChatUnread > 99 ? "99+" : totalChatUnread}
                     </span>
                   )}
@@ -277,7 +277,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
         {!collapsed && brands.length > 0 && (
           <div className="px-2 py-2 border-t border-on-surface/10">
             <div className="flex items-center justify-between px-3 py-1.5 mb-1">
-              <span className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface/40">Brands</span>
+              <span className="font-label text-[11px] uppercase tracking-[0.15em] text-on-surface/40">Brands</span>
               <Link
                 href="/clients/new"
                 className="flex h-5 w-5 items-center justify-center text-on-surface/30 hover:text-primary transition-colors"
@@ -321,7 +321,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                         {brand.companyName}
                       </span>
                       {totalTasks > 0 && (
-                        <span className="text-[9px] font-mono text-on-surface/30 flex-shrink-0">
+                        <span className="text-[11px] font-mono text-on-surface/30 flex-shrink-0">
                           {totalTasks}
                         </span>
                       )}
@@ -331,7 +331,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                     {isExpanded && (
                       <div className="ml-5 border-l border-on-surface/10 pl-2 space-y-0.5 py-0.5">
                         {brand.projects.length === 0 && (
-                          <span className="px-2 py-1 font-mono text-[8px] text-on-surface/20 uppercase">No projects</span>
+                          <span className="px-2 py-1 font-mono text-[10px] text-on-surface/20 uppercase">No projects</span>
                         )}
                         {brand.projects.map((project) => {
                           const isProjectActive = pathname === `/projects/${project.id}`;
@@ -354,7 +354,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                               </span>
                               {project._count.tasks > 0 && (
                                 <span className={cn(
-                                  "text-[9px] font-mono px-1.5 py-0.5 rounded-sm flex-shrink-0",
+                                  "text-[11px] font-mono px-1.5 py-0.5 rounded-sm flex-shrink-0",
                                   isProjectActive
                                     ? "bg-primary/20 text-primary"
                                     : "text-on-surface/30"
@@ -371,7 +371,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                           className="flex items-center gap-2 px-2 py-1 text-on-surface/20 hover:text-primary transition-colors"
                         >
                           <span className="material-symbols-outlined text-xs">add</span>
-                          <span className="font-label text-[9px] uppercase tracking-widest">Add Project</span>
+                          <span className="font-label text-[11px] uppercase tracking-widest">Add Project</span>
                         </Link>
                       </div>
                     )}
@@ -386,7 +386,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
         {!collapsed && allClients.length > 0 && (
           <div className="px-2 py-2 border-t border-on-surface/10">
             <div className="flex items-center justify-between px-3 py-1.5 mb-1">
-              <span className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface/40">All Clients</span>
+              <span className="font-label text-[11px] uppercase tracking-[0.2em] text-on-surface/40">All Clients</span>
             </div>
             <div className="space-y-0.5">
               {allClients.map((brand) => {
@@ -422,7 +422,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                         {brand.companyName}
                       </span>
                       {totalTasks > 0 && (
-                        <span className="text-[9px] font-mono text-on-surface/30 flex-shrink-0">
+                        <span className="text-[11px] font-mono text-on-surface/30 flex-shrink-0">
                           {totalTasks}
                         </span>
                       )}
@@ -432,7 +432,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                     {isExpanded && (
                       <div className="ml-5 border-l border-on-surface/10 pl-2 space-y-0.5 py-0.5">
                         {brand.projects.length === 0 && (
-                          <span className="px-2 py-1 font-mono text-[8px] text-on-surface/20 uppercase">No projects</span>
+                          <span className="px-2 py-1 font-mono text-[10px] text-on-surface/20 uppercase">No projects</span>
                         )}
                         {brand.projects.map((project) => {
                           const isProjectActive = pathname === `/projects/${project.id}`;
@@ -455,7 +455,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                               </span>
                               {project._count.tasks > 0 && (
                                 <span className={cn(
-                                  "text-[9px] font-mono px-1.5 py-0.5 rounded-sm flex-shrink-0",
+                                  "text-[11px] font-mono px-1.5 py-0.5 rounded-sm flex-shrink-0",
                                   isProjectActive
                                     ? "bg-primary/20 text-primary"
                                     : "text-on-surface/30"
@@ -493,7 +493,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                 <p className="truncate text-xs font-headline font-bold text-foreground uppercase tracking-tight group-hover:text-primary transition-colors">
                   {user.name}
                 </p>
-                <p className="truncate text-[9px] font-label text-outline uppercase tracking-widest">
+                <p className="truncate text-[11px] font-label text-outline uppercase tracking-widest">
                   {roleLabel[user.role]}
                 </p>
               </div>

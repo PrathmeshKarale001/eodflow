@@ -39,7 +39,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
         <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
           <span className="material-symbols-outlined text-base text-amber-600">warning</span>
           <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">BOTTLENECK_ALERTS</h3>
-          <span className="ml-auto bg-amber-500/100 text-white px-2 py-0.5 text-[9px] font-mono">
+          <span className="ml-auto bg-amber-500/100 text-white px-2 py-0.5 text-[11px] font-mono">
             {bottleneckTasks.length}
           </span>
         </div>
@@ -49,7 +49,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
             <div className="p-8 text-center">
               <span className="material-symbols-outlined text-3xl text-green-400 mb-2 block">check_circle</span>
               <p className="font-mono text-xs uppercase tracking-widest text-green-500">ALL_CLEAR</p>
-              <p className="font-mono text-[9px] text-on-surface/50 mt-1">No bottlenecks detected</p>
+              <p className="font-mono text-[11px] text-on-surface/50 mt-1">No bottlenecks detected</p>
             </div>
           ) : (
             bottleneckTasks.map((task) => {
@@ -64,11 +64,11 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
                     <span className="font-headline text-xs uppercase tracking-tight truncate max-w-[200px] text-on-surface">
                       {task.title}
                     </span>
-                    <span className={`font-mono text-[9px] uppercase px-2 py-0.5 ${stuckHours > 48 ? "bg-red-600 text-white" : "bg-amber-500/100 text-white"}`}>
+                    <span className={`font-mono text-[11px] uppercase px-2 py-0.5 ${stuckHours > 48 ? "bg-red-600 text-white" : "bg-amber-500/100 text-white"}`}>
                       {stuckHours}H STUCK
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-[9px] font-mono uppercase text-on-surface/50">
+                  <div className="flex items-center gap-3 text-[11px] font-mono uppercase text-on-surface/50">
                     <span>{task.status.replace(/_/g, " ")}</span>
                     <span>•</span>
                     <span>{task.assignedTo?.name || "UNASSIGNED"}</span>
@@ -98,7 +98,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
               <div key={activity.id} className="px-4 py-2 flex items-center gap-3 hover:bg-surface-container-high transition-colors">
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
                 <div className="min-w-0 flex-1">
-                  <span className="font-mono text-[9px] uppercase tracking-widest">
+                  <span className="font-mono text-[11px] uppercase tracking-widest">
                     <span className="font-bold text-card-text">{activity.user.name}</span>
                     <span className="text-on-surface/50"> {activity.action.replace(/_/g, " ")}</span>
                     {activity.task ? (
@@ -106,7 +106,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
                     ) : null}
                   </span>
                 </div>
-                <span className="font-mono text-[8px] text-on-surface/40 flex-shrink-0" suppressHydrationWarning>{timeAgo}</span>
+                <span className="font-mono text-[10px] text-on-surface/40 flex-shrink-0" suppressHydrationWarning>{timeAgo}</span>
               </div>
             );
           })}

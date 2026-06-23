@@ -113,7 +113,7 @@ export function ImageAnnotator({
           {annotateMode ? "CANCEL" : "ANNOTATE"}
         </button>
         {annotations.length > 0 && (
-          <span className="font-mono text-[9px] text-on-surface/50 uppercase">
+          <span className="font-mono text-[11px] text-on-surface/50 uppercase">
             {annotations.length} pin{annotations.length !== 1 ? "s" : ""}
           </span>
         )}
@@ -166,7 +166,7 @@ export function ImageAnnotator({
       {/* Annotation input popover */}
       {pendingPin && (
         <div className="mt-3 bg-card brutalist-border p-3">
-          <p className="font-headline text-[9px] uppercase tracking-widest text-primary mb-2">
+          <p className="font-headline text-[11px] uppercase tracking-widest text-primary mb-2">
             ADD_ANNOTATION — Pin at ({Math.round(pendingPin.x)}%, {Math.round(pendingPin.y)}%)
           </p>
           <textarea
@@ -198,7 +198,7 @@ export function ImageAnnotator({
       {annotations.length > 0 && (
         <div className="mt-3 brutalist-border divide-y divide-outline-variant/20">
           <div className="px-3 py-2 bg-card-muted">
-            <h4 className="font-headline text-[9px] uppercase tracking-widest text-card-text">
+            <h4 className="font-headline text-[11px] uppercase tracking-widest text-card-text">
               ANNOTATIONS
             </h4>
           </div>
@@ -211,11 +211,11 @@ export function ImageAnnotator({
               }`}
             >
               <div className="flex items-start gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-on-primary text-[9px] font-headline font-bold flex-shrink-0 mt-0.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-on-primary text-[11px] font-headline font-bold flex-shrink-0 mt-0.5">
                   {ann.pinNumber}
                 </span>
                 <div className="min-w-0">
-                  <p className="font-headline text-[9px] uppercase tracking-widest text-primary">
+                  <p className="font-headline text-[11px] uppercase tracking-widest text-primary">
                     {ann.user.name}
                   </p>
                   <p className="font-mono text-[10px] text-card-text leading-tight line-clamp-2">

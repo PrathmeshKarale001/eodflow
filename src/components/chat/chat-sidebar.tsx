@@ -232,15 +232,15 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
             <div className="flex items-center gap-2">
               <button
                 onClick={handleNewDM}
-                className="flex items-center gap-1 px-2 py-1 brutalist-border text-[8px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-primary hover:border-primary/30 transition-colors"
+                className="flex items-center gap-1 px-2 py-1 brutalist-border text-[10px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-primary hover:border-primary/30 transition-colors"
               >
                 <span className="material-symbols-outlined text-xs">chat</span>
-                NEW_DM
+                New DM
               </button>
               {canManageChannels && (
                 <button
                   onClick={() => setShowNewChannel(true)}
-                  className="flex items-center gap-1 px-2 py-1 brutalist-border text-[8px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-primary hover:border-primary/30 transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 brutalist-border text-[10px] font-headline uppercase tracking-widest text-on-surface/60 hover:text-primary hover:border-primary/30 transition-colors"
                 >
                   <span className="material-symbols-outlined text-xs">add</span>
                   CHANNEL
@@ -265,7 +265,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
         {/* Group Channels */}
         <div className="px-3 py-2">
           <div className="flex items-center justify-between mb-1">
-            <p className="font-headline text-[8px] uppercase tracking-widest text-on-surface/40">
+            <p className="font-headline text-[10px] uppercase tracking-widest text-on-surface/40">
               CHANNELS
             </p>
             {canManageChannels && (
@@ -279,7 +279,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
             )}
           </div>
           {filteredChannels(groupChannels).length === 0 ? (
-            <p className="font-mono text-[9px] text-on-surface/30 px-2 py-1">No channels yet</p>
+            <p className="font-mono text-[11px] text-on-surface/30 px-2 py-1">No channels yet</p>
           ) : (
             filteredChannels(groupChannels).map((ch) => {
               const isActive = pathname === `/chat/${ch.id}`;
@@ -303,7 +303,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                         {ch.name}
                       </p>
                       {ch.messages[0]?.createdAt && (
-                        <span className={`font-mono text-[7px] flex-shrink-0 ${
+                        <span className={`font-mono text-[11px] flex-shrink-0 ${
                           unread > 0 ? "text-primary" : "text-on-surface/25"
                         }`}>
                           {timeAgo(ch.messages[0].createdAt)}
@@ -311,7 +311,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                       )}
                     </div>
                     {ch.messages[0] && (
-                      <p className={`font-mono text-[8px] truncate ${
+                      <p className={`font-mono text-[10px] truncate ${
                         unread > 0 ? "text-on-surface/60" : "text-on-surface/35"
                       }`}>
                         {ch.messages[0].user.name}: {ch.messages[0].content?.substring(0, 30)}
@@ -319,7 +319,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                     )}
                   </div>
                   {unread > 0 && (
-                    <span className="flex-shrink-0 min-w-[18px] h-[18px] bg-primary text-on-primary text-[8px] font-bold font-mono rounded-full flex items-center justify-center px-1">
+                    <span className="flex-shrink-0 min-w-[18px] h-[18px] bg-primary text-on-primary text-[10px] font-bold font-mono rounded-full flex items-center justify-center px-1">
                       {unread > 99 ? "99+" : unread}
                     </span>
                   )}
@@ -341,8 +341,8 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
         {/* Direct Messages */}
         <div className="px-3 py-2 border-t border-outline-variant/20">
           <div className="flex items-center justify-between mb-1">
-            <p className="font-headline text-[8px] uppercase tracking-widest text-on-surface/40">
-              DIRECT_MESSAGES
+            <p className="font-headline text-[11px] uppercase tracking-widest text-on-surface/40">
+              Direct Messages
             </p>
             <button
               onClick={handleNewDM}
@@ -367,14 +367,14 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                 }`}
               >
                 <div className="relative flex-shrink-0">
-                  <div className="flex h-5 w-5 items-center justify-center bg-surface-container-high text-[8px] font-headline font-bold text-on-surface/60 uppercase">
+                  <div className="flex h-5 w-5 items-center justify-center bg-surface-container-high text-[10px] font-headline font-bold text-on-surface/60 uppercase">
                     {otherUser?.name.charAt(0) || "?"}
                   </div>
                   {otherUser?.id && onlineUsers[otherUser.id] && (
                     <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-card flex-shrink-0" />
                   )}
                   {unread > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-primary text-on-primary text-[7px] font-bold font-mono rounded-full flex items-center justify-center px-0.5">
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-primary text-on-primary text-[11px] font-bold font-mono rounded-full flex items-center justify-center px-0.5">
                       {unread > 9 ? "9+" : unread}
                     </span>
                   )}
@@ -387,7 +387,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                       {otherUser?.name || "Unknown"}
                     </p>
                     {ch.messages[0]?.createdAt && (
-                      <span className={`font-mono text-[7px] flex-shrink-0 ${
+                      <span className={`font-mono text-[11px] flex-shrink-0 ${
                         unread > 0 ? "text-primary" : "text-on-surface/25"
                       }`}>
                         {timeAgo(ch.messages[0].createdAt)}
@@ -395,7 +395,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                     )}
                   </div>
                   {ch.messages[0] && (
-                    <p className={`font-mono text-[8px] truncate ${
+                    <p className={`font-mono text-[10px] truncate ${
                       unread > 0 ? "text-on-surface/60" : "text-on-surface/35"
                     }`}>
                       {ch.messages[0].content?.substring(0, 35) || "No messages yet"}
@@ -417,14 +417,14 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
           <div className="relative bg-card brutalist-border w-80 max-h-[80vh] flex flex-col">
             {/* Modal Header */}
             <div className="px-3 py-2 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between flex-shrink-0">
-              <h4 className="font-headline text-[9px] uppercase tracking-widest text-card-text">
-                {channelStep === 1 ? "CREATE_CHANNEL" : "SELECT_MEMBERS"}
+              <h4 className="font-headline text-[11px] uppercase tracking-widest text-card-text">
+                {channelStep === 1 ? "Create Channel" : "Select Members"}
               </h4>
               <div className="flex items-center gap-1">
                 {channelStep === 2 && (
                   <button
                     onClick={() => setChannelStep(1)}
-                    className="text-on-surface/40 hover:text-on-surface text-[9px] font-mono uppercase"
+                    className="text-on-surface/40 hover:text-on-surface text-[11px] font-mono uppercase"
                   >
                     ← BACK
                   </button>
@@ -439,7 +439,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
             {channelStep === 1 && (
               <div className="p-3 space-y-3">
                 <div>
-                  <label className="block font-headline text-[8px] uppercase tracking-widest text-on-surface/50 mb-1">
+                  <label className="block font-headline text-[10px] uppercase tracking-widest text-on-surface/50 mb-1">
                     Channel Name
                   </label>
                   <input
@@ -456,9 +456,9 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                 <button
                   onClick={handleNextStep}
                   disabled={!newChannelName.trim() || loadingMembers}
-                  className="w-full brutalist-border bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[9px] uppercase tracking-widest py-2 transition-colors disabled:opacity-50"
+                  className="w-full brutalist-border bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[11px] uppercase tracking-widest py-2 transition-colors disabled:opacity-50"
                 >
-                  {loadingMembers ? "Loading..." : "NEXT → SELECT_MEMBERS"}
+                  {loadingMembers ? "Loading..." : "Next → Select Members"}
                 </button>
               </div>
             )}
@@ -481,13 +481,13 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                 <div className="px-3 py-1.5 flex items-center justify-between flex-shrink-0">
                   <button
                     onClick={selectAll}
-                    className="font-mono text-[8px] text-primary uppercase tracking-widest hover:underline"
+                    className="font-mono text-[10px] text-primary uppercase tracking-widest hover:underline"
                   >
                     {filteredAvailableMembers().every((u) => selectedMembers.has(u.id))
-                      ? "DESELECT_ALL"
-                      : "SELECT_ALL"}
+                      ? "Deselect All"
+                      : "Select All"}
                   </button>
-                  <span className="font-mono text-[8px] text-on-surface/40 uppercase">
+                  <span className="font-mono text-[10px] text-on-surface/40 uppercase">
                     {selectedMembers.size} SELECTED
                   </span>
                 </div>
@@ -513,7 +513,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                           )}
                         </div>
                         {/* Avatar */}
-                        <div className="flex h-6 w-6 items-center justify-center bg-surface-container-high text-[9px] font-headline font-bold text-on-surface/60 uppercase flex-shrink-0">
+                        <div className="flex h-6 w-6 items-center justify-center bg-surface-container-high text-[11px] font-headline font-bold text-on-surface/60 uppercase flex-shrink-0">
                           {u.name.charAt(0)}
                         </div>
                         {/* Info */}
@@ -521,7 +521,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                           <p className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">
                             {u.name}
                           </p>
-                          <p className="font-mono text-[8px] text-on-surface/40 uppercase">
+                          <p className="font-mono text-[10px] text-on-surface/40 uppercase">
                             {ROLE_LABELS[u.role as Role] || u.role}
                             {u.department ? ` · ${u.department}` : ""}
                           </p>
@@ -533,7 +533,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
 
                 {/* Error */}
                 {channelError && (
-                  <p className="px-3 font-mono text-[9px] text-red-400">{channelError}</p>
+                  <p className="px-3 font-mono text-[11px] text-red-400">{channelError}</p>
                 )}
 
                 {/* Create button */}
@@ -541,13 +541,13 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                   <button
                     onClick={handleCreateChannel}
                     disabled={creatingChannel || !newChannelName.trim()}
-                    className="w-full brutalist-border bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[9px] uppercase tracking-widest py-2 transition-colors disabled:opacity-50"
+                    className="w-full brutalist-border bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[11px] uppercase tracking-widest py-2 transition-colors disabled:opacity-50"
                   >
                     {creatingChannel
                       ? "CREATING..."
                       : `CREATE "${newChannelName.toUpperCase()}" → ${selectedMembers.size + 1} MEMBERS`}
                   </button>
-                  <p className="font-mono text-[7px] text-on-surface/30 mt-1.5 text-center">
+                  <p className="font-mono text-[11px] text-on-surface/30 mt-1.5 text-center">
                     You will be added automatically as channel creator
                   </p>
                 </div>
@@ -563,8 +563,8 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowNewDM(false)} />
           <div className="relative bg-card brutalist-border w-64 max-h-80 flex flex-col">
             <div className="px-3 py-2 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between">
-              <h4 className="font-headline text-[9px] uppercase tracking-widest text-card-text">
-                NEW_DIRECT_MESSAGE
+              <h4 className="font-headline text-[11px] uppercase tracking-widest text-card-text">
+                New Direct Message
               </h4>
               <button onClick={() => setShowNewDM(false)} className="text-on-surface/40 hover:text-on-surface">
                 <span className="material-symbols-outlined text-sm">close</span>
@@ -572,7 +572,7 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-outline-variant/20">
               {loadingDM ? (
-                <p className="p-3 font-mono text-[9px] text-on-surface/40 text-center uppercase">
+                <p className="p-3 font-mono text-[11px] text-on-surface/40 text-center uppercase">
                   Loading...
                 </p>
               ) : (
@@ -582,14 +582,14 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                     onClick={() => handleStartDM(u.id)}
                     className="w-full px-3 py-2 text-left hover:bg-card-muted transition-colors flex items-center gap-2"
                   >
-                    <div className="flex h-6 w-6 items-center justify-center bg-surface-container-high text-[9px] font-headline font-bold text-on-surface/60 uppercase">
+                    <div className="flex h-6 w-6 items-center justify-center bg-surface-container-high text-[11px] font-headline font-bold text-on-surface/60 uppercase">
                       {u.name.charAt(0)}
                     </div>
                     <div>
                       <p className="font-headline text-[10px] uppercase tracking-wider text-card-text">
                         {u.name}
                       </p>
-                      <p className="font-mono text-[8px] text-on-surface/40 uppercase">
+                      <p className="font-mono text-[10px] text-on-surface/40 uppercase">
                         {ROLE_LABELS[u.role as Role] || u.role}
                       </p>
                     </div>

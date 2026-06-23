@@ -66,7 +66,7 @@ export function PWAInstallPrompt() {
           <p className="font-headline text-[10px] uppercase tracking-widest text-card-text mb-1">
             INSTALL_APP
           </p>
-          <p className="font-mono text-[9px] text-on-surface/50 leading-relaxed">
+          <p className="font-mono text-[11px] text-on-surface/50 leading-relaxed">
             Install EOD Flow for quick access and offline support
           </p>
         </div>
@@ -74,13 +74,13 @@ export function PWAInstallPrompt() {
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleInstall}
-          className="flex-1 py-1.5 bg-primary text-on-primary font-headline text-[9px] uppercase tracking-widest hover:bg-primary/80 transition-colors"
+          className="flex-1 py-1.5 bg-primary text-on-primary font-headline text-[11px] uppercase tracking-widest hover:bg-primary/80 transition-colors"
         >
           INSTALL
         </button>
         <button
           onClick={handleDismiss}
-          className="px-4 py-1.5 brutalist-border text-card-text font-headline text-[9px] uppercase tracking-widest hover:bg-card-muted transition-colors"
+          className="px-4 py-1.5 brutalist-border text-card-text font-headline text-[11px] uppercase tracking-widest hover:bg-card-muted transition-colors"
         >
           LATER
         </button>

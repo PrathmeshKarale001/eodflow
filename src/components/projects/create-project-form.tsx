@@ -186,7 +186,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
       
       {/* Project Title */}
       <div className="space-y-1.5">
-        <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+        <label className="font-label text-[11px] uppercase text-primary tracking-widest">
           PROJECT_TITLE
         </label>
         <input
@@ -196,12 +196,12 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
           className="w-full h-12 bg-transparent brutalist-border px-4 py-2 font-body text-sm placeholder:text-muted focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase"
           placeholder="E.G. Q3 CAMPAIGN ROLLOUT"
         />
-        {errors.title && <p className="text-error text-[9px] font-mono uppercase">{errors.title.message}</p>}
+        {errors.title && <p className="text-error text-[11px] font-mono uppercase">{errors.title.message}</p>}
       </div>
 
       {/* Client Binding */}
       <div className="space-y-1.5">
-        <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+        <label className="font-label text-[11px] uppercase text-primary tracking-widest">
           CLIENT_BINDING
         </label>
         {preselectedClient ? (
@@ -227,7 +227,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
             )}
           />
         )}
-        {errors.clientId && <p className="text-error text-[9px] font-mono uppercase">{errors.clientId.message}</p>}
+        {errors.clientId && <p className="text-error text-[11px] font-mono uppercase">{errors.clientId.message}</p>}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════
@@ -237,12 +237,12 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
         <div className="flex items-center gap-2 mb-1">
           <span className="material-symbols-outlined text-primary text-base">add_task</span>
           <h3 className="font-headline text-xs uppercase tracking-widest text-on-surface/60">FIRST_TASK</h3>
-          <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto">OPTIONAL — LEAVE BLANK TO SKIP</span>
+          <span className="font-mono text-[10px] text-on-surface/30 uppercase ml-auto">OPTIONAL — LEAVE BLANK TO SKIP</span>
         </div>
 
         {/* Task Title */}
         <div className="space-y-1">
-          <label className="font-label text-[9px] uppercase text-primary tracking-widest">TASK_TITLE</label>
+          <label className="font-label text-[11px] uppercase text-primary tracking-widest">TASK_TITLE</label>
           <input
             {...register("taskTitle")}
             className="w-full h-10 bg-transparent brutalist-border px-3 py-2 font-body text-sm focus:border-primary-container focus:outline-none focus:bg-card/5 transition-colors uppercase"
@@ -252,7 +252,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
 
         {/* Task Description */}
         <div className="space-y-1">
-          <label className="font-label text-[9px] uppercase text-primary tracking-widest">DESCRIPTION</label>
+          <label className="font-label text-[11px] uppercase text-primary tracking-widest">DESCRIPTION</label>
           <textarea
             {...register("taskDescription")}
             rows={2}
@@ -264,7 +264,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
         {/* Task Priority + Due Date */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">PRIORITY</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">PRIORITY</label>
             <Controller
               name="taskPriority"
               control={control}
@@ -281,7 +281,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
           </div>
 
           <div className="space-y-1">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
             <input
               type="datetime-local"
               {...register("taskDueDate")}
@@ -293,7 +293,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
         {/* Assigned By (mandatory for employees) OR Assignees (for managers) */}
         {isEmployee ? (
           <div className="space-y-1.5">
-            <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">
               ASSIGNED_BY <span className="text-red-500">*</span>
             </label>
             <Controller
@@ -309,12 +309,12 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
                 />
               )}
             />
-            {errors.taskAssignedById && <p className="text-red-500 text-[9px] font-mono uppercase">{errors.taskAssignedById.message}</p>}
+            {errors.taskAssignedById && <p className="text-red-500 text-[11px] font-mono uppercase">{errors.taskAssignedById.message}</p>}
           </div>
         ) : (
           teamMembers.length > 0 && (
             <div className="space-y-1 relative">
-              <label className="font-label text-[9px] uppercase text-primary tracking-widest">ASSIGNEES</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">ASSIGNEES</label>
               <div
                 className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
                 onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
@@ -328,7 +328,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
                     return (
                       <span
                         key={id}
-                        className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-headline uppercase tracking-wider border border-primary/20"
+                        className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-headline uppercase tracking-wider border border-primary/20"
                       >
                         {member.name}
                         <button
@@ -369,7 +369,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
                         </div>
                         <span className="font-label text-[10px] uppercase tracking-wide text-foreground truncate">{member.name}</span>
                         {member.department && (
-                          <span className="font-mono text-[8px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
+                          <span className="font-mono text-[10px] text-on-surface/30 uppercase ml-auto flex-shrink-0">{member.department}</span>
                         )}
                       </button>
                     );
@@ -382,7 +382,7 @@ export function CreateProjectForm({ clients, managers, teamMembers = [], presele
 
         {/* Deliverables Attachment */}
         <div className="space-y-1">
-          <label className="font-label text-[9px] uppercase text-primary tracking-widest">
+          <label className="font-label text-[11px] uppercase text-primary tracking-widest">
             DELIVERABLES_ATTACHMENTS
           </label>
           <div

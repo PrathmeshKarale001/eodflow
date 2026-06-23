@@ -112,13 +112,13 @@ export function TimeTrackerWidget({
             {formatElapsed(isRunning ? elapsed : 0)}
           </p>
           {running && (
-            <p className="font-mono text-[9px] uppercase text-on-surface/50 mt-1 truncate max-w-[180px]">
+            <p className="font-mono text-[11px] uppercase text-on-surface/50 mt-1 truncate max-w-[180px]">
               <span className="text-primary">●</span> {running.task?.title ?? "Task"}
               {running.task?.project && ` · ${running.task.project.title}`}
             </p>
           )}
           {!running && effectiveTaskTitle && (
-            <p className="font-mono text-[9px] uppercase text-on-surface/40 mt-1 truncate max-w-[180px]">
+            <p className="font-mono text-[11px] uppercase text-on-surface/40 mt-1 truncate max-w-[180px]">
               {effectiveTaskTitle}
             </p>
           )}
@@ -160,7 +160,7 @@ export function TimeTrackerWidget({
       {/* Task Selector — only shown on standalone page (no taskId prop) and when not running */}
       {!taskId && !running && tasks.length > 0 && (
         <div className="mt-3 pt-3 border-t border-on-surface/10">
-          <label className="font-label text-[8px] uppercase tracking-widest text-on-surface/40 block mb-1.5">
+          <label className="font-label text-[10px] uppercase tracking-widest text-on-surface/40 block mb-1.5">
             SELECT_TASK_TO_TRACK
           </label>
           <select

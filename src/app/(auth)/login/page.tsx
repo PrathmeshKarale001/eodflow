@@ -37,7 +37,7 @@ function LoginForm() {
       <div className="w-full max-w-md brutalist-border bg-surface-container-lowest p-5 sm:p-8 flex flex-col relative z-10 box-border">
         
         {/* Decorative ID */}
-        <div className="absolute top-0 right-0 p-2 border-l border-b border-on-surface/10 font-label text-[8px] text-on-surface/30 uppercase">
+        <div className="absolute top-0 right-0 p-2 border-l border-b border-on-surface/10 font-label text-[10px] text-on-surface/30 uppercase">
           ID: 0xAUTH-SYS-REQ
         </div>
 

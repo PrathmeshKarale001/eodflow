@@ -78,7 +78,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
             <h2 className="font-headline text-base uppercase tracking-tight text-on-surface">
               EDIT_PROJECT
             </h2>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 mt-0.5">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mt-0.5">
               {project.id.slice(-8)}
             </p>
           </div>

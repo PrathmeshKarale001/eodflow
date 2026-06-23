@@ -41,7 +41,7 @@ export default async function ChatPage({ searchParams }: Props) {
         <p className="font-headline text-xs uppercase tracking-widest text-on-surface/30 mb-1">
           SELECT_A_CHANNEL
         </p>
-        <p className="font-mono text-[9px] text-on-surface/20 max-w-xs">
+        <p className="font-mono text-[11px] text-on-surface/20 max-w-xs">
           Pick a channel or start a direct message to begin chatting
         </p>
       </div>

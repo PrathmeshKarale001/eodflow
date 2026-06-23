@@ -9,8 +9,7 @@ import { cacheFetch, CacheKeys, CacheTTL } from "@/lib/cache";
 import { checkDueReminders } from "@/app/actions/reminders";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 
-export const dynamic = "force-dynamic";
-
+// ─── PERF: No force-dynamic needed — Next.js auto-detects from searchParams ──
 // ─── PERF: Redis-cached dashboard counts (with DB fallback) ─────────────────
 // Uses Upstash Redis when configured, otherwise queries Postgres directly.
 // These counts change rarely but were queried on every dashboard load.

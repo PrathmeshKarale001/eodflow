@@ -423,14 +423,14 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
           <div className="relative z-10 flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className={`px-1.5 py-0.5 text-[8px] sm:text-[9px] font-headline uppercase ${PRIORITY_COLORS[task.priority]} ${flashPriority ? "animate-pulse ring-2 ring-primary" : ""} transition-all duration-150`}>
+                <span className={`px-1.5 py-0.5 text-[10px] sm:text-[11px] font-headline uppercase ${PRIORITY_COLORS[task.priority]} ${flashPriority ? "animate-pulse ring-2 ring-primary" : ""} transition-all duration-150`}>
                   {task.priority}
                 </span>
-                <span className="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-headline uppercase bg-card/10 text-foreground">
+                <span className="px-1.5 py-0.5 text-[10px] sm:text-[11px] font-headline uppercase bg-card/10 text-foreground">
                   {task.status.replace(/_/g, " ")}
                 </span>
                 {task.revisionCount > 0 ? (
-                  <span className="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-headline uppercase bg-error text-white">REV:{task.revisionCount}</span>
+                  <span className="px-1.5 py-0.5 text-[10px] sm:text-[11px] font-headline uppercase bg-error text-white">REV:{task.revisionCount}</span>
                 ) : null}
               </div>
               <div className="flex items-center gap-1.5">
@@ -467,7 +467,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
             <div>
               <h2 className="font-headline text-lg sm:text-xl uppercase tracking-tight text-foreground leading-tight">{task.title}</h2>
               {((task.assignees && task.assignees.length > 0) || task.assignedTo) && (
-                <p className="font-label text-[9px] text-outline uppercase tracking-widest mt-1.5">
+                <p className="font-label text-[11px] text-outline uppercase tracking-widest mt-1.5">
                   ASSIGNED → <span className="text-primary font-bold">
                     {task.assignees && task.assignees.length > 0
                       ? task.assignees.map((a) => a.name).join(", ")
@@ -503,7 +503,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 <button
                   onClick={handleDeleteTask}
                   disabled={isDeleting}
-                  className="flex-shrink-0 flex items-center gap-1.5 mono-clip px-3 py-2 bg-red-600 text-white font-headline text-[9px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+                  className="flex-shrink-0 flex items-center gap-1.5 mono-clip px-3 py-2 bg-red-600 text-white font-headline text-[11px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-xs">{isDeleting ? "progress_activity" : "close"}</span>
                   REJECT
@@ -531,7 +531,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-3 font-label text-[9px] sm:text-[10px] uppercase tracking-widest transition-colors ${
+              className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-3 font-label text-[11px] sm:text-[10px] uppercase tracking-widest transition-colors ${
                 activeTab === tab.id
                   ? "text-primary border-b-2 border-b-primary bg-primary/5 font-bold"
                   : "text-outline hover:text-foreground hover:bg-card/5"
@@ -539,7 +539,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
             >
               <span className="material-symbols-outlined text-base sm:text-sm">{tab.icon}</span>
               <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden text-[8px]">{tab.label.slice(0, 3)}</span>
+              <span className="sm:hidden text-[10px]">{tab.label.slice(0, 3)}</span>
             </button>
           ))}
         </div>
@@ -552,13 +552,13 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {/* Meta Grid */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="brutalist-border p-3 bg-surface-container-lowest">
-                  <span className="font-label text-[8px] sm:text-[9px] text-outline uppercase tracking-widest block mb-1">DUE_DATE</span>
+                  <span className="font-label text-[10px] sm:text-[11px] text-outline uppercase tracking-widest block mb-1">DUE_DATE</span>
                   <span className="font-headline text-xs sm:text-sm text-foreground uppercase whitespace-nowrap">
                     {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) : "NOT_SET"}
                   </span>
                 </div>
                 <div className="brutalist-border p-3 bg-surface-container-lowest">
-                  <span className="font-label text-[8px] sm:text-[9px] text-outline uppercase tracking-widest block mb-1">PROGRESS</span>
+                  <span className="font-label text-[10px] sm:text-[11px] text-outline uppercase tracking-widest block mb-1">PROGRESS</span>
                   <span className="font-headline text-xs sm:text-sm text-foreground">
                     {localSubtasks.filter(s => s.isDone).length}/{localSubtasks.length} DONE
                   </span>
@@ -568,7 +568,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {/* Description */}
               {task.description ? (
                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                  <h3 className="font-label text-[9px] uppercase tracking-widest text-outline mb-2.5">DESCRIPTION</h3>
+                  <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-2.5">DESCRIPTION</h3>
                   <p className="font-body text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap border-l-3 border-primary pl-4 py-1">{task.description}</p>
                 </div>
               ) : null}
@@ -576,7 +576,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {/* Subtasks */}
               {task.subtasks.length > 0 ? (
                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                  <h3 className="font-label text-[9px] uppercase tracking-widest text-outline mb-3">
+                  <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-3">
                     SUBTASKS CHECKLIST
                   </h3>
                   <ul className="space-y-2">
@@ -606,7 +606,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
 
               {/* Deliverables Upload */}
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                <h3 className="font-label text-[9px] uppercase tracking-widest text-outline mb-3">FILE_DELIVERABLES</h3>
+                <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-3">FILE_DELIVERABLES</h3>
                 <div
                   onDragOver={onDragOver}
                   onDragLeave={onDragLeave}
@@ -625,7 +625,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 </div>
 
                 {uploadProgress !== null && (
-                  <div className="w-full brutalist-border h-5 mt-2 bg-surface-container-low overflow-hidden relative font-mono text-[9px] uppercase tracking-widest flex items-center justify-center">
+                  <div className="w-full brutalist-border h-5 mt-2 bg-surface-container-low overflow-hidden relative font-mono text-[11px] uppercase tracking-widest flex items-center justify-center">
                     <div 
                       className="absolute left-0 top-0 h-full bg-primary-container transition-all duration-150"
                       style={{ width: `${uploadProgress}%` }}
@@ -638,7 +638,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 {isLoadingFiles ? (
                   <div className="mt-4 p-4 text-center">
                     <span className="material-symbols-outlined text-primary animate-spin">progress_activity</span>
-                    <p className="font-label text-[9px] text-outline uppercase tracking-widest mt-2">LOADING_FILES...</p>
+                    <p className="font-label text-[11px] text-outline uppercase tracking-widest mt-2">LOADING_FILES...</p>
                   </div>
                 ) : files.length > 0 ? (
                   <div className="mt-4 space-y-2">
@@ -688,11 +688,11 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                                   </span>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     {file.uploadedBy?.name && (
-                                      <span className="font-label text-[8px] text-outline uppercase tracking-wider">
+                                      <span className="font-label text-[10px] text-outline uppercase tracking-wider">
                                         BY: {file.uploadedBy.name}
                                       </span>
                                     )}
-                                    <span className="font-mono text-[8px] text-primary/80 uppercase">
+                                    <span className="font-mono text-[10px] text-primary/80 uppercase">
                                       V{file.version ?? 1}
                                     </span>
                                   </div>
@@ -704,7 +704,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                                 {file.history.length > 0 && (
                                   <button
                                     onClick={() => setExpandedFiles(prev => ({ ...prev, [file.id]: !prev[file.id] }))}
-                                    className="flex h-8 px-2 items-center gap-1 brutalist-border bg-surface-container-low text-primary font-mono text-[8px] hover:bg-neutral-200 transition-colors mr-2"
+                                    className="flex h-8 px-2 items-center gap-1 brutalist-border bg-surface-container-low text-primary font-mono text-[10px] hover:bg-neutral-200 transition-colors mr-2"
                                     title="View Revision History"
                                   >
                                     <span className="material-symbols-outlined text-xs">history</span>
@@ -769,16 +769,16 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                                           history
                                         </span>
                                         <div className="flex flex-col min-w-0 flex-1">
-                                          <span className="truncate font-mono text-[9px] text-foreground/80">
+                                          <span className="truncate font-mono text-[11px] text-foreground/80">
                                             {rev.filename}
                                           </span>
                                           <div className="flex items-center gap-2 mt-0.5">
                                             {rev.uploadedBy?.name && (
-                                              <span className="font-label text-[7px] text-outline uppercase tracking-wider">
+                                              <span className="font-label text-[11px] text-outline uppercase tracking-wider">
                                                 BY: {rev.uploadedBy.name}
                                               </span>
                                             )}
-                                            <span className="font-mono text-[7px] text-outline uppercase">
+                                            <span className="font-mono text-[11px] text-outline uppercase">
                                               V{rev.version ?? 1}
                                             </span>
                                           </div>
@@ -930,7 +930,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                           <p className="font-mono text-[10px] uppercase tracking-wider text-on-surface/80">
                             <span className="font-bold text-card-text">{act.user.name}</span> {actionText}
                           </p>
-                          <p className="font-mono text-[8px] uppercase tracking-widest text-on-surface/30">
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/30">
                             {new Date(act.createdAt).toLocaleString("en-IN", {
                               day: "2-digit",
                               month: "short",
@@ -952,7 +952,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
         {(availableActions.length > 0 || canSelfAssign) && (
           <div className="p-4 sm:p-5 border-t-2 border-on-surface/10 bg-surface-container-lowest flex-shrink-0 flex flex-col gap-3">
             {task.status !== TaskStatus.DONE && (
-              <p className="font-label text-[8px] uppercase tracking-widest text-outline text-center">
+              <p className="font-label text-[10px] uppercase tracking-widest text-outline text-center">
                 {isManager ? "MANAGEMENT_ACTIONS" : "YOUR_ACTIONS"} — CURRENT: {task.status.replace(/_/g, " ")}
               </p>
             )}
