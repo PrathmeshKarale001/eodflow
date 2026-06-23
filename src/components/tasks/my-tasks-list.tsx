@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, startTransition, useEffect } from "react";
+import { useState, startTransition, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { TaskStatus, Priority, Role } from "@prisma/client";
 import { reassignTask } from "@/app/actions/tasks";
+import { categorizeByTime, sortByUrgencyWithinStatus, isTaskOverdue, isTaskDueToday } from "@/lib/task-group-utils";
 
 // ─── PERF: Lazy-load heavy modal/drawer but prefetch eagerly ────────────────
 const TaskDetailDrawer = dynamic(
@@ -115,6 +116,7 @@ export function MyTasksList({
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"priority" | "due_date" | "title" | "created">("priority");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [groupView, setGroupView] = useState<"STATUS" | "TIMELINE">("STATUS");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -270,8 +272,11 @@ export function MyTasksList({
 
   const grouped = STATUS_SECTIONS.map((section) => ({
     ...section,
-    tasks: filteredTasks.filter((t) => t.status === section.status),
+    tasks: sortByUrgencyWithinStatus(filteredTasks.filter((t) => t.status === section.status)),
   })).filter((section) => section.tasks.length > 0);
+
+  // Timeline view grouping
+  const timelineGroups = useMemo(() => categorizeByTime(filteredTasks), [filteredTasks]);
 
   // Unique assignees and projects from current tasks for filter dropdowns
   const uniqueAssignees = Array.from(
@@ -392,6 +397,27 @@ export function MyTasksList({
                 <span className="material-symbols-outlined text-sm">
                   {sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
                 </span>
+              </button>
+            </div>
+            {/* View Toggle */}
+            <div className="flex items-center brutalist-border overflow-hidden">
+              <button
+                onClick={() => setGroupView("STATUS")}
+                className={`px-2.5 py-1.5 font-headline text-[8px] uppercase tracking-widest transition-colors flex items-center gap-1 ${
+                  groupView === "STATUS" ? "bg-primary text-white" : "text-on-surface/50 hover:bg-surface-container-high"
+                }`}
+              >
+                <span className="material-symbols-outlined text-xs">view_list</span>
+                STATUS
+              </button>
+              <button
+                onClick={() => setGroupView("TIMELINE")}
+                className={`px-2.5 py-1.5 font-headline text-[8px] uppercase tracking-widest transition-colors flex items-center gap-1 border-l border-on-surface/10 ${
+                  groupView === "TIMELINE" ? "bg-primary text-white" : "text-on-surface/50 hover:bg-surface-container-high"
+                }`}
+              >
+                <span className="material-symbols-outlined text-xs">schedule</span>
+                TIMELINE
               </button>
             </div>
             {hasAnyFilter && (
@@ -559,6 +585,101 @@ export function MyTasksList({
             </button>
           )}
         </div>
+      ) : groupView === "TIMELINE" ? (
+        /* ─── Timeline View: Group by urgency ─── */
+        timelineGroups.map(({ group, config, tasks: groupTasks }) => (
+          <div key={group} className={`brutalist-border bg-card border-l-4 ${config.accentBorder}`}>
+            {/* Section Header */}
+            <div className="px-5 py-3 border-b border-neutral-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined text-sm ${config.accentText}`}>{config.icon}</span>
+                <h3 className={`font-headline text-xs uppercase tracking-[0.2em] ${config.accentText}`}>
+                  {config.label}
+                </h3>
+              </div>
+              <span className={`text-white px-2 py-0.5 text-[10px] font-mono min-w-[24px] text-center ${config.badgeBg}`}>
+                {groupTasks.length}
+              </span>
+            </div>
+
+            {/* Task Rows */}
+            <div className="divide-y divide-outline-variant/30">
+              {groupTasks.map((task) => {
+                const dueLabel = task.dueDate
+                  ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                  : null;
+                const taskOverdue = isTaskOverdue(task.dueDate, task.status);
+                const taskToday = isTaskDueToday(task.dueDate);
+
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => setSelectedTaskId(task.id)}
+                    className={`px-4 py-4 md:px-5 md:py-3 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors group gap-3`}
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <span className={`inline-block px-1.5 py-0.5 text-[8px] font-headline uppercase ${PRIORITY_CHIP[task.priority]} flex-shrink-0 mt-1 sm:mt-0`}>
+                        {task.priority[0]}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="font-headline text-sm uppercase tracking-tight truncate group-hover:text-primary transition-colors block leading-tight">
+                          {task.title}
+                        </span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                          {/* Status badge */}
+                          <span className={`px-1.5 py-0.5 text-[7px] font-headline uppercase tracking-widest ${
+                            task.status === "TODO" ? "bg-blue-500/20 text-blue-400" :
+                            task.status === "IN_PROGRESS" ? "bg-amber-500/20 text-amber-400" :
+                            task.status === "IN_REVIEW" ? "bg-purple-500/20 text-purple-400" :
+                            task.status === "REVISION" ? "bg-red-500/20 text-red-400" :
+                            task.status === "DONE" || task.status === "APPROVED" ? "bg-green-500/20 text-green-400" :
+                            "bg-neutral-500/20 text-neutral-400"
+                          }`}>
+                            {task.status.replace(/_/g, " ")}
+                          </span>
+                          {task.project?.client?.companyName && (
+                            <span className="font-mono text-[8px] uppercase text-primary/70 tracking-widest font-bold">
+                              {task.project.client.companyName}
+                            </span>
+                          )}
+                          {task.project && (
+                            <span className="font-mono text-[8px] uppercase text-on-surface/40 tracking-widest">
+                              {task.project.title}
+                            </span>
+                          )}
+                          {task.assignedTo && (
+                            <span className="font-mono text-[8px] uppercase text-primary/60 tracking-widest">
+                              → {task.assignedTo.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 ml-8 sm:ml-0">
+                      {taskOverdue && (
+                        <span className="text-[7px] font-mono uppercase text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">OVERDUE</span>
+                      )}
+                      {taskToday && !taskOverdue && (
+                        <span className="text-[7px] font-mono uppercase text-white bg-amber-600 px-1.5 py-0.5 font-bold">TODAY</span>
+                      )}
+                      {dueLabel && (
+                        <span className={`font-mono text-[9px] ${taskOverdue ? "text-red-500 font-bold" : "text-on-surface/40"}`}>
+                          {dueLabel}
+                        </span>
+                      )}
+                      {task._count.files > 0 && (
+                        <span className="flex items-center gap-0.5 font-mono text-[9px] text-on-surface/30">
+                          <span className="material-symbols-outlined text-xs">attach_file</span>
+                          {task._count.files}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))
       ) : (
         grouped.map((section) => (
           <div key={section.status} className={`brutalist-border bg-card border-l-4 ${section.accent}`}>
@@ -682,6 +803,12 @@ export function MyTasksList({
                           {dueLabel ? (
                             <span className={isOverdue ? "text-red-600 font-bold" : ""}>{dueLabel}</span>
                           ) : null}
+                          {isOverdue && (
+                            <span className="text-[7px] font-mono uppercase text-white bg-red-600 px-1.5 py-0.5 font-bold animate-pulse">OVERDUE</span>
+                          )}
+                          {!isOverdue && isTaskDueToday(task.dueDate) && (
+                            <span className="text-[7px] font-mono uppercase text-white bg-amber-600 px-1.5 py-0.5 font-bold">TODAY</span>
+                          )}
                         </div>
                         
                         <div className="flex items-center gap-3">

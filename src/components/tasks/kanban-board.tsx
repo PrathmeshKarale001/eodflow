@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { TaskStatus, Role } from "@prisma/client";
 import { TaskColumn } from "@/components/tasks/task-column";
+import { sortByPriorityThenDue } from "@/lib/task-group-utils";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -105,7 +106,8 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask, user
 
   const groupedTasks = KANBAN_COLUMNS.reduce(
     (acc, status) => {
-      acc[status] = tasks.filter((t) => t.status === status);
+      // Sort within each column: priority (URGENT first) → due date (earliest first)
+      acc[status] = sortByPriorityThenDue(tasks.filter((t) => t.status === status));
       return acc;
     },
     {} as Record<TaskStatus, typeof tasks>
