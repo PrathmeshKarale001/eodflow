@@ -1,7 +1,7 @@
 "use client";
 
 import { useUnread } from "./chat-provider";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Determine the right link and label for each toast type
 function getToastAction(toast: { id: string; channelId: string }) {
@@ -20,15 +20,25 @@ function getToastAction(toast: { id: string; channelId: string }) {
   // Chat message toasts
   return {
     href: `/chat/${toast.channelId}`,
-    label: "Open channel",
+    label: "Open chat",
     icon: "arrow_forward",
   };
 }
 
 export function ChatToastContainer() {
   const { toasts, dismissToast } = useUnread();
+  const router = useRouter();
 
   if (toasts.length === 0) return null;
+
+  const handleToastClick = (toast: (typeof toasts)[0]) => {
+    const action = getToastAction(toast);
+    dismissToast(toast.id);
+    // Use router.push + refresh instead of <Link> so the server component
+    // refetches channel data even when we're already on /chat
+    router.push(action.href);
+    router.refresh();
+  };
 
   return (
     <div className="fixed bottom-6 right-6 z-[999] flex flex-col gap-2 pointer-events-none">
@@ -86,10 +96,9 @@ export function ChatToastContainer() {
                 </p>
               )}
 
-              {/* Action */}
-              <Link
-                href={action.href}
-                onClick={() => dismissToast(toast.id)}
+              {/* Action — now a button with router.push instead of Link */}
+              <button
+                onClick={() => handleToastClick(toast)}
                 className={`inline-flex items-center gap-1 mt-2 font-mono text-[8px] uppercase tracking-widest transition-colors ${
                   isTaskOrNotif
                     ? "text-green-500 hover:text-green-400"
@@ -98,7 +107,7 @@ export function ChatToastContainer() {
               >
                 <span>{action.label}</span>
                 <span className="material-symbols-outlined text-[9px]">{action.icon}</span>
-              </Link>
+              </button>
             </div>
           </div>
         );

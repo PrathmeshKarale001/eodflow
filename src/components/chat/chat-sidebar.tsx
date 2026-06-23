@@ -19,8 +19,31 @@ interface Channel {
   type: "PROJECT" | "DIRECT" | "GROUP";
   project?: { title: string; client: { companyName: string; brandColor: string } | null } | null;
   members: { user: { id: string; name: string; image: string | null } }[];
-  messages: { user: { name: string }; content?: string }[];
+  messages: { user: { name: string }; content?: string; createdAt?: Date | string }[];
   _count: { messages: number };
+}
+
+function timeAgo(date: Date | string) {
+  const secs = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  if (secs < 60) return "now";
+  if (secs < 3600) return `${Math.floor(secs / 60)}m`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h`;
+  if (secs < 604800) return `${Math.floor(secs / 86400)}d`;
+  return new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
+function sortByRecentMessage(channels: Channel[], unreadCounts: Record<string, number>) {
+  return [...channels].sort((a, b) => {
+    // Unread channels always come first
+    const aUnread = unreadCounts[a.id] ?? 0;
+    const bUnread = unreadCounts[b.id] ?? 0;
+    if (aUnread > 0 && bUnread === 0) return -1;
+    if (bUnread > 0 && aUnread === 0) return 1;
+    // Then sort by latest message timestamp
+    const aTime = a.messages[0]?.createdAt ? new Date(a.messages[0].createdAt).getTime() : 0;
+    const bTime = b.messages[0]?.createdAt ? new Date(b.messages[0].createdAt).getTime() : 0;
+    return bTime - aTime;
+  });
 }
 
 interface ChatSidebarProps {
@@ -64,8 +87,8 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
     }
   }, [searchParams]);
 
-  const groupChannels = channels.filter((c) => c.type === "GROUP");
-  const directChannels = channels.filter((c) => c.type === "DIRECT");
+  const groupChannels = sortByRecentMessage(channels.filter((c) => c.type === "GROUP"), unreadCounts);
+  const directChannels = sortByRecentMessage(channels.filter((c) => c.type === "DIRECT"), unreadCounts);
 
   const handleNewDM = async () => {
     setShowNewDM(true);
@@ -273,13 +296,24 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                 >
                   <span className="text-primary/60 font-mono text-[11px] flex-shrink-0">#</span>
                   <div className="min-w-0 flex-1">
-                    <p className={`font-headline text-[10px] uppercase tracking-wider truncate ${
-                      unread > 0 ? "text-on-surface" : "text-card-text"
-                    }`}>
-                      {ch.name}
-                    </p>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className={`font-headline text-[10px] uppercase tracking-wider truncate ${
+                        unread > 0 ? "text-on-surface font-bold" : "text-card-text"
+                      }`}>
+                        {ch.name}
+                      </p>
+                      {ch.messages[0]?.createdAt && (
+                        <span className={`font-mono text-[7px] flex-shrink-0 ${
+                          unread > 0 ? "text-primary" : "text-on-surface/25"
+                        }`}>
+                          {timeAgo(ch.messages[0].createdAt)}
+                        </span>
+                      )}
+                    </div>
                     {ch.messages[0] && (
-                      <p className="font-mono text-[8px] text-on-surface/40 truncate">
+                      <p className={`font-mono text-[8px] truncate ${
+                        unread > 0 ? "text-on-surface/60" : "text-on-surface/35"
+                      }`}>
                         {ch.messages[0].user.name}: {ch.messages[0].content?.substring(0, 30)}
                       </p>
                     )}
@@ -346,11 +380,27 @@ export function ChatSidebar({ channels, currentUserId, canManageChannels, isMobi
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={`font-headline text-[10px] uppercase tracking-wider truncate ${
-                    unread > 0 ? "text-on-surface" : "text-card-text"
-                  }`}>
-                    {otherUser?.name || "Unknown"}
-                  </p>
+                  <div className="flex items-center justify-between gap-1">
+                    <p className={`font-headline text-[10px] uppercase tracking-wider truncate ${
+                      unread > 0 ? "text-on-surface font-bold" : "text-card-text"
+                    }`}>
+                      {otherUser?.name || "Unknown"}
+                    </p>
+                    {ch.messages[0]?.createdAt && (
+                      <span className={`font-mono text-[7px] flex-shrink-0 ${
+                        unread > 0 ? "text-primary" : "text-on-surface/25"
+                      }`}>
+                        {timeAgo(ch.messages[0].createdAt)}
+                      </span>
+                    )}
+                  </div>
+                  {ch.messages[0] && (
+                    <p className={`font-mono text-[8px] truncate ${
+                      unread > 0 ? "text-on-surface/60" : "text-on-surface/35"
+                    }`}>
+                      {ch.messages[0].content?.substring(0, 35) || "No messages yet"}
+                    </p>
+                  )}
                 </div>
               </Link>
             );

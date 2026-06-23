@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/permissions";
+import { useUnread } from "@/components/chat/chat-provider";
 import type { Role } from "@prisma/client";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { getAvailableDMUsers } from "@/app/actions/chat";
@@ -48,6 +49,8 @@ interface SidebarProps {
 export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClients = [] }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { unreadCounts } = useUnread();
+  const totalChatUnread = Object.values(unreadCounts).reduce((sum, c) => sum + c, 0);
   const [collapsed, setCollapsed] = useState(false);
   const [chatSearch, setChatSearch] = useState("");
   const [chatSearchResults, setChatSearchResults] = useState<{ id: string; name: string; image: string | null }[]>([]);
@@ -244,6 +247,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
             {navItems.map((item) => {
               const iconName = ICON_MAP[item.icon] ?? "space_dashboard";
               const isActive = pathname === item.href || (item.href !== "/overview" && pathname.startsWith(item.href));
+              const isChatNav = item.href === "/chat";
 
               return (
                 <Link
@@ -257,7 +261,12 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
                   )}
                 >
                   <span className="material-symbols-outlined text-base flex-shrink-0">{iconName}</span>
-                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && <span className="flex-1">{item.label}</span>}
+                  {isChatNav && totalChatUnread > 0 && (
+                    <span className="min-w-[18px] h-[18px] bg-primary text-on-primary text-[8px] font-bold font-mono rounded-full flex items-center justify-center px-1 animate-pulse">
+                      {totalChatUnread > 99 ? "99+" : totalChatUnread}
+                    </span>
+                  )}
                 </Link>
               );
             })}
