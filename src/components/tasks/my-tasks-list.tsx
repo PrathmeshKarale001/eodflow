@@ -26,10 +26,13 @@ if (typeof window !== "undefined") {
 }
 
 const STATUS_SECTIONS: { status: TaskStatus; label: string; accent: string }[] = [
+  { status: TaskStatus.PENDING_APPROVAL, label: "PENDING_APPROVAL", accent: "border-l-cyan-500" },
   { status: TaskStatus.TODO, label: "TODO", accent: "border-l-blue-500" },
   { status: TaskStatus.IN_PROGRESS, label: "IN_PROGRESS", accent: "border-l-amber-500" },
   { status: TaskStatus.IN_REVIEW, label: "IN_REVIEW", accent: "border-l-purple-500" },
   { status: TaskStatus.REVISION, label: "REVISION", accent: "border-l-red-500" },
+  { status: TaskStatus.CLIENT_APPROVAL, label: "CLIENT_APPROVAL", accent: "border-l-teal-500" },
+  { status: TaskStatus.CLIENT_REVISION, label: "CLIENT_REVISION", accent: "border-l-orange-500" },
   { status: TaskStatus.APPROVED, label: "APPROVED", accent: "border-l-green-500" },
   { status: TaskStatus.DONE, label: "DONE", accent: "border-l-green-700" },
   { status: TaskStatus.BACKLOG, label: "BACKLOG", accent: "border-l-neutral-400" },

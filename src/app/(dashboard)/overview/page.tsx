@@ -54,7 +54,6 @@ export default async function OverviewPage({
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
   const nextWeek = new Date(Date.now() + 7 * 86400000);
 
   // Parse date range query params
