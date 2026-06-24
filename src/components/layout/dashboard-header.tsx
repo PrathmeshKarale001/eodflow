@@ -28,7 +28,7 @@ export function DashboardHeader({ user, navItems, unreadCount = 0, brands = [], 
   const { openCreateTask } = useGlobalTaskModal();
 
   return (
-    <header className="hidden max-md:flex sticky top-0 z-30 h-14 w-full items-center justify-between border-b brutalist-border bg-background px-3">
+    <header className="hidden max-md:flex sticky top-0 z-30 h-14 w-full items-center justify-between border-b brutalist-border bg-background px-3 safe-area-top">
       {/* Left: menu + logo */}
       <div className="flex items-center gap-2.5">
         <button

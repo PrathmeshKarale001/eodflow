@@ -9,9 +9,7 @@ import { db } from "@/lib/db";
 // Configure VAPID credentials
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
-const VAPID_SUBJECT = process.env.NEXT_PUBLIC_APP_URL
-  ? `mailto:noreply@${new URL(process.env.NEXT_PUBLIC_APP_URL).hostname}`
-  : "mailto:noreply@eodflow.com";
+const VAPID_SUBJECT = "mailto:noreply@eod.media";
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);

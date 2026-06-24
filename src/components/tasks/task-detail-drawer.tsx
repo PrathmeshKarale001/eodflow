@@ -1013,7 +1013,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onEx
 
         {/* Footer Actions — Role-aware status transitions */}
         {(availableActions.length > 0 || canSelfAssign) && (
-          <div className="p-4 sm:p-5 border-t-2 border-on-surface/10 bg-surface-container-lowest flex-shrink-0 flex flex-col gap-3">
+          <div className="p-4 sm:p-5 border-t-2 border-on-surface/10 bg-surface-container-lowest flex-shrink-0 flex flex-col gap-3 safe-area-bottom">
             {task.status !== TaskStatus.DONE && (
               <p className="font-label text-[11px] uppercase tracking-widest text-outline text-center">
                 {isManager ? "Management Actions" : "Your Actions"} — Current: {task.status.replace(/_/g, " ")}

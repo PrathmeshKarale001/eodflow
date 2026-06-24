@@ -1,0 +1,445 @@
+/* Material Symbols loaded via non-blocking <link> in layout.tsx — not @import (render-blocking) */
+@import "tailwindcss";
+
+/* =============================================================================
+   EOD FLOW — Design System Tokens
+   Inspired by: ClickUp density, Slack warmth, Zoho clean, Linear polish
+   ============================================================================= */
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-headline: var(--font-jetbrains-mono), monospace;
+  --font-body: var(--font-inter), sans-serif;
+  --font-label: var(--font-jetbrains-mono), monospace;
+
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+
+  --color-primary: var(--clr-primary);
+  --color-on-primary: var(--clr-on-primary);
+  --color-primary-container: var(--clr-primary-container);
+  --color-on-primary-container: var(--clr-on-primary-container);
+
+  --color-secondary: var(--clr-secondary);
+  --color-on-secondary: var(--clr-on-secondary);
+  --color-secondary-container: var(--clr-secondary-container);
+  --color-on-secondary-container: var(--clr-on-secondary-container);
+
+  --color-tertiary: var(--clr-tertiary);
+  --color-on-tertiary: var(--clr-on-tertiary);
+  --color-tertiary-container: var(--clr-tertiary-container);
+  --color-on-tertiary-container: var(--clr-on-tertiary-container);
+
+  --color-surface: var(--clr-surface);
+  --color-on-surface: var(--clr-on-surface);
+  --color-surface-container-lowest: var(--clr-surface-lowest);
+  --color-surface-container-low: var(--clr-surface-low);
+  --color-surface-container: var(--clr-surface-container);
+  --color-surface-container-high: var(--clr-surface-high);
+  --color-surface-container-highest: var(--clr-surface-highest);
+
+  --color-outline: var(--clr-outline);
+  --color-outline-variant: var(--clr-outline-variant);
+
+  --color-error: var(--clr-error);
+  --color-on-error: var(--clr-on-error);
+
+  /* Semantic card token */
+  --color-card: var(--clr-card);
+  --color-card-muted: var(--clr-card-muted);
+  --color-card-text: var(--clr-card-text);
+  --color-card-border: var(--clr-card-border);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+}
+
+/* ===== DARK MODE (default) ===== */
+:root {
+  color-scheme: dark;
+  --bg: #0C0C10;
+  --fg: #e5e2e1;
+  --clr-primary: #c6bfff;
+  --clr-on-primary: #2900a0;
+  --clr-primary-container: #6c5ce7;
+  --clr-on-primary-container: #faf6ff;
+  --clr-secondary: #c7bfff;
+  --clr-on-secondary: #2c0d95;
+  --clr-secondary-container: #4330ab;
+  --clr-on-secondary-container: #b5abff;
+  --clr-tertiary: #ffb77d;
+  --clr-on-tertiary: #4d2600;
+  --clr-tertiary-container: #ac5d00;
+  --clr-on-tertiary-container: #fff5f1;
+  --clr-surface: #111115;
+  --clr-on-surface: #e5e2e1;
+  --clr-surface-lowest: #0C0C10;
+  --clr-surface-low: #18181E;
+  --clr-surface-container: #1E1E26;
+  --clr-surface-high: #282832;
+  --clr-surface-highest: #33333D;
+  --clr-outline: #928ea0;
+  --clr-outline-variant: #3E3D4D;
+  --clr-error: #ffb4ab;
+  --clr-on-error: #690005;
+  --clr-card: #14141A;
+  --clr-card-muted: #1A1A22;
+  --clr-card-text: #c6bfff;
+  --clr-card-border: rgba(255, 255, 255, 0.10);
+}
+
+/* ===== LIGHT MODE ===== */
+.light {
+  color-scheme: light;
+  --bg: #f5f5f5;
+  --fg: #1a1a1a;
+  --clr-primary: #6c5ce7;
+  --clr-on-primary: #ffffff;
+  --clr-primary-container: #6c5ce7;
+  --clr-on-primary-container: #ffffff;
+  --clr-secondary: #5a4fcf;
+  --clr-on-secondary: #ffffff;
+  --clr-secondary-container: #e8e5ff;
+  --clr-on-secondary-container: #2c0d95;
+  --clr-tertiary: #c45d00;
+  --clr-on-tertiary: #ffffff;
+  --clr-tertiary-container: #ffead9;
+  --clr-on-tertiary-container: #4d2600;
+  --clr-surface: #ffffff;
+  --clr-on-surface: #1a1a1a;
+  --clr-surface-lowest: #ffffff;
+  --clr-surface-low: #f8f8f8;
+  --clr-surface-container: #f0f0f0;
+  --clr-surface-high: #e8e8e8;
+  --clr-surface-highest: #dcdcdc;
+  --clr-outline: #6b6880;
+  --clr-outline-variant: #c8c6d4;
+  --clr-error: #ba1a1a;
+  --clr-on-error: #ffffff;
+  --clr-card: #ffffff;
+  --clr-card-muted: #f4f4f5;
+  --clr-card-text: #180065;
+  --clr-card-border: rgba(0, 0, 0, 0.15);
+}
+
+/* Custom Utilities */
+@utility brutalist-border {
+  border: 1px solid var(--clr-card-border);
+  border-radius: var(--radius-md);
+}
+
+@utility scanline {
+  background: linear-gradient(to bottom, transparent 50%, rgba(108, 92, 231, 0.05) 51%);
+  background-size: 100% 4px;
+  pointer-events: none;
+}
+
+@utility mono-clip {
+  clip-path: polygon(0 0, 100% 0, 100% 90%, 95% 100%, 0 100%);
+}
+
+@utility accent-glow {
+  text-shadow: 0 0 12px var(--clr-primary);
+}
+
+@utility card-hover-lift {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(108, 92, 231, 0.15), 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+@utility shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--clr-surface-high) 0%,
+    var(--clr-surface-highest) 40%,
+    var(--clr-surface-high) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.5s ease-in-out infinite;
+}
+
+@utility data-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+
+/* Base styles — scoped border-color (not * wildcard for perf) */
+div, section, aside, nav, header, footer, article,
+button, a, input, select, textarea, label,
+[class*="brutalist"] {
+  border-color: var(--clr-card-border);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--clr-outline-variant);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--clr-outline);
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--clr-primary-container);
+  color: white;
+}
+
+/* Smooth transitions — scoped to interactive elements only (not every DOM node) */
+a,
+button,
+[role="button"],
+input,
+select,
+textarea,
+.brutalist-border {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+
+/* Gentle tactile active state for buttons and links */
+button:active:not(:disabled),
+a:active:not(:disabled),
+[role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* ─── Page transition animations ──────────────────────────────── */
+/* NOTE: No transforms here — CSS transforms create a new containing block
+   that breaks fixed positioning for modals/drawers inside page content. */
+@keyframes page-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes page-exit {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.page-transition-enter {
+  animation: page-enter 200ms ease-out both;
+}
+
+/* ─── Shimmer sweep keyframes ──────────────────────────────── */
+@keyframes shimmer-sweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Theme-switch animation: apply globally only during active transition */
+[data-transitioning] *,
+[data-transitioning] *::before,
+[data-transitioning] *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--clr-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none !important;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  /* ─── PERF: Prevent CLS during icon font loading ─────────────── */
+  /* Explicit dimensions prevent layout shift when the font swaps in */
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+}
+
+/* ─── PERF: Content visibility for below-fold sections ──────────── */
+/* Tells the browser to skip rendering off-screen content until needed */
+[id="workflow"],
+[id="roles"] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
+/* =============================================================================
+   EOD FLOW — Custom Native Dropdown Styling
+   ============================================================================= */
+
+select {
+  appearance: none;
+  background-color: var(--clr-surface-low);
+  color: var(--fg);
+  border: 1px solid var(--clr-card-border);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  padding: 0.25rem 1.75rem 0.25rem 0.5rem;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23c6bfff'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+}
+
+.light select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c5ce7'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+}
+
+select:hover {
+  border-color: var(--clr-outline);
+  background-color: var(--clr-surface-container);
+}
+
+select:focus {
+  outline: 2px solid var(--clr-primary);
+  outline-offset: 2px;
+}
+
+/* Don't show custom background chevron if select has a manual sibling chevron */
+.relative:has(> .material-symbols-outlined) select,
+div:has(> .material-symbols-outlined) select {
+  background-image: none;
+  padding-right: 0.5rem;
+}
+
+/* Dropdown Options List panel styling */
+select option {
+  background-color: #131313 !important; /* Matches var(--clr-surface) */
+  color: #e5e2e1 !important; /* Matches var(--fg) / var(--clr-on-surface) */
+  font-family: var(--font-mono) !important;
+}
+
+/* Light Mode Dropdown Options List styling */
+.light select option {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+}
+
+/* =============================================================================
+   Animation Utilities (replaces tailwindcss-animate plugin)
+   ============================================================================= */
+
+/* Base animation triggers — compose with direction classes below */
+.animate-in {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.animate-out {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+/* Duration modifiers */
+.duration-150 { animation-duration: 150ms; }
+.duration-200 { animation-duration: 200ms; }
+.duration-250 { animation-duration: 250ms; }
+.duration-300 { animation-duration: 300ms; }
+.duration-500 { animation-duration: 500ms; }
+
+/* Ease */
+.ease-out { animation-timing-function: ease-out; }
+
+/* Fade */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fade-in { animation-name: fadeIn; }
+
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.fade-out { animation-name: fadeOut; }
+
+/* Slide from right (drawers / side panels) */
+@keyframes slideInFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.slide-in-from-right { animation-name: slideInFromRight; }
+
+/* Slide from left (mobile sidebars) */
+@keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.slide-in-from-left { animation-name: slideInFromLeft; }
+
+/* Slide from bottom (mobile bottom sheets) */
+@keyframes slideInFromBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.slide-in-from-bottom { animation-name: slideInFromBottom; }
+
+/* Slide from bottom small amount (modals with subtle lift) */
+@keyframes slideInFromBottom4 { from { transform: translateY(1rem); } to { transform: translateY(0); } }
+.slide-in-from-bottom-4 { animation-name: slideInFromBottom4; }
+
+/* Slide from top (search bars, dropdown panels) */
+@keyframes slideInFromTop1 { from { transform: translateY(-0.25rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.slide-in-from-top-1 { animation-name: slideInFromTop1; }
+
+@keyframes slideInFromTop2 { from { transform: translateY(-0.5rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.slide-in-from-top-2 { animation-name: slideInFromTop2; }
+
+/* Slide exits */
+@keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+.slide-out-to-left { animation-name: slideOutToLeft; }
+
+@keyframes slideOutToRight { from { transform: translateX(0); } to { transform: translateX(100%); } }
+.slide-out-to-right { animation-name: slideOutToRight; }
+
+@keyframes slideOutToBottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+.slide-out-to-bottom { animation-name: slideOutToBottom; }
+
+/* Zoom in (modal popup scale effect) */
+@keyframes zoomIn95 { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.zoom-in-95 { animation-name: zoomIn95; }
+
+/* Shimmer loading skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.06) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Responsive animation overrides — on mobile, use bottom sheet instead of side drawer */
+@media (min-width: 768px) {
+  .md\:slide-in-from-right { animation-name: slideInFromRight !important; }
+  .md\:slide-out-to-right { animation-name: slideOutToRight !important; }
+}
+
+@media (min-width: 640px) {
+  .sm\:zoom-in-95 { animation-name: zoomIn95 !important; }
+  .sm\:slide-in-from-bottom { animation-name: slideInFromBottom !important; }
+  .sm\:slide-out-to-bottom { animation-name: slideOutToBottom !important; }
+}

@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
+import { isNativePlatform } from "@/lib/capacitor";
 
 // ---------------------------------------------------------------------------
 // Hook: Auto-registers push subscription on mount
-// Shows browser permission prompt if not yet granted
+// Shows browser permission prompt if not yet granted.
+//
+// CAPACITOR BRIDGE: When running inside a Capacitor native shell, this hook
+// uses @capacitor/push-notifications (APNs on iOS, FCM on Android) instead
+// of the Web Push API. The server-side subscription endpoint remains the same.
 // ---------------------------------------------------------------------------
 
 export function usePushNotifications() {
@@ -13,14 +18,87 @@ export function usePushNotifications() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
   useEffect(() => {
-    const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-    setIsSupported(supported);
-    if (supported) {
-      setPermission(Notification.permission);
+    if (isNativePlatform()) {
+      // Native Capacitor — push is always "supported"
+      setIsSupported(true);
+      initNativePush();
+    } else {
+      // Web browser — check for Web Push API support
+      const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+      setIsSupported(supported);
+      if (supported) {
+        setPermission(Notification.permission);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ─── Native Capacitor Push Setup ─────────────────────────────────────────
+  const initNativePush = async () => {
+    try {
+      // Dynamic import — only loads inside Capacitor, tree-shaken from web bundle
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+
+      // Request permission
+      const permResult = await PushNotifications.requestPermissions();
+      if (permResult.receive === "granted") {
+        setPermission("granted");
+        await PushNotifications.register();
+      } else {
+        setPermission("denied");
+        return;
+      }
+
+      // Listen for registration success — sends device token to our server
+      PushNotifications.addListener("registration", async (token) => {
+        try {
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subscription: {
+                // For native push, we send the device token in a format
+                // our server can distinguish from web push subscriptions
+                endpoint: `capacitor://${token.value}`,
+                keys: { p256dh: "", auth: "" },
+              },
+              userAgent: `Capacitor/${(window as any).Capacitor?.getPlatform?.() ?? "native"}`,
+            }),
+          });
+          setIsSubscribed(true);
+        } catch {
+          // Server sync failed — will retry on next app launch
+        }
+      });
+
+      // Handle registration errors
+      PushNotifications.addListener("registrationError", (err) => {
+        console.error("Native push registration failed:", err);
+      });
+
+      // Handle received notifications when app is in foreground
+      PushNotifications.addListener("pushNotificationReceived", (notification) => {
+        // Show an in-app toast instead of a system notification
+        // (system notifications are only shown when app is backgrounded)
+        console.log("Push received in foreground:", notification);
+      });
+
+      // Handle notification tap (app opened from notification)
+      PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+        const url = action.notification.data?.url;
+        if (url && typeof window !== "undefined") {
+          window.location.href = url;
+        }
+      });
+    } catch (err) {
+      console.error("Native push init failed:", err);
+    }
+  };
+
+  // ─── Web Push Subscribe ──────────────────────────────────────────────────
   const subscribe = useCallback(async () => {
+    // If native, push is handled by initNativePush() above
+    if (isNativePlatform()) return true;
     if (!isSupported) return false;
 
     try {
@@ -66,8 +144,9 @@ export function usePushNotifications() {
     }
   }, [isSupported]);
 
-  // Auto-subscribe on mount if permission already granted
+  // Auto-subscribe on mount if permission already granted (web only)
   useEffect(() => {
+    if (isNativePlatform()) return; // Native handled by initNativePush
     if (!isSupported) return;
 
     const checkExisting = async () => {
@@ -119,3 +198,4 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   }
   return outputArray;
 }
+
