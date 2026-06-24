@@ -94,7 +94,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-container text-white px-6 py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all mono-clip disabled:opacity-50 disabled:hover:bg-primary-container disabled:hover:text-white"
+              className="w-full bg-primary-container text-white px-6 py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all rounded-lg disabled:opacity-50 disabled:hover:bg-primary-container disabled:hover:text-white"
             >
               {loading ? "AUTHENTICATING..." : "INITIALIZE_SESSION"} <span className="material-symbols-outlined text-[18px]">login</span>
             </button>

@@ -10,7 +10,7 @@ const TYPE_ICONS: Record<string, string> = {
   TASK_STATUS_CHANGED: "swap_horiz",
   COMMENT_ADDED: "chat",
   MENTION: "alternate_email",
-  FILE_UPLOADED: "upload_file",
+  FILE_UPLOADED: "Upload File",
   DEADLINE_REMINDER: "alarm",
   APPROVAL_REQUESTED: "verified",
   REVISION_REQUESTED: "undo",
@@ -102,7 +102,7 @@ export function NotificationPanel({ userId, onClose, onMarkAllRead, onCountRefre
               MARK_ALL_READ
             </button>
             <button onClick={onClose} className="hover:bg-neutral-200 p-1 transition-colors">
-              <span className="material-symbols-outlined text-lg">close</span>
+              <span className="material-symbols-outlined text-lg">Close</span>
             </button>
           </div>
         </div>

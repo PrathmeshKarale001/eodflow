@@ -107,7 +107,7 @@ export function ChatSearch({ channelId, isOpen, onClose, onScrollToMessage }: Ch
           {results.length === 0 && !searching ? (
             <div className="p-4 text-center">
               <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/30">
-                NO_RESULTS_FOUND
+                No results found
               </p>
             </div>
           ) : (

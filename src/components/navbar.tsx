@@ -29,7 +29,7 @@ export function Navbar() {
         {/* Right Auth/Theme block on Mobile */}
         <div className="flex lg:hidden items-center gap-2 h-9">
           <ThemeToggle />
-          <NavbarAuthSection className="bg-primary-container text-on-primary-container font-headline text-[11px] uppercase font-bold hover:bg-primary hover:text-on-primary transition-all px-3 h-full flex items-center justify-center mono-clip" />
+          <NavbarAuthSection className="bg-primary-container text-on-primary-container font-headline text-[11px] uppercase font-bold hover:bg-primary hover:text-on-primary transition-all px-3 h-full flex items-center justify-center rounded-lg" />
         </div>
       </div>
 

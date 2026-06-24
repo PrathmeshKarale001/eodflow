@@ -114,7 +114,7 @@ export function InviteCodesPanel({
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="mono-clip bg-primary-container text-white px-4 py-2 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+            className="rounded-lg bg-primary-container text-white px-4 py-2 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-sm">
               {showCreateForm ? "close" : "generating_tokens"}
@@ -137,7 +137,7 @@ export function InviteCodesPanel({
 
       {/* New Code Created Modal */}
       {newCode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
           <div className="brutalist-border bg-background w-full max-w-sm mx-4 p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-2xl text-primary">generating_tokens</span>
@@ -229,7 +229,7 @@ export function InviteCodesPanel({
           <button
             onClick={handleCreate}
             disabled={isCreating}
-            className="mono-clip bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-2"
+            className="rounded-lg bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-sm">generating_tokens</span>
             {isCreating ? "GENERATING..." : "GENERATE"}

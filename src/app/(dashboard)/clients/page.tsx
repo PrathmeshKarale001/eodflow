@@ -44,7 +44,7 @@ export default async function ClientsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline text-2xl md:text-3xl font-extrabold uppercase tracking-tight text-foreground leading-none">
-            Client_Workspaces
+            Client Workspaces
           </h1>
           <p className="font-label text-[10px] uppercase tracking-widest text-outline mt-1.5">
             {clients.length} ACTIVE_ACCOUNTS
@@ -53,10 +53,10 @@ export default async function ClientsPage() {
         {hasPermission(role, "createClient") && (
           <Link
             href="/clients/new"
-            className="mono-clip bg-primary-container text-white px-5 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+            className="rounded-lg bg-primary-container text-white px-5 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <span className="material-symbols-outlined text-sm">add</span>
-            NEW_CLIENT
+            New Client
           </Link>
         )}
       </div>

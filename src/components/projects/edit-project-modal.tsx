@@ -66,7 +66,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
         onClick={onClose}
       />
 
@@ -76,7 +76,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
         <div className="flex items-center justify-between p-5 border-b border-on-surface/10 flex-shrink-0">
           <div>
             <h2 className="font-headline text-base uppercase tracking-tight text-on-surface">
-              EDIT_PROJECT
+              Edit Project
             </h2>
             <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mt-0.5">
               {project.id.slice(-8)}
@@ -101,7 +101,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
           {/* Title */}
           <div>
             <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-              PROJECT_TITLE *
+              Project Title *
             </label>
             <input
               type="text"
@@ -116,7 +116,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-                PRIORITY
+                Priority
               </label>
               <AppSelect
                 options={PRIORITY_OPTIONS}
@@ -128,7 +128,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
             </div>
             <div>
               <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-                STATUS
+                Status
               </label>
               <AppSelect
                 options={STATUS_OPTIONS}
@@ -144,7 +144,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-                DEADLINE
+                Deadline
               </label>
               <input
                 type="date"
@@ -155,16 +155,16 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
             </div>
             <div>
               <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-                ASSIGNED_MANAGER
+                Assigned Manager
               </label>
               <AppSelect
                 options={[
-                  { value: "", label: "-- UNASSIGNED --" },
+                  { value: "", label: "-- Unassigned --" },
                   ...managers.map((m) => ({ value: m.id, label: m.name })),
                 ]}
                 value={assignedManagerId}
                 onChange={(val) => setAssignedManagerId(val)}
-                placeholder="-- UNASSIGNED --"
+                placeholder="-- Unassigned --"
                 className="h-11"
               />
             </div>
@@ -173,28 +173,28 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
           {/* Brief Objective */}
           <div>
             <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-              BRIEF_OBJECTIVE
+              Brief Objective
             </label>
             <textarea
               value={briefObjective}
               onChange={(e) => setBriefObjective(e.target.value)}
               rows={3}
               className="w-full brutalist-border bg-transparent px-4 py-3 font-mono text-sm text-on-surface focus:border-primary focus:outline-none placeholder:text-on-surface/20 resize-none"
-              placeholder="PRIMARY GOAL..."
+              placeholder="Primary goal..."
             />
           </div>
 
           {/* Deliverables */}
           <div>
             <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-              DELIVERABLES
+              Deliverables
             </label>
             <textarea
               value={briefDeliverables}
               onChange={(e) => setBriefDeliverables(e.target.value)}
               rows={3}
               className="w-full brutalist-border bg-transparent px-4 py-3 font-mono text-sm text-on-surface focus:border-primary focus:outline-none placeholder:text-on-surface/20 resize-none"
-              placeholder="WHAT EXACTLY IS BEING DELIVERED..."
+              placeholder="What exactly is being delivered..."
             />
           </div>
 
@@ -203,17 +203,17 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
             <button
               type="submit"
               disabled={isPending}
-              className="mono-clip bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="rounded-lg bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isPending ? (
                 <>
                   <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
-                  SAVING...
+                  Saving...
                 </>
               ) : (
                 <>
                   <span className="material-symbols-outlined text-sm">save</span>
-                  SAVE_CHANGES
+                  Save Changes
                 </>
               )}
             </button>
@@ -222,7 +222,7 @@ export function EditProjectModal({ project, managers, onClose }: EditProjectModa
               onClick={onClose}
               className="brutalist-border px-5 py-3 font-headline text-xs uppercase text-on-surface/60 hover:text-on-surface hover:bg-surface-container-high transition-colors"
             >
-              CANCEL
+              Cancel
             </button>
           </div>
         </form>

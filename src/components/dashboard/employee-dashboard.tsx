@@ -79,10 +79,10 @@ export function EmployeeDashboard({ myName, myTasks, todayHours, weekHours, week
       {/* Greeting + KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "MY_TASKS", value: myTasks.length, icon: "task_alt", color: "border-t-blue-500", href: "/tasks" },
-          { label: "IN_PROGRESS", value: inProgress.length, icon: "pending", color: "border-t-amber-500", href: "/tasks?filter=in_progress" },
-          { label: "OVERDUE", value: overdue.length, icon: "warning", color: "border-t-red-500", href: "/tasks?filter=overdue" },
-          { label: "DUE_THIS_WEEK", value: upcomingThisWeek.length, icon: "event_upcoming", color: "border-t-purple-500", href: "/tasks?filter=due_this_week" },
+          { label: "My Tasks", value: myTasks.length, icon: "task_alt", color: "border-t-blue-500", href: "/tasks" },
+          { label: "In Progress", value: inProgress.length, icon: "pending", color: "border-t-amber-500", href: "/tasks?filter=in_progress" },
+          { label: "Overdue", value: overdue.length, icon: "warning", color: "border-t-red-500", href: "/tasks?filter=overdue" },
+          { label: "Due This Week", value: upcomingThisWeek.length, icon: "event_upcoming", color: "border-t-purple-500", href: "/tasks?filter=due_this_week" },
         ].map((k) => (
           <Link key={k.label} href={k.href} className={`brutalist-border bg-card p-4 border-t-4 ${k.color} card-hover-lift group block`}>
             <span className="material-symbols-outlined text-lg text-on-surface/40">{k.icon}</span>

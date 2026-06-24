@@ -33,7 +33,7 @@ export default async function ProfilePage() {
         <div className="relative z-10 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text">
-              MY_PROFILE
+              My Profile
             </h1>
             <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-on-surface/50">
               EDIT_YOUR_DETAILS

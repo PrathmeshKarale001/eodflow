@@ -63,7 +63,7 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative bg-card brutalist-border w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col overflow-hidden">
@@ -83,9 +83,9 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
           </button>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Preview Area */}
-          <div className="flex-1 flex items-center justify-center p-6 bg-surface-container-lowest overflow-auto">
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-surface-container-lowest overflow-auto min-h-[300px] md:min-h-0">
             {isImage ? (
               <ImageAnnotator
                 src={activeFile.fileUrl}
@@ -96,49 +96,49 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
               <video
                 src={activeFile.fileUrl}
                 controls
-                className="max-w-full max-h-[60vh]"
+                className="max-w-full max-h-[40vh] md:max-h-[60vh]"
               />
             ) : isPdf ? (
               <iframe
                 src={activeFile.fileUrl}
-                className="w-full h-[60vh] border-0"
+                className="w-full h-[40vh] md:h-[60vh] border-0"
                 title={activeFile.originalName}
               />
             ) : (
-              <div className="text-center p-8">
-                <span className="material-symbols-outlined text-5xl text-on-surface/30 mb-4 block">
+              <div className="text-center p-6 sm:p-8">
+                <span className="material-symbols-outlined text-4xl sm:text-5xl text-on-surface/30 mb-3 sm:mb-4 block">
                   description
                 </span>
-                <p className="font-mono text-xs uppercase tracking-widest text-on-surface/50 mb-4">
-                  PREVIEW_NOT_AVAILABLE
+                <p className="font-mono text-xs uppercase tracking-widest text-on-surface/50 mb-3 sm:mb-4">
+                  Preview not available
                 </p>
                 <a
                   href={activeFile.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mono-clip bg-primary text-on-primary px-6 py-2 font-headline text-[10px] uppercase hover:bg-primary/80 transition-colors"
+                  className="inline-block rounded-lg bg-primary text-on-primary px-5 py-2 font-headline text-[10px] uppercase hover:bg-primary/80 transition-colors"
                 >
-                  DOWNLOAD FILE
+                  Download File
                 </a>
               </div>
             )}
           </div>
 
           {/* Version History Sidebar */}
-          <div className="w-64 brutalist-border border-t-0 border-b-0 border-r-0 flex flex-col flex-shrink-0 bg-card">
+          <div className="w-full md:w-64 brutalist-border border-x-0 border-b-0 md:border-t-0 md:border-b-0 md:border-r-0 md:border-l flex flex-col flex-shrink-0 bg-card max-h-[250px] md:max-h-none">
             <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted">
               <h4 className="font-headline text-[10px] uppercase tracking-widest text-card-text">
-                VERSION_HISTORY
+                Version History
               </h4>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-outline-variant/20">
               {loadingVersions ? (
                 <div className="p-4 text-center">
-                  <p className="font-mono text-[11px] text-on-surface/50 uppercase">LOADING...</p>
+                  <p className="font-mono text-[11px] text-on-surface/50 uppercase">Loading...</p>
                 </div>
               ) : versions.length <= 1 ? (
                 <div className="p-4 text-center">
-                  <p className="font-mono text-[11px] text-on-surface/50 uppercase">SINGLE_VERSION</p>
+                  <p className="font-mono text-[11px] text-on-surface/50 uppercase">No other versions</p>
                 </div>
               ) : (
                 versions.map((v) => (
@@ -168,20 +168,20 @@ export function FilePreviewModal({ isOpen, onClose, file, taskId }: FilePreviewM
             {/* File Meta */}
             <div className="p-4 brutalist-border border-b-0 border-x-0 bg-card-muted space-y-2">
               <div className="flex justify-between">
-                <span className="font-mono text-[10px] uppercase text-on-surface/50">TYPE</span>
+                <span className="font-mono text-[10px] uppercase text-on-surface/50">Type</span>
                 <span className="font-mono text-[10px] uppercase text-on-surface">{activeFile.mimeType.split("/")[1]}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-mono text-[10px] uppercase text-on-surface/50">SIZE</span>
+                <span className="font-mono text-[10px] uppercase text-on-surface/50">Size</span>
                 <span className="font-mono text-[10px] uppercase text-on-surface">{formatBytes(activeFile.fileSize)}</span>
               </div>
               <a
                 href={activeFile.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-center mono-clip bg-primary text-on-primary py-2 font-headline text-[11px] uppercase hover:bg-primary/80 transition-colors mt-3"
+                className="block w-full text-center rounded-lg bg-primary text-on-primary py-2 font-headline text-[11px] uppercase hover:bg-primary/80 transition-colors mt-3"
               >
-                DOWNLOAD
+                Download
               </a>
             </div>
           </div>

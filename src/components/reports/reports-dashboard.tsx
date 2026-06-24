@@ -60,13 +60,13 @@ interface ReportsDashboardProps {
 const ACTION_ICONS: Record<string, string> = {
   CREATED: "add_circle",
   UPDATED: "edit",
-  DELETED: "delete",
+  DELETED: "Delete",
   ASSIGNED: "person_add",
   STATUS_CHANGED: "swap_horiz",
   COMMENTED: "comment",
-  FILE_UPLOADED: "upload_file",
+  FILE_UPLOADED: "Upload File",
   APPROVED: "check_circle",
-  REJECTED: "cancel",
+  REJECTED: "Cancel",
   REVISION_REQUESTED: "replay",
   TIME_LOGGED: "schedule",
 };
@@ -250,7 +250,7 @@ export function ReportsDashboard({
           `}} />
 
           {/* Data Actions Toolbar */}
-          <div className="flex flex-wrap gap-2 brutalist-border bg-card p-3 items-center justify-between shadow-[4px_4px_0px_#000000] data-actions-toolbar mb-2">
+          <div className="flex flex-wrap gap-2 brutalist-border bg-card p-3 items-center justify-between shadow-lg data-actions-toolbar mb-2">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-sm text-on-surface/50">download</span>
               <span className="font-mono text-xs uppercase tracking-wider text-on-surface/70">Data Actions:</span>
@@ -284,11 +284,11 @@ export function ReportsDashboard({
           </div>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <KPICard label="COMPLETION" value={`${completionRate}%`} sub={`${completedTasks}/${totalTasks} tasks`} icon="donut_large" accent={completionRate >= 70 ? "text-green-400" : completionRate >= 40 ? "text-amber-400" : "text-red-400"} />
-            <KPICard label="OVERDUE" value={String(overdueTasks)} sub="past deadline" icon="warning" accent={overdueTasks > 0 ? "text-red-500" : "text-green-400"} />
-            <KPICard label="IN_PROGRESS" value={String(taskStatusCounts["IN_PROGRESS"] || 0)} sub="actively working" icon="pending_actions" accent="text-amber-400" />
-            <KPICard label="THIS_WEEK" value={String(weeklyCompletions)} sub="completed" icon="event_available" accent="text-blue-400" />
-            <KPICard label="HOURS_LOGGED" value={totalHoursThisWeek.toFixed(1)} sub="this week" icon="schedule" accent="text-purple-400" />
+            <KPICard label="Completion" value={`${completionRate}%`} sub={`${completedTasks}/${totalTasks} tasks`} icon="donut_large" accent={completionRate >= 70 ? "text-green-400" : completionRate >= 40 ? "text-amber-400" : "text-red-400"} />
+            <KPICard label="Overdue" value={String(overdueTasks)} sub="past deadline" icon="warning" accent={overdueTasks > 0 ? "text-red-500" : "text-green-400"} />
+            <KPICard label="In Progress" value={String(taskStatusCounts["IN_PROGRESS"] || 0)} sub="actively working" icon="pending_actions" accent="text-amber-400" />
+            <KPICard label="This Week" value={String(weeklyCompletions)} sub="completed" icon="event_available" accent="text-blue-400" />
+            <KPICard label="Hours Logged" value={totalHoursThisWeek.toFixed(1)} sub="this week" icon="schedule" accent="text-purple-400" />
           </div>
 
           {/* Task Pipeline */}
@@ -458,12 +458,12 @@ export function ReportsDashboard({
             {/* Recent activity feed */}
             <div className="brutalist-border bg-card p-5">
               <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text mb-4">
-                RECENT_ACTIVITY
+                Recent Activity
               </h3>
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {activitiesList.length === 0 ? (
                   <p className="font-mono text-[11px] uppercase text-on-surface/30 tracking-widest text-center py-4">
-                    NO_RECENT_ACTIVITY
+                    No recent activity
                   </p>
                 ) : (
                   activitiesList.map((a) => (
@@ -570,7 +570,7 @@ export function ReportsDashboard({
             { label: "PENDING", value: pendingCount, color: "bg-amber-500/15 text-amber-400", icon: "pending" },
             { label: "REVISIONS", value: revisionCount, color: "bg-orange-500/15 text-orange-400", icon: "replay" },
             { label: "OVERDUE", value: overdueCount, color: overdueCount > 0 ? "bg-red-500/15 text-red-400" : "bg-green-500/15 text-green-400", icon: overdueCount > 0 ? "warning" : "check" },
-            ...(isManager ? [{ label: "CREATED_BY_THEM", value: createdCount, color: "bg-purple-500/15 text-purple-400", icon: "add_task" }] : []),
+            ...(isManager ? [{ label: "CREATED_BY_THEM", value: createdCount, color: "bg-purple-500/15 text-purple-400", icon: "Add Task" }] : []),
           ];
 
           return (
@@ -593,7 +593,7 @@ export function ReportsDashboard({
                     onClick={() => setSelectedPersonId(null)}
                     className="p-1 hover:bg-surface-container-high transition-colors"
                   >
-                    <span className="material-symbols-outlined text-sm text-on-surface/40">close</span>
+                    <span className="material-symbols-outlined text-sm text-on-surface/40">Close</span>
                   </button>
                 </div>
 
@@ -729,7 +729,7 @@ export function ReportsDashboard({
                                           </div>
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); setSelectedTaskId(null); }} className="p-1 hover:bg-surface-container-high transition-colors flex-shrink-0">
-                                          <span className="material-symbols-outlined text-sm text-on-surface/40">close</span>
+                                          <span className="material-symbols-outlined text-sm text-on-surface/40">Close</span>
                                         </button>
                                       </div>
 

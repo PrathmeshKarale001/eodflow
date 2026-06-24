@@ -42,7 +42,7 @@ export function PushNotificationPrompt() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-500">
-      <div className="brutalist-border bg-card shadow-[4px_4px_0px_#180065] p-4 space-y-3">
+      <div className="brutalist-border bg-card shadow-lg p-4 space-y-3">
         <div className="flex items-start gap-3">
           <span className="material-symbols-outlined text-primary text-xl flex-shrink-0 mt-0.5">
             notifications_active
@@ -61,7 +61,7 @@ export function PushNotificationPrompt() {
           <button
             onClick={handleEnable}
             disabled={isSubscribing}
-            className="flex-1 mono-clip bg-primary-container text-white py-2 font-headline text-[10px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 rounded-lg bg-primary-container text-white py-2 font-headline text-[10px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             <span className="material-symbols-outlined text-sm">check</span>
             {isSubscribing ? "ENABLING..." : "ENABLE"}

@@ -58,7 +58,7 @@ export function ClientActions({ client, userRole }: ClientActionsProps) {
             className="brutalist-border px-4 py-2 font-headline text-xs uppercase text-on-surface/70 hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1.5"
           >
             <span className="material-symbols-outlined text-sm">edit</span>
-            EDIT_CLIENT
+            Edit Client
           </button>
         )}
         {canDelete && (
@@ -74,7 +74,7 @@ export function ClientActions({ client, userRole }: ClientActionsProps) {
             {isPendingDelete ? (
               <>
                 <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
-                DELETING...
+                Deleting...
               </>
             ) : confirmDelete ? (
               <>

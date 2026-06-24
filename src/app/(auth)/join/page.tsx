@@ -177,7 +177,7 @@ function JoinForm() {
           className="flex items-center gap-2 font-headline text-[10px] uppercase text-on-surface/40 hover:text-white transition-all tracking-widest border border-on-surface/10 px-4 py-2 hover:border-primary"
         >
           <span className="material-symbols-outlined text-xs">arrow_back</span>
-          LOGIN_TERMINAL
+          Login Terminal
         </Link>
       </div>
 
@@ -223,7 +223,7 @@ function JoinForm() {
           <div className="flex items-center gap-3 py-8">
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             <span className="font-label text-[10px] text-outline uppercase tracking-widest">
-              VALIDATING_INVITATION_TOKEN...
+              Validating invitation...
             </span>
           </div>
         )}
@@ -233,7 +233,7 @@ function JoinForm() {
           <form onSubmit={handleCodeSubmit} className="space-y-5 sm:space-y-6">
             <div className="space-y-2">
               <label htmlFor="invite-code" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
-                INVITE_CODE
+                Invite Code
               </label>
               <input
                 id="invite-code"
@@ -249,7 +249,7 @@ function JoinForm() {
             <button
               type="submit"
               disabled={codeLoading || !code.trim()}
-              className="w-full bg-primary-container text-white px-6 py-3.5 sm:py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all mono-clip disabled:opacity-50"
+              className="w-full bg-primary-container text-white px-6 py-3.5 sm:py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all rounded-lg disabled:opacity-50"
             >
               {codeLoading ? "VALIDATING..." : "VERIFY_CODE"}
               <span className="material-symbols-outlined text-[18px]">verified</span>
@@ -404,7 +404,7 @@ function JoinForm() {
                 {/* Confirm Password */}
                 <div className="space-y-1.5">
                   <label htmlFor="join-confirm" className="block text-[10px] font-label text-on-surface/50 uppercase tracking-widest">
-                    CONFIRM_KEY
+                    Confirm Key
                   </label>
                   <input
                     id="join-confirm"
@@ -424,7 +424,7 @@ function JoinForm() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-primary-container text-white px-6 py-3.5 sm:py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all mono-clip disabled:opacity-50"
+                  className="w-full bg-primary-container text-white px-6 py-3.5 sm:py-4 font-headline uppercase text-sm font-bold flex items-center justify-center gap-3 hover:bg-card hover:text-black transition-all rounded-lg disabled:opacity-50"
                 >
                   {submitting ? "CREATING_ACCOUNT..." : "ACTIVATE_ACCOUNT"}
                   <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
@@ -448,7 +448,7 @@ function JoinForm() {
               className="w-full brutalist-border py-3 font-headline text-xs uppercase text-foreground hover:bg-card/5 transition-colors flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
-              BACK_TO_LOGIN
+              Back to Login
             </button>
           </div>
         )}
@@ -503,7 +503,7 @@ class JoinErrorBoundary extends React.Component<
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full bg-primary-container text-white px-6 py-3 font-headline uppercase text-sm font-bold hover:bg-card hover:text-black transition-all mono-clip"
+              className="w-full bg-primary-container text-white px-6 py-3 font-headline uppercase text-sm font-bold hover:bg-card hover:text-black transition-all rounded-lg"
             >
               RETRY
             </button>

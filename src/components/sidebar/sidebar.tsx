@@ -7,6 +7,7 @@ import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/permissions";
 import { useUnread } from "@/components/chat/chat-provider";
+import { useGlobalTaskModal } from "@/components/tasks/global-task-modal";
 import type { Role } from "@prisma/client";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { getAvailableDMUsers } from "@/app/actions/chat";
@@ -58,6 +59,7 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
   const [chatSearchOpen, setChatSearchOpen] = useState(false);
   const [allUsers, setAllUsers] = useState<{ id: string; name: string; image: string | null }[] | null>(null);
   const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
+  const { openCreateTask } = useGlobalTaskModal();
 
   // Prefetch available DM users on component mount to warm the search cache
   useEffect(() => {
@@ -195,13 +197,14 @@ export function Sidebar({ user, navItems, unreadCount = 0, brands = [], allClien
         <div className="px-3 pb-3 pt-1.5 border-b border-on-surface/10 space-y-1.5">
           {/* Row 1: New Task (primary) + New Project */}
           <div className="flex gap-1.5">
-            <Link
-              href="/tasks?action=new-task"
-              className="flex h-8 flex-1 items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
+            <button
+              type="button"
+              onClick={() => openCreateTask()}
+              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">add</span>
               New Task
-            </Link>
+            </button>
             <Link
               href="/projects/new"
               title="New Project"

@@ -22,7 +22,7 @@ export default function OverviewError({
           onClick={reset}
           className="brutalist-border px-6 py-2 font-mono text-sm uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-colors"
         >
-          RETRY_CONNECTION →
+          Retry Connection →
         </button>
       </div>
     </div>

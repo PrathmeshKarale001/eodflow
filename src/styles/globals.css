@@ -146,10 +146,13 @@
 }
 
 @utility card-hover-lift {
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  transition: transform 150ms ease, box-shadow 150ms ease;
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(108, 92, 231, 0.15), 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  &:active {
+    transform: translateY(0) scale(0.98);
   }
 }
 
@@ -216,22 +219,31 @@ input,
 select,
 textarea,
 .brutalist-border {
-  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+
+/* Gentle tactile active state for buttons and links */
+button:active:not(:disabled),
+a:active:not(:disabled),
+[role="button"]:active {
+  transform: scale(0.97);
 }
 
 /* ─── Page transition animations ──────────────────────────────── */
+/* NOTE: No transforms here — CSS transforms create a new containing block
+   that breaks fixed positioning for modals/drawers inside page content. */
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes page-exit {
-  from { opacity: 1; transform: none; }
-  to   { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 .page-transition-enter {
-  animation: page-enter 250ms ease-out both;
+  animation: page-enter 200ms ease-out both;
 }
 
 /* ─── Shimmer sweep keyframes ──────────────────────────────── */
@@ -336,4 +348,98 @@ select option {
 .light select option {
   background-color: #ffffff !important;
   color: #1a1a1a !important;
+}
+
+/* =============================================================================
+   Animation Utilities (replaces tailwindcss-animate plugin)
+   ============================================================================= */
+
+/* Base animation triggers — compose with direction classes below */
+.animate-in {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.animate-out {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+/* Duration modifiers */
+.duration-150 { animation-duration: 150ms; }
+.duration-200 { animation-duration: 200ms; }
+.duration-250 { animation-duration: 250ms; }
+.duration-300 { animation-duration: 300ms; }
+.duration-500 { animation-duration: 500ms; }
+
+/* Ease */
+.ease-out { animation-timing-function: ease-out; }
+
+/* Fade */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fade-in { animation-name: fadeIn; }
+
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.fade-out { animation-name: fadeOut; }
+
+/* Slide from right (drawers / side panels) */
+@keyframes slideInFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.slide-in-from-right { animation-name: slideInFromRight; }
+
+/* Slide from left (mobile sidebars) */
+@keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.slide-in-from-left { animation-name: slideInFromLeft; }
+
+/* Slide from bottom (mobile bottom sheets) */
+@keyframes slideInFromBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.slide-in-from-bottom { animation-name: slideInFromBottom; }
+
+/* Slide from bottom small amount (modals with subtle lift) */
+@keyframes slideInFromBottom4 { from { transform: translateY(1rem); } to { transform: translateY(0); } }
+.slide-in-from-bottom-4 { animation-name: slideInFromBottom4; }
+
+/* Slide from top (search bars, dropdown panels) */
+@keyframes slideInFromTop1 { from { transform: translateY(-0.25rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.slide-in-from-top-1 { animation-name: slideInFromTop1; }
+
+@keyframes slideInFromTop2 { from { transform: translateY(-0.5rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.slide-in-from-top-2 { animation-name: slideInFromTop2; }
+
+/* Slide exits */
+@keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+.slide-out-to-left { animation-name: slideOutToLeft; }
+
+@keyframes slideOutToRight { from { transform: translateX(0); } to { transform: translateX(100%); } }
+.slide-out-to-right { animation-name: slideOutToRight; }
+
+@keyframes slideOutToBottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+.slide-out-to-bottom { animation-name: slideOutToBottom; }
+
+/* Zoom in (modal popup scale effect) */
+@keyframes zoomIn95 { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.zoom-in-95 { animation-name: zoomIn95; }
+
+/* Shimmer loading skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.06) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Responsive animation overrides — on mobile, use bottom sheet instead of side drawer */
+@media (min-width: 768px) {
+  .md\:slide-in-from-right { animation-name: slideInFromRight !important; }
+  .md\:slide-out-to-right { animation-name: slideOutToRight !important; }
+}
+
+@media (min-width: 640px) {
+  .sm\:zoom-in-95 { animation-name: zoomIn95 !important; }
+  .sm\:slide-in-from-bottom { animation-name: slideInFromBottom !important; }
+  .sm\:slide-out-to-bottom { animation-name: slideOutToBottom !important; }
 }

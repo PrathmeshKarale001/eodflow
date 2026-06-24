@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
 import { getTaskFiles, getTaskActivities } from "@/app/actions/tasks";
 import { TaskStatus, Priority } from "@prisma/client";
 import { createTaskFileRecord } from "@/app/actions/task-submissions";
@@ -21,9 +23,9 @@ const CommentThread = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="p-6 space-y-3 animate-pulse">
-        <div className="h-4 bg-surface-container-high w-1/3" />
-        <div className="h-20 bg-surface-container-high w-full" />
+      <div className="p-6 space-y-3">
+        <div className="h-4 bg-surface-container-high w-1/3 shimmer" />
+        <div className="h-20 bg-surface-container-high w-full shimmer" />
       </div>
     ),
   }
@@ -54,31 +56,31 @@ const STATUS_ACTIONS: Record<TaskStatus, Array<{
   roles: Role[]; // who can perform this action
 }>> = {
   [TaskStatus.PENDING_APPROVAL]: [
-    { targetStatus: TaskStatus.TODO, label: "APPROVE_TASK", icon: "check_circle", color: "bg-green-600 text-white shadow-[4px_4px_0px_#14532d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+    { targetStatus: TaskStatus.TODO, label: "Approve Task", icon: "check_circle", color: "bg-green-600 text-white hover:bg-green-500", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   ],
   [TaskStatus.BACKLOG]: [
-    { targetStatus: TaskStatus.TODO, label: "MOVE_TO_TODO", icon: "playlist_add", color: "bg-blue-600 text-white shadow-[4px_4px_0px_#1e3a5f]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+    { targetStatus: TaskStatus.TODO, label: "Move to Todo", icon: "playlist_add", color: "bg-blue-600 text-white hover:bg-blue-500", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   ],
   [TaskStatus.TODO]: [
-    { targetStatus: TaskStatus.IN_PROGRESS, label: "START_WORK", icon: "play_arrow", color: "bg-[#00FF41]/20 text-[#00FF41] border border-[#00FF41]/30 shadow-[4px_4px_0px_#008000]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+    { targetStatus: TaskStatus.IN_PROGRESS, label: "Start Work", icon: "play_arrow", color: "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/30", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   ],
   [TaskStatus.IN_PROGRESS]: [
-    { targetStatus: TaskStatus.IN_REVIEW, label: "SUBMIT_FOR_REVIEW", icon: "send", color: "bg-[#180065] text-white shadow-[4px_4px_0px_#5847d2]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+    { targetStatus: TaskStatus.IN_REVIEW, label: "Submit for Review", icon: "send", color: "bg-primary-container text-white hover:brightness-110", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   ],
   [TaskStatus.IN_REVIEW]: [
     // Manager actions: approve directly (→ DONE) or send back for revision
-    { targetStatus: TaskStatus.DONE, label: "APPROVE", icon: "check_circle", color: "bg-green-600 text-white shadow-[4px_4px_0px_#14532d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
-    { targetStatus: TaskStatus.REVISION, label: "SEND_TO_REVISION", icon: "undo", color: "bg-red-600 text-white shadow-[4px_4px_0px_#7f1d1d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+    { targetStatus: TaskStatus.DONE, label: "Approve", icon: "check_circle", color: "bg-green-600 text-white hover:bg-green-500", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+    { targetStatus: TaskStatus.REVISION, label: "Send to Revision", icon: "undo", color: "bg-red-600 text-white hover:bg-red-500", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   ],
   [TaskStatus.REVISION]: [
     // Employee reworks and restarts
-    { targetStatus: TaskStatus.IN_PROGRESS, label: "REWORK_STARTED", icon: "play_arrow", color: "bg-[#00FF41]/20 text-[#00FF41] border border-[#00FF41]/30 shadow-[4px_4px_0px_#008000]", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
+    { targetStatus: TaskStatus.IN_PROGRESS, label: "Rework Started", icon: "play_arrow", color: "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/30", roles: [Role.SUPER_ADMIN, Role.ADMIN, Role.EMPLOYEE] },
   ],
   [TaskStatus.CLIENT_APPROVAL]: [],
   [TaskStatus.CLIENT_REVISION]: [],
   [TaskStatus.APPROVED]: [
     // Legacy: finalize tasks that were already in APPROVED state before the merge
-    { targetStatus: TaskStatus.DONE, label: "FINALIZE_TASK", icon: "task_alt", color: "bg-success text-white shadow-[4px_4px_0px_#15803d]", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
+    { targetStatus: TaskStatus.DONE, label: "Finalize Task", icon: "task_alt", color: "bg-green-600 text-white hover:bg-green-500", roles: [Role.SUPER_ADMIN, Role.ADMIN] },
   ],
   [TaskStatus.DONE]: [],
 };
@@ -115,12 +117,13 @@ interface TaskDetailDrawerProps {
   userRole: Role;
   isOpen: boolean;
   onClose: () => void;
+  onExited?: () => void;
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
 }
 
 type TabId = "details" | "comments" | "activity";
 
-export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, teamMembers = [] }: TaskDetailDrawerProps) {
+export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onExited, teamMembers = [] }: TaskDetailDrawerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -136,6 +139,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
   const [isSendingReminder, setIsSendingReminder] = useState(false);
   const [isSelfAssigning, setIsSelfAssigning] = useState(false);
   const [localSubtasks, setLocalSubtasks] = useState(task.subtasks);
+  const [isClosing, setIsClosing] = useState(false);
 
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
@@ -152,6 +156,51 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
       return () => clearTimeout(timer);
     }
   }, [task.priority, prevPriority]);
+
+  // Lock scroll on the ACTUAL scroll container (main element), body, and html when open
+  useEffect(() => {
+    if (isOpen) {
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+      
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      
+      const mainEl = document.querySelector('main');
+      let originalMainOverflow = "";
+      if (mainEl) {
+        originalMainOverflow = mainEl.style.overflow;
+        mainEl.style.overflow = "hidden";
+      }
+      
+      return () => {
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+        if (mainEl) {
+          mainEl.style.overflow = originalMainOverflow;
+        }
+      };
+    }
+  }, [isOpen]);
+
+  // Track hydration state to render portal safely on the client
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Sync animation state on close
+  useEffect(() => {
+    if (isOpen) {
+      setIsClosing(false);
+    } else {
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        onExited?.();
+      }, 200); // matches the 200ms slide-out duration
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, onExited]);
 
   // Load activities on-demand when activeTab changes to activity
   useEffect(() => {
@@ -401,22 +450,36 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !isClosing) return null;
 
   const TABS: { id: TabId; label: string; icon: string }[] = [
-    { id: "details", label: "DETAILS", icon: "description" },
-    { id: "comments", label: "COMMENTS", icon: "forum" },
-
-    { id: "activity", label: "ACTIVITY", icon: "history" },
+    { id: "details", label: "Details", icon: "description" },
+    { id: "comments", label: "Comments", icon: "forum" },
+    { id: "activity", label: "Activity", icon: "history" },
   ];
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}></div>
+  if (!mounted) return null;
 
-      {/* Drawer */}
-      <div className="relative w-full max-w-xl bg-background border-l-2 brutalist-border shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col overflow-hidden">
+  // Portal directly into document.body
+  return createPortal(
+    <div className="fixed inset-0 flex justify-end" style={{ pointerEvents: 'auto', height: '100dvh', zIndex: 9999 }}>
+      {/* Backdrop */}
+      <div 
+        className={cn(
+          "absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200",
+          isClosing && "animate-out fade-out duration-200"
+        )} 
+        onClick={onClose}
+      />
+
+      {/* Drawer — full-screen on mobile, side panel on desktop */}
+      <div 
+        className={cn(
+          "relative w-full md:max-w-xl bg-background md:border-l-2 brutalist-border shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom md:slide-in-from-right duration-200",
+          isClosing && "animate-out slide-out-to-bottom md:slide-out-to-right duration-200"
+        )} 
+        style={{ height: '100dvh' }}
+      >
         {/* Header */}
         <div className="p-4 sm:p-6 bg-surface-container-lowest border-b border-on-surface/10 relative overflow-hidden flex-shrink-0">
           <div className="absolute inset-0 scanline opacity-20 pointer-events-none"></div>
@@ -451,7 +514,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                     title="Delete Task"
                   >
                     <span className="material-symbols-outlined text-base">
-                      {isDeleting ? "progress_activity" : "delete"}
+                      {isDeleting ? "progress_activity" : "Delete"}
                     </span>
                   </button>
                 )}
@@ -459,7 +522,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                   onClick={onClose} 
                   className="flex h-8 w-8 items-center justify-center brutalist-border text-outline hover:text-error transition-colors"
                 >
-                  <span className="material-symbols-outlined text-lg">close</span>
+                  <span className="material-symbols-outlined text-lg">Close</span>
                 </button>
               </div>
             </div>
@@ -503,9 +566,9 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 <button
                   onClick={handleDeleteTask}
                   disabled={isDeleting}
-                  className="flex-shrink-0 flex items-center gap-1.5 mono-clip px-3 py-2 bg-red-600 text-white font-headline text-[11px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+                  className="flex-shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-2 bg-red-600 text-white font-headline text-[11px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
                 >
-                  <span className="material-symbols-outlined text-xs">{isDeleting ? "progress_activity" : "close"}</span>
+                  <span className="material-symbols-outlined text-xs">{isDeleting ? "progress_activity" : "Close"}</span>
                   REJECT
                 </button>
               </div>
@@ -552,13 +615,13 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {/* Meta Grid */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="brutalist-border p-3 bg-surface-container-lowest">
-                  <span className="font-label text-[10px] sm:text-[11px] text-outline uppercase tracking-widest block mb-1">DUE_DATE</span>
+                  <span className="font-label text-[11px] text-outline uppercase tracking-widest block mb-1">Due Date</span>
                   <span className="font-headline text-xs sm:text-sm text-foreground uppercase whitespace-nowrap">
-                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) : "NOT_SET"}
+                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) : "Not set"}
                   </span>
                 </div>
                 <div className="brutalist-border p-3 bg-surface-container-lowest">
-                  <span className="font-label text-[10px] sm:text-[11px] text-outline uppercase tracking-widest block mb-1">PROGRESS</span>
+                  <span className="font-label text-[11px] text-outline uppercase tracking-widest block mb-1">Progress</span>
                   <span className="font-headline text-xs sm:text-sm text-foreground">
                     {localSubtasks.filter(s => s.isDone).length}/{localSubtasks.length} DONE
                   </span>
@@ -568,7 +631,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {/* Description */}
               {task.description ? (
                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                  <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-2.5">DESCRIPTION</h3>
+                  <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-2.5">Description</h3>
                   <p className="font-body text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap border-l-3 border-primary pl-4 py-1">{task.description}</p>
                 </div>
               ) : null}
@@ -577,7 +640,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               {task.subtasks.length > 0 ? (
                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                   <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-3">
-                    SUBTASKS CHECKLIST
+                    Subtasks Checklist
                   </h3>
                   <ul className="space-y-2">
                     {localSubtasks.map((sub) => (
@@ -606,7 +669,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
 
               {/* Deliverables Upload */}
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-3">FILE_DELIVERABLES</h3>
+                <h3 className="font-label text-[11px] uppercase tracking-widest text-outline mb-3">File Deliverables</h3>
                 <div
                   onDragOver={onDragOver}
                   onDragLeave={onDragLeave}
@@ -619,8 +682,8 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                   <span className="material-symbols-outlined text-3xl mb-2.5 text-primary">
                     {isUploading ? "progress_activity" : "cloud_upload"}
                   </span>
-                  <span className="font-label text-[10px] uppercase tracking-widest text-outline px-4">
-                    {isUploading ? "TRANSMITTING_DATA..." : "TAP_OR_DROP_FILES"}
+                  <span className="font-label text-[11px] uppercase tracking-widest text-outline px-4">
+                    {isUploading ? "Uploading..." : "Tap or drop files"}
                   </span>
                 </div>
 
@@ -638,7 +701,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 {isLoadingFiles ? (
                   <div className="mt-4 p-4 text-center">
                     <span className="material-symbols-outlined text-primary animate-spin">progress_activity</span>
-                    <p className="font-label text-[11px] text-outline uppercase tracking-widest mt-2">LOADING_FILES...</p>
+                    <p className="font-label text-[11px] text-outline uppercase tracking-widest mt-2">Loading files...</p>
                   </div>
                 ) : files.length > 0 ? (
                   <div className="mt-4 space-y-2">
@@ -750,7 +813,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                                     className="flex h-8 w-8 items-center justify-center text-outline hover:text-error transition-colors ml-1"
                                     title="Delete File"
                                   >
-                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                    <span className="material-symbols-outlined text-lg">Delete</span>
                                   </button>
                                 )}
                               </div>
@@ -804,7 +867,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                                             className="flex h-7 w-7 items-center justify-center text-outline hover:text-error transition-colors ml-1"
                                             title="Delete Revision"
                                           >
-                                            <span className="material-symbols-outlined text-base">delete</span>
+                                            <span className="material-symbols-outlined text-base">Delete</span>
                                           </button>
                                         )}
                                       </div>
@@ -835,20 +898,20 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
           {/* Activity Tab */}
           {activeTab === "activity" && (
             <div className="p-4 sm:p-6 space-y-4">
-              <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">
-                ACTIVITY_LOG
+              <h3 className="font-headline text-xs uppercase tracking-[0.15em] text-card-text">
+                Activity Log
               </h3>
               {isLoadingActivities ? (
-                <div className="space-y-3 animate-pulse">
-                  <div className="h-4 bg-surface-container-high w-1/3" />
-                  <div className="h-10 bg-surface-container-high w-full" />
-                  <div className="h-10 bg-surface-container-high w-full" />
+                <div className="space-y-3">
+                  <div className="h-4 bg-surface-container-high w-1/3 shimmer" />
+                  <div className="h-10 bg-surface-container-high w-full shimmer" />
+                  <div className="h-10 bg-surface-container-high w-full shimmer" />
                 </div>
               ) : activities.length === 0 ? (
                 <div className="brutalist-border bg-card p-6 text-center">
-                  <span className="material-symbols-outlined text-2xl text-neutral-400 mb-1 block">history</span>
-                  <p className="font-mono text-[10px] uppercase text-muted-foreground tracking-widest">
-                    NO_ACTIVITIES_LOGGED_YET
+                  <span className="material-symbols-outlined text-2xl text-on-surface/20 mb-1 block">history</span>
+                  <p className="font-mono text-[11px] uppercase text-on-surface/40 tracking-widest">
+                    No activities logged yet
                   </p>
                 </div>
               ) : (
@@ -906,7 +969,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                         break;
                       case "FILE_UPLOADED":
                         actionText = "uploaded a file";
-                        actionIcon = "upload_file";
+                        actionIcon = "Upload File";
                         iconColor = "text-teal-500";
                         break;
                       case "TIME_LOGGED": {
@@ -952,8 +1015,8 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
         {(availableActions.length > 0 || canSelfAssign) && (
           <div className="p-4 sm:p-5 border-t-2 border-on-surface/10 bg-surface-container-lowest flex-shrink-0 flex flex-col gap-3">
             {task.status !== TaskStatus.DONE && (
-              <p className="font-label text-[10px] uppercase tracking-widest text-outline text-center">
-                {isManager ? "MANAGEMENT_ACTIONS" : "YOUR_ACTIONS"} — CURRENT: {task.status.replace(/_/g, " ")}
+              <p className="font-label text-[11px] uppercase tracking-widest text-outline text-center">
+                {isManager ? "Management Actions" : "Your Actions"} — Current: {task.status.replace(/_/g, " ")}
               </p>
             )}
 
@@ -962,10 +1025,10 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
               <button
                 onClick={handleSelfAssign}
                 disabled={isSelfAssigning}
-                className="w-full flex items-center justify-center gap-2 mono-clip px-6 py-4 font-headline text-sm uppercase hover:translate-y-[1px] hover:shadow-none transition-all disabled:opacity-50 bg-primary-container text-white shadow-[4px_4px_0px_#3b1f8e]"
+                className="w-full flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-headline text-sm uppercase hover:brightness-110 transition-all disabled:opacity-50 bg-primary-container text-white"
               >
                 <span className="material-symbols-outlined text-base">person_add</span>
-                {isSelfAssigning ? "ASSIGNING..." : "ASSIGN_TO_ME"}
+                {isSelfAssigning ? "Assigning..." : "Assign to Me"}
               </button>
             )}
 
@@ -974,10 +1037,10 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 key={action.targetStatus}
                 onClick={() => handleStatusTransition(action.targetStatus, action.label)}
                 disabled={isTransitioning}
-                className={`w-full flex items-center justify-center gap-2 mono-clip px-6 py-4 font-headline text-sm uppercase hover:translate-y-[1px] hover:shadow-none transition-all disabled:opacity-50 ${action.color}`}
+                className={`w-full flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-headline text-sm uppercase transition-all disabled:opacity-50 ${action.color}`}
               >
                 <span className="material-symbols-outlined text-base">{action.icon}</span>
-                {isTransitioning ? "PROCESSING..." : action.label}
+                {isTransitioning ? "Processing..." : action.label}
               </button>
             ))}
 
@@ -989,7 +1052,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
                 className="w-full flex items-center justify-center gap-2 brutalist-border px-6 py-3 font-headline text-xs uppercase tracking-widest text-on-surface hover:bg-card-muted transition-colors disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-base">notifications_active</span>
-                {isSendingReminder ? "SENDING..." : `SEND REMINDER → ${task.assignedTo.name}`}
+                {isSendingReminder ? "Sending..." : `SEND REMINDER → ${task.assignedTo.name}`}
               </button>
             )}
           </div>
@@ -1009,6 +1072,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, team
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

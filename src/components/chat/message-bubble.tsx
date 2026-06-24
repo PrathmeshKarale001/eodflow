@@ -203,7 +203,7 @@ export function MessageBubble({
         <div className={`max-w-[70%] ${isOwn ? "text-right" : ""}`}>
           <div className="flex items-baseline gap-2 mb-0.5">
             <span className="font-headline text-[11px] uppercase tracking-widest text-on-surface/30">
-              {isOwn ? "YOU" : userName}
+              {isOwn ? "You" : userName}
             </span>
             <span className="font-mono text-[10px] text-on-surface/20">{time}</span>
           </div>
@@ -220,12 +220,12 @@ export function MessageBubble({
 
   return (
     <div
-      className={`group relative flex gap-2 pt-9 -mt-9 ${isOwn ? "flex-row-reverse" : ""}`}
+      className={`group relative flex gap-3 py-1.5 ${isOwn ? "flex-row-reverse" : ""}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={(e) => {
         // Don't hide if cursor moved to the actions bar (which is absolutely positioned)
         const related = e.relatedTarget as HTMLElement | null;
-        if (related && e.currentTarget.contains(related)) return;
+        if (related && related instanceof Node && e.currentTarget.contains(related)) return;
         setShowActions(false);
         setShowReactionPicker(false);
       }}
@@ -246,7 +246,7 @@ export function MessageBubble({
         {/* User + time header */}
         <div className="flex items-baseline gap-2 mb-0.5">
           <span className="font-headline text-[11px] uppercase tracking-widest text-on-surface/60">
-            {isOwn ? "YOU" : userName}
+            {isOwn ? "You" : userName}
           </span>
           <span className="font-mono text-[10px] text-on-surface/30 flex items-center justify-end gap-1">
             {time}
@@ -299,8 +299,8 @@ export function MessageBubble({
                 }}
               />
               <div className="flex gap-1.5 justify-end">
-                <button onClick={() => setIsEditing(false)} className="font-mono text-[10px] uppercase text-on-surface/50 hover:text-on-surface px-2 py-1 brutalist-border">ESC</button>
-                <button onClick={handleEditSave} className="font-mono text-[10px] uppercase text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 brutalist-border">SAVE</button>
+                <button onClick={() => setIsEditing(false)} className="font-mono text-[10px] uppercase text-on-surface/50 hover:text-on-surface px-2 py-1 brutalist-border">Esc</button>
+                <button onClick={handleEditSave} className="font-mono text-[10px] uppercase text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 brutalist-border">Save</button>
               </div>
             </div>
           ) : (
@@ -330,7 +330,7 @@ export function MessageBubble({
                   <span className="material-symbols-outlined text-base text-primary flex-shrink-0">{getFileIcon(fileUrl)}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-[11px] uppercase tracking-wider text-on-surface truncate">{getFileName(fileUrl)}</p>
-                    <p className="font-mono text-[10px] text-on-surface/40 uppercase">TAP TO DOWNLOAD</p>
+                    <p className="font-mono text-[10px] text-on-surface/40 uppercase">Tap to download</p>
                   </div>
                   <span className="material-symbols-outlined text-xs text-on-surface/30 group-hover/file:text-primary transition-colors flex-shrink-0">download</span>
                 </a>
@@ -371,7 +371,7 @@ export function MessageBubble({
         {showActions && !isEditing && (
           <div
             ref={actionsRef}
-            className={`absolute -top-8 ${isOwn ? "right-0" : "left-0"} flex items-center gap-0.5 bg-card brutalist-border shadow-lg z-20 p-0.5`}
+            className={`absolute -top-6 ${isOwn ? "right-2" : "left-2"} flex items-center gap-0.5 bg-card brutalist-border shadow-lg z-20 p-0.5`}
           >
             {/* React */}
             <button

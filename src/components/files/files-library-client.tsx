@@ -152,10 +152,10 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
   };
 
   const typeFilters: Array<{ key: typeof typeFilter; label: string; count: number; icon: string }> = [
-    { key: "all", label: "ALL", count: stats.total, icon: "folder_open" },
-    { key: "image", label: "IMAGES", count: stats.images, icon: "image" },
-    { key: "document", label: "DOCS", count: stats.docs, icon: "description" },
-    { key: "video", label: "VIDEO", count: stats.videos, icon: "movie" },
+    { key: "all", label: "All", count: stats.total, icon: "folder_open" },
+    { key: "image", label: "Images", count: stats.images, icon: "image" },
+    { key: "document", label: "Docs", count: stats.docs, icon: "description" },
+    { key: "video", label: "Video", count: stats.videos, icon: "movie" },
   ];
 
   return (
@@ -166,19 +166,19 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
         <div className="relative z-10 flex items-center justify-between">
           <div>
             <h1 className="text-3xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text">
-              MEDIA_LIBRARY
+              Media Library
             </h1>
             <p className="font-mono text-xs uppercase tracking-widest text-on-surface/50">
-              {files.length} FILES — {formatBytes(totalSize)} TOTAL
+              {files.length} files — {formatBytes(totalSize)} total
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowUpload(true)}
-              className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+              className="rounded-lg bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-sm">upload_file</span>
-              UPLOAD
+              <span className="material-symbols-outlined text-sm">Upload File</span>
+              Upload
             </button>
             <span className="material-symbols-outlined text-[36px] text-primary">folder_open</span>
           </div>
@@ -191,15 +191,15 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
           <button
             key={tf.key}
             onClick={() => setTypeFilter(tf.key)}
-            className={`brutalist-border p-4 text-left transition-all ${
+            className={`brutalist-border p-2.5 sm:p-4 text-left transition-all ${
               typeFilter === tf.key
                 ? "bg-primary/10 border-primary shadow-[2px_2px_0px_var(--clr-primary)]"
                 : "bg-card hover:bg-card-muted"
             }`}
           >
-            <span className="material-symbols-outlined text-sm text-primary mb-2 block">{tf.icon}</span>
-            <span className="font-headline text-2xl font-bold text-on-surface block">{tf.count}</span>
-            <span className="font-label text-[10px] text-on-surface/50 uppercase tracking-widest">{tf.label}</span>
+            <span className="material-symbols-outlined text-xs sm:text-sm text-primary mb-1.5 block">{tf.icon}</span>
+            <span className="font-headline text-xl sm:text-2xl font-bold text-on-surface block">{tf.count}</span>
+            <span className="font-label text-[9px] sm:text-[10px] text-on-surface/50 uppercase tracking-widest">{tf.label}</span>
           </button>
         ))}
       </div>
@@ -211,12 +211,12 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="SEARCH FILES BY NAME..."
+          placeholder="Search files by name..."
           className="flex-1 h-10 bg-transparent font-mono text-xs uppercase tracking-wide text-on-surface placeholder:text-on-surface/30 focus:outline-none"
         />
         {search && (
           <button onClick={() => setSearch("")} className="text-on-surface/40 hover:text-on-surface">
-            <span className="material-symbols-outlined text-sm">close</span>
+            <span className="material-symbols-outlined text-sm">Close</span>
           </button>
         )}
       </div>
@@ -224,19 +224,20 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
       {/* File Grid / Table */}
       {filtered.length > 0 ? (
         <div className="brutalist-border overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-card-muted border-b-2 border-on-surface/10">
-                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">FILE</th>
-                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">CLIENT</th>
-                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">PROJECT</th>
-                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">UPLOADER</th>
-                <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-on-surface/50">SIZE</th>
-                <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-on-surface/50">DATE</th>
-                <th className="px-4 py-3 text-center font-label text-[11px] uppercase tracking-widest text-on-surface/50">VER</th>
-                <th className="px-4 py-3 text-center font-label text-[11px] uppercase tracking-widest text-on-surface/50">ACTIONS</th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px] md:min-w-0">
+              <thead>
+                <tr className="bg-card-muted border-b-2 border-on-surface/10">
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">File</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">Client</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">Project</th>
+                  <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-on-surface/50">Uploader</th>
+                  <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-on-surface/50">Size</th>
+                  <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-on-surface/50">Date</th>
+                  <th className="px-4 py-3 text-center font-label text-[11px] uppercase tracking-widest text-on-surface/50">Ver</th>
+                  <th className="px-4 py-3 text-center font-label text-[11px] uppercase tracking-widest text-on-surface/50">Actions</th>
+                </tr>
+              </thead>
             <tbody className="divide-y divide-on-surface/5">
               {filtered.map((file) => (
                 <tr key={file.id} className="hover:bg-card-muted/50 transition-colors group">
@@ -319,22 +320,23 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
                         className="p-1 hover:bg-red-500/10 transition-colors text-on-surface/50 hover:text-red-500 disabled:opacity-30"
                         title="Delete"
                       >
-                        <span className="material-symbols-outlined text-sm">delete</span>
+                        <span className="material-symbols-outlined text-sm">Delete</span>
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
           {hasMore && (
             <div className="flex justify-center pt-4">
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                className="brutalist-border bg-surface hover:bg-surface-container-high px-6 py-2.5 font-headline text-[10px] uppercase tracking-widest shadow-[4px_4px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="brutalist-border bg-surface hover:bg-surface-container-high px-6 py-2.5 font-headline text-[10px] uppercase tracking-widest shadow-lg active:translate-x-0.5 active:translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoadingMore ? "LOADING..." : "LOAD MORE FILES"}
+                {isLoadingMore ? "Loading..." : "Load More Files"}
               </button>
             </div>
           )}
@@ -343,14 +345,14 @@ export function FilesLibraryClient({ initialFiles, clients, projects, totalSize,
         <div className="brutalist-border p-12 text-center bg-card">
           <span className="material-symbols-outlined text-3xl text-on-surface/20 mb-3 block">folder_off</span>
           <p className="font-label text-[10px] text-on-surface/40 uppercase tracking-widest">
-            {search ? "NO_MATCHING_FILES" : "NO_FILES_FOUND"}
+            {search ? "No matching files found" : "No files uploaded yet"}
           </p>
           {!search && (
             <button
               onClick={() => setShowUpload(true)}
-              className="mt-4 mono-clip bg-primary text-on-primary px-5 py-2 font-headline text-[10px] uppercase tracking-widest hover:bg-primary/80 transition-colors"
+              className="mt-4 rounded-lg bg-primary text-on-primary px-5 py-2 font-headline text-[10px] uppercase tracking-widest hover:bg-primary/80 transition-colors"
             >
-              UPLOAD YOUR FIRST FILE
+              Upload your first file
             </button>
           )}
         </div>

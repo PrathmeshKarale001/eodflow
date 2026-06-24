@@ -7,6 +7,7 @@ import { SearchDialog } from "@/components/search/search-dialog";
 import { MainContentContainer } from "@/components/layout/main-content-container";
 import { ChatProvider } from "@/components/chat/chat-provider";
 import { ChatToastContainer } from "@/components/chat/chat-toast";
+import { GlobalTaskModalProvider } from "@/components/tasks/global-task-modal";
 // RealtimeSync removed — its task-notifications subscription is now in ChatProvider
 import { getUserChannels } from "@/app/actions/chat";
 import { getUnreadCount } from "@/app/actions/notifications";
@@ -115,6 +116,7 @@ export default async function DashboardLayout({
 
   return (
     <ChatProvider channels={channelList} currentUserId={session.user.id}>
+      <GlobalTaskModalProvider>
       <div className="flex flex-col md:flex-row h-screen bg-background overflow-hidden">
         {/* Mobile Header */}
         <DashboardHeader
@@ -159,6 +161,7 @@ export default async function DashboardLayout({
 
       {/* Global chat toast notifications — visible on all dashboard pages */}
       <ChatToastContainer />
+      </GlobalTaskModalProvider>
     </ChatProvider>
   );
 }

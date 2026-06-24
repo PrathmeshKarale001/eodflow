@@ -52,18 +52,21 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
   if (!isOpen) return null;
 
   const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: "media", label: "MEDIA", count: media.length },
-    { id: "files", label: "FILES", count: files.length },
-    { id: "links", label: "LINKS", count: links.length },
+    { id: "media", label: "Media", count: media.length },
+    { id: "files", label: "Files", count: files.length },
+    { id: "links", label: "Links", count: links.length },
   ];
 
   return (
-    <div className="w-72 lg:w-80 h-full border-l-2 border-on-surface/10 bg-surface-container-lowest flex flex-col flex-shrink-0">
+    <>
+      {/* Mobile backdrop */}
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-md md:hidden animate-in fade-in duration-200" onClick={onClose} />
+      <div className="fixed inset-0 z-50 md:relative md:inset-auto md:z-auto w-full md:w-72 lg:w-80 h-full md:border-l-2 border-on-surface/10 bg-surface-container-lowest flex flex-col flex-shrink-0 animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="p-4 border-b border-on-surface/10 flex items-center justify-between">
         <div>
           <h3 className="font-headline text-xs uppercase tracking-widest text-foreground">
-            CHANNEL_INFO
+            Channel Info
           </h3>
           <p className="font-mono text-[11px] text-on-surface/40 uppercase tracking-widest mt-0.5">
             {channelName} — {memberCount} MEMBERS
@@ -105,7 +108,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
           </div>
         ) : activeTab === "media" ? (
           media.length === 0 ? (
-            <EmptyState icon="image" label="NO_MEDIA_SHARED" />
+            <EmptyState icon="image" label="No media shared" />
           ) : (
             <div className="grid grid-cols-3 gap-1.5">
               {media.map((item) => (
@@ -130,7 +133,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
           )
         ) : activeTab === "files" ? (
           files.length === 0 ? (
-            <EmptyState icon="description" label="NO_FILES_SHARED" />
+            <EmptyState icon="description" label="No files shared" />
           ) : (
             <div className="space-y-2">
               {files.map((item) => {
@@ -156,7 +159,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
           )
         ) : (
           links.length === 0 ? (
-            <EmptyState icon="link" label="NO_LINKS_SHARED" />
+            <EmptyState icon="link" label="No links shared" />
           ) : (
             <div className="space-y-2">
               {links.map((link, i) => {
@@ -183,6 +186,7 @@ export function ChatInfoPanel({ channelId, channelName, memberCount, isOpen, onC
         )}
       </div>
     </div>
+    </>
   );
 }
 

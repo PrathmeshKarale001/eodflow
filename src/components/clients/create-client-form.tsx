@@ -55,7 +55,7 @@ export function CreateClientForm() {
       {/* Company Name */}
       <div>
         <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-          COMPANY_NAME *
+          Company Name *
         </label>
         <input
           type="text"
@@ -70,7 +70,7 @@ export function CreateClientForm() {
       {/* Industry */}
       <div>
         <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-          INDUSTRY
+          Industry
         </label>
         <input
           type="text"
@@ -84,7 +84,7 @@ export function CreateClientForm() {
       {/* Brand Color */}
       <div>
         <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-          BRAND_COLOR
+          Brand Color
         </label>
         <div className="flex items-center gap-3 flex-wrap">
           {PRESET_COLORS.map((color) => (
@@ -116,7 +116,7 @@ export function CreateClientForm() {
       {/* Website */}
       <div>
         <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-          WEBSITE
+          Website
         </label>
         <input
           type="url"
@@ -133,17 +133,17 @@ export function CreateClientForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="mono-clip bg-primary-container text-white px-8 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="rounded-lg bg-primary-container text-white px-8 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isPending ? (
             <>
               <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
-              CREATING...
+              Creating...
             </>
           ) : (
             <>
               <span className="material-symbols-outlined text-sm">add</span>
-              CREATE_CLIENT
+              Create Client
             </>
           )}
         </button>
@@ -152,7 +152,7 @@ export function CreateClientForm() {
           onClick={() => router.back()}
           className="brutalist-border px-6 py-3 font-headline text-xs uppercase text-on-surface/60 hover:text-on-surface hover:bg-surface-container-high transition-colors"
         >
-          CANCEL
+          Cancel
         </button>
       </div>
     </form>

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 import type { BrandNode } from "@/components/sidebar/sidebar";
+import { useGlobalTaskModal } from "@/components/tasks/global-task-modal";
 
 const ICON_MAP: Record<string, string> = {
   LayoutDashboard: "space_dashboard",
@@ -36,6 +37,7 @@ interface MobileSidebarProps {
 export function MobileSidebar({ isOpen, onClose, user, navItems, brands = [], allClients = [] }: MobileSidebarProps) {
   const pathname = usePathname();
   const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
+  const { openCreateTask } = useGlobalTaskModal();
 
   const roleLabel: Record<Role, string> = {
     SUPER_ADMIN: "DIRECTOR",
@@ -50,9 +52,9 @@ export function MobileSidebar({ isOpen, onClose, user, navItems, brands = [], al
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md data-[state=open]:animate-in data-[state=open]:fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out duration-200" />
         <Dialog.Content 
-          className="fixed inset-y-0 left-0 z-50 w-[280px] bg-background border-r-2 brutalist-border shadow-2xl animate-in slide-in-from-left duration-300 focus:outline-none flex flex-col"
+          className="fixed inset-y-0 left-0 z-50 w-[280px] bg-background border-r-2 brutalist-border shadow-2xl data-[state=open]:animate-in data-[state=open]:slide-in-from-left data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left duration-200 focus:outline-none flex flex-col"
         >
           <Dialog.Title className="sr-only">Navigation Menu</Dialog.Title>
           <div className="flex items-center justify-between p-4 border-b border-on-surface/10">
@@ -68,14 +70,14 @@ export function MobileSidebar({ isOpen, onClose, user, navItems, brands = [], al
 
           {/* Quick Actions */}
           <div className="px-3 py-3 border-b border-on-surface/10 flex gap-2">
-            <Link
-              href="/tasks?action=new-task"
-              onClick={onClose}
-              className="flex h-9 flex-1 items-center justify-center gap-1.5 mono-clip bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
+            <button
+              type="button"
+              onClick={() => { onClose(); openCreateTask(); }}
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary-container text-xs font-headline font-bold text-white uppercase hover:bg-primary-container/80 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">add</span>
               New Task
-            </Link>
+            </button>
             <Link
               href="/projects/new"
               onClick={onClose}

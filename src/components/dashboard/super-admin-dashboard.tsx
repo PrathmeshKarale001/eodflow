@@ -75,12 +75,12 @@ export function SuperAdminDashboard({
   const change = hoursChange(weeklyHours, lastWeekHours);
 
   const kpis = [
-    { label: "ACTIVE_PROJECTS", value: activeProjects, icon: "folder_open", color: "text-blue-400", border: "border-t-blue-500", href: "/projects" },
-    { label: "CLIENTS", value: totalClients, icon: "business", color: "text-purple-400", border: "border-t-purple-500", href: "/clients" },
-    { label: "TEAM_SIZE", value: totalTeam, icon: "group", color: "text-green-400", border: "border-t-green-500", href: "/settings" },
-    { label: "OVERDUE", value: overdueTasks, icon: "warning", color: "text-red-400", border: "border-t-red-500", href: "/tasks" },
-    { label: "IN_REVIEW", value: tasksInReview, icon: "rate_review", color: "text-amber-400", border: "border-t-amber-500", href: "/tasks" },
-    { label: "DONE_THIS_WEEK", value: completedThisWeek, icon: "check_circle", color: "text-emerald-400", border: "border-t-emerald-500", href: "/reports" },
+    { label: "Active Projects", value: activeProjects, icon: "folder_open", color: "text-blue-400", border: "border-t-blue-500", href: "/projects" },
+    { label: "Clients", value: totalClients, icon: "business", color: "text-purple-400", border: "border-t-purple-500", href: "/clients" },
+    { label: "Team Size", value: totalTeam, icon: "group", color: "text-green-400", border: "border-t-green-500", href: "/settings" },
+    { label: "Overdue", value: overdueTasks, icon: "warning", color: "text-red-400", border: "border-t-red-500", href: "/tasks" },
+    { label: "In Review", value: tasksInReview, icon: "rate_review", color: "text-amber-400", border: "border-t-amber-500", href: "/tasks" },
+    { label: "Done This Week", value: completedThisWeek, icon: "check_circle", color: "text-emerald-400", border: "border-t-emerald-500", href: "/reports" },
   ];
 
   return (
@@ -131,26 +131,26 @@ export function SuperAdminDashboard({
             <div className="grid grid-cols-3 gap-3">
               <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
                 <p className="font-mono text-2xl font-bold text-green-400">{productivitySnapshot.completedToday}</p>
-                <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/40 mt-1">DONE_TODAY</p>
+                <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/40 mt-1">Done Today</p>
               </div>
               <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
                 <p className={`font-mono text-2xl font-bold ${productivitySnapshot.avgCompletionHours <= 24 ? "text-green-400" : productivitySnapshot.avgCompletionHours <= 48 ? "text-amber-400" : "text-red-400"}`}>
                   {productivitySnapshot.avgCompletionHours > 0 ? `${productivitySnapshot.avgCompletionHours}h` : "—"}
                 </p>
-                <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/40 mt-1">AVG_TIME_TO_COMPLETE</p>
+                <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/40 mt-1">Avg Time to Complete</p>
               </div>
               <div className="brutalist-border bg-surface-container-lowest p-3 text-center">
                 <p className={`font-mono text-2xl font-bold ${productivitySnapshot.revisionRate <= 15 ? "text-green-400" : productivitySnapshot.revisionRate <= 30 ? "text-amber-400" : "text-red-400"}`}>
                   {productivitySnapshot.revisionRate}%
                 </p>
-                <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/40 mt-1">REVISION_RATE</p>
+                <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/40 mt-1">Revision Rate</p>
               </div>
             </div>
 
             {/* Top Performers This Week */}
             {productivitySnapshot.topPerformers.length > 0 && (
               <div>
-                <p className="font-headline text-[10px] uppercase tracking-widest text-on-surface/40 mb-2">TOP_PERFORMERS_THIS_WEEK</p>
+                <p className="font-headline text-[10px] uppercase tracking-widest text-on-surface/40 mb-2">Top Performers This Week</p>
                 <div className="space-y-1.5">
                   {productivitySnapshot.topPerformers.map((p, idx) => (
                     <div key={p.name} className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export function SuperAdminDashboard({
             {/* Blocked Tasks (tasks stuck in review > 24h) */}
             {productivitySnapshot.blockedTasks.length > 0 && (
               <div>
-                <p className="font-headline text-[10px] uppercase tracking-widest text-amber-400 mb-2">NEEDS_ATTENTION</p>
+                <p className="font-headline text-[10px] uppercase tracking-widest text-amber-400 mb-2">Needs Attention</p>
                 <div className="space-y-1">
                   {productivitySnapshot.blockedTasks.slice(0, 4).map((t) => (
                     <div key={t.id} className="flex items-center gap-2 py-1">
@@ -190,7 +190,7 @@ export function SuperAdminDashboard({
       <div className="brutalist-border bg-card overflow-hidden">
         <div className="px-4 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
           <span className="material-symbols-outlined text-sm text-primary">history</span>
-          <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">RECENT_ACTIVITY</h3>
+          <h3 className="font-headline text-[10px] uppercase tracking-widest text-card-text">Recent Activity</h3>
         </div>
         <div className="divide-y divide-outline-variant/20 max-h-64 overflow-y-auto">
           {recentActivities.slice(0, 15).map((a) => (

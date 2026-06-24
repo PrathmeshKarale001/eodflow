@@ -172,7 +172,7 @@ export function ChatWindow({
   useEffect(() => {
     getChannelMembers(channelId).then((members) => {
       setChannelMembersCache(members.map((m) => ({ id: m.id, name: m.name, image: m.image })));
-    }).catch(() => {});
+    }).catch(() => { });
   }, [channelId]);
 
   // Subscribe to broadcast
@@ -464,11 +464,11 @@ export function ChatWindow({
             <span className="material-symbols-outlined text-sm text-primary flex-shrink-0">
               {channelType === "DIRECT" ? "person" : "tag"}
             </span>
-            <h2 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text truncate">
+            <h2 className="font-headline text-xs tracking-wide text-card-text truncate">
               {channelName}
             </h2>
-            <span className="font-mono text-[10px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 uppercase flex-shrink-0">
-              {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "CHANNEL" : "PROJECT"}
+            <span className="font-mono text-[10px] bg-surface-container-high text-on-surface/60 px-2 py-0.5 flex-shrink-0">
+              {channelType === "DIRECT" ? "DM" : channelType === "GROUP" ? "Channel" : "Project"}
             </span>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -478,7 +478,7 @@ export function ChatWindow({
             <button onClick={() => setShowInfoPanel((v) => !v)} className={`flex h-7 w-7 items-center justify-center brutalist-border transition-colors ${showInfoPanel ? "bg-primary/10 text-primary" : "text-outline hover:text-foreground"}`}>
               <span className="material-symbols-outlined text-sm">info</span>
             </button>
-            <span className="font-mono text-[11px] text-on-surface/40 uppercase hidden sm:inline">
+            <span className="font-mono text-[11px] text-on-surface/40 hidden sm:inline">
               {memberCount} member{memberCount !== 1 ? "s" : ""}
             </span>
           </div>
@@ -511,7 +511,7 @@ export function ChatWindow({
                     }
                   }, 100);
                 }
-              } catch {}
+              } catch { }
             }}
           />
         </div>
@@ -581,7 +581,7 @@ export function ChatWindow({
           <div className="flex justify-center py-1 flex-shrink-0">
             <button
               onClick={scrollToBottom}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-container/90 text-white text-[11px] font-headline uppercase tracking-wider rounded-full shadow-lg hover:bg-primary-container transition-all hover:scale-105"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-container/90 text-white text-[11px] font-headline tracking-wider rounded-full shadow-lg hover:bg-primary-container transition-all hover:scale-105"
             >
               <span className="material-symbols-outlined text-sm">keyboard_arrow_down</span>
               New messages
@@ -594,7 +594,7 @@ export function ChatWindow({
           <div className="px-4 py-2 bg-primary/10 brutalist-border border-x-0 border-b-0 flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-xs text-primary animate-spin">progress_activity</span>
-              <span className="font-mono text-[11px] uppercase tracking-widest text-primary">{uploadProgress}</span>
+              <span className="font-mono text-[11px] tracking-widest text-primary">{uploadProgress}</span>
             </div>
           </div>
         )}
@@ -663,7 +663,7 @@ export function ChatWindow({
               onFocus={handleFocus}
               placeholder="Type a message... (@ to mention)"
               rows={1}
-              className="w-full bg-surface-container-lowest brutalist-border px-3 py-2 text-base md:text-xs text-on-surface font-mono placeholder:text-on-surface/30 resize-none max-h-24 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full bg-surface-container-lowest brutalist-border px-3 py-2 text-xs md:text-xs text-on-surface font-mono placeholder:text-on-surface/30 resize-none max-h-24 focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 

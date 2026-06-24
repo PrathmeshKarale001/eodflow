@@ -28,7 +28,7 @@ export default function DashboardError({
         <div className="flex gap-3 justify-center pt-2">
           <button
             onClick={reset}
-            className="bg-primary-container text-white px-6 py-3 font-headline uppercase text-sm font-bold hover:brightness-110 transition-all mono-clip"
+            className="bg-primary-container text-white px-6 py-3 font-headline uppercase text-sm font-bold hover:brightness-110 transition-all rounded-lg"
           >
             RETRY
           </button>

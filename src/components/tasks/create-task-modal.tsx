@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -46,6 +47,14 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const assigneeRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [isOpen]);
 
   const { role, user, isEmployee } = usePermissions();
   const currentUserId = user?.id;
@@ -95,7 +104,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
   // Managers → see directors above them
   // Directors → only self (they are the top)
   const assignerOptions = useMemo(() => {
-    const options = [{ value: currentUserId || "", label: "MYSELF (MY OWN TASK)" }];
+    const options = [{ value: currentUserId || "", label: "Myself (My Own Task)" }];
     if (isEmployee) {
       // Employees can claim a manager or director assigned them
       const superiors = teamMembers
@@ -172,20 +181,20 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-8">
-      <div className="brutalist-border bg-card w-full max-w-lg mx-4 shadow-[4px_4px_0px_#180065] animate-in zoom-in-95 duration-300 my-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden">
+      <div className="brutalist-border bg-card w-full sm:max-w-lg sm:mx-4 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 sm:rounded-lg flex flex-col max-h-full sm:max-h-[85vh]">
         {/* Modal Header */}
-        <div className="p-4 brutalist-border border-t-0 border-x-0 flex items-center justify-between bg-[#180065] text-white relative overflow-hidden">
+        <div className="p-4 brutalist-border border-t-0 border-x-0 flex items-center justify-between bg-[#180065] text-white relative overflow-hidden flex-shrink-0">
           <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
-          <h2 className="font-headline text-base uppercase tracking-widest relative z-10">CREATE_TASK</h2>
+          <h2 className="font-headline text-base uppercase tracking-widest relative z-10">Create Task</h2>
           <button onClick={onClose} className="relative z-10 hover:text-red-400 transition-colors">
-            <span className="material-symbols-outlined text-sm">close</span>
+            <span className="material-symbols-outlined text-sm">Close</span>
           </button>
         </div>
 
         {/* Modal Body — scrollable */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5 overflow-y-auto flex-1 pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
 
           {/* Brand + Project Selectors (only when no pre-set projectId) */}
           {!projectId && (
@@ -193,7 +202,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
               {/* Brand Selector */}
               {brands.length > 0 && (
                 <div className="space-y-1">
-                  <label className="font-label text-[11px] uppercase text-primary tracking-widest">BRAND <span className="text-on-surface/30">(OPTIONAL)</span></label>
+                  <label className="font-label text-[11px] uppercase text-primary tracking-widest">Brand <span className="text-on-surface/30">(Optional)</span></label>
                   <AppSelect
                     options={brandOptions}
                     value={selectedBrandId}
@@ -202,14 +211,14 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                       // Reset project when brand changes
                       setValue("selectedProjectId", "");
                     }}
-                    placeholder="— SELECT BRAND —"
+                    placeholder="— Select Brand —"
                   />
                 </div>
               )}
 
               {/* Project Selector */}
               <div className="space-y-1">
-                <label className="font-label text-[11px] uppercase text-primary tracking-widest">PROJECT <span className="text-on-surface/30">(OPTIONAL)</span></label>
+                <label className="font-label text-[11px] uppercase text-primary tracking-widest">Project <span className="text-on-surface/30">(Optional)</span></label>
                 <Controller
                   name="selectedProjectId"
                   control={control}
@@ -218,7 +227,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                       options={projectOptions}
                       value={field.value ?? ""}
                       onChange={field.onChange}
-                      placeholder="— SELECT PROJECT —"
+                      placeholder="— Select Project —"
                     />
                   )}
                 />
@@ -228,7 +237,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
 
           {/* Title */}
           <div className="space-y-1">
-            <label className="font-label text-[11px] uppercase text-primary tracking-widest">TASK_TITLE</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">Task Title</label>
             <input
               {...register("title")}
               autoFocus
@@ -240,7 +249,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
 
           {/* Description */}
           <div className="space-y-1">
-            <label className="font-label text-[11px] uppercase text-primary tracking-widest">DESCRIPTION</label>
+            <label className="font-label text-[11px] uppercase text-primary tracking-widest">Description</label>
             <textarea
               {...register("description")}
               rows={2}
@@ -252,7 +261,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
           {/* Priority + Due Date/Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
-              <label className="font-label text-[11px] uppercase text-primary tracking-widest">PRIORITY</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">Priority</label>
               <Controller
                 name="priority"
                 control={control}
@@ -269,7 +278,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-label text-[11px] uppercase text-primary tracking-widest">DUE_DATE_TIME</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">Due Date & Time</label>
               <input
                 type="datetime-local"
                 {...register("dueDate")}
@@ -281,7 +290,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
           {/* Assigned By — shown for ALL roles (everyone can say who gave them the task) */}
           <div className="space-y-1.5">
             <label className="font-label text-[11px] uppercase text-primary tracking-widest">
-              ASSIGNED_BY {isEmployee && <span className="text-red-500">*</span>}
+              Assigned By {isEmployee && <span className="text-red-500">*</span>}
             </label>
             <Controller
               name="assignedById"
@@ -291,7 +300,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                   options={assignerOptions}
                   value={field.value ?? ""}
                   onChange={field.onChange}
-                  placeholder="— WHO ASSIGNED THIS? —"
+                  placeholder="— Who assigned this? —"
                   className={`h-11 ${errors.assignedById ? "border-red-500" : ""}`}
                 />
               )}
@@ -302,14 +311,14 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
           {/* Assignees — only for managers/directors who can assign to others */}
           {!isEmployee && (
             <div className="space-y-1 relative" ref={assigneeRef}>
-              <label className="font-label text-[11px] uppercase text-primary tracking-widest">ASSIGN_TO</label>
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">Assign To</label>
               {/* Selected Assignees Chips */}
               <div
                 className="min-h-[44px] w-full bg-transparent brutalist-border px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer"
                 onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
               >
                 {selectedAssigneeIds.length === 0 ? (
-                  <span className="font-label text-[10px] uppercase tracking-widest text-on-surface/30 px-1">— SELECT ASSIGNEES —</span>
+                  <span className="font-label text-[10px] uppercase tracking-widest text-on-surface/30 px-1">— Select Assignees —</span>
                 ) : (
                   selectedAssigneeIds.map((id) => {
                     const member = teamMembers.find((m) => m.id === id);
@@ -325,7 +334,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                           onClick={(e) => { e.stopPropagation(); toggleAssignee(id); }}
                           className="hover:text-red-500 transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[10px]">close</span>
+                          <span className="material-symbols-outlined text-[10px]">Close</span>
                         </button>
                       </span>
                     );
@@ -366,7 +375,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                   })}
                   {filteredMembers.length === 0 && (
                     <div className="p-3 text-center">
-                      <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/30">NO_MEMBERS_FOUND</p>
+                      <p className="font-label text-[11px] uppercase tracking-widest text-on-surface/30">No members found</p>
                     </div>
                   )}
                 </div>
@@ -381,19 +390,20 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
               onClick={onClose}
               className="flex-1 brutalist-border py-2.5 font-headline text-xs uppercase tracking-widest text-outline hover:bg-card/5 transition-colors"
             >
-              CANCEL
+              Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 mono-clip bg-primary-container text-white py-2.5 font-headline text-xs uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 rounded-lg bg-primary-container text-white py-2.5 font-headline text-xs uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <span className="material-symbols-outlined text-sm">add_task</span>
-              {isSubmitting ? "CREATING..." : "CREATE_TASK"}
+              <span className="material-symbols-outlined text-sm">Add Task</span>
+              {isSubmitting ? "Creating..." : "Create Task"}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

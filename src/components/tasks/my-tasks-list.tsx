@@ -26,16 +26,16 @@ if (typeof window !== "undefined") {
 }
 
 const STATUS_SECTIONS: { status: TaskStatus; label: string; accent: string }[] = [
-  { status: TaskStatus.PENDING_APPROVAL, label: "PENDING_APPROVAL", accent: "border-l-cyan-500" },
-  { status: TaskStatus.TODO, label: "TODO", accent: "border-l-blue-500" },
-  { status: TaskStatus.IN_PROGRESS, label: "IN_PROGRESS", accent: "border-l-amber-500" },
-  { status: TaskStatus.IN_REVIEW, label: "IN_REVIEW", accent: "border-l-purple-500" },
-  { status: TaskStatus.REVISION, label: "REVISION", accent: "border-l-red-500" },
-  { status: TaskStatus.CLIENT_APPROVAL, label: "CLIENT_APPROVAL", accent: "border-l-teal-500" },
-  { status: TaskStatus.CLIENT_REVISION, label: "CLIENT_REVISION", accent: "border-l-orange-500" },
-  { status: TaskStatus.APPROVED, label: "APPROVED", accent: "border-l-green-500" },
-  { status: TaskStatus.DONE, label: "DONE", accent: "border-l-green-700" },
-  { status: TaskStatus.BACKLOG, label: "BACKLOG", accent: "border-l-neutral-400" },
+  { status: TaskStatus.PENDING_APPROVAL, label: "Pending Approval", accent: "border-l-cyan-500" },
+  { status: TaskStatus.TODO, label: "To Do", accent: "border-l-blue-500" },
+  { status: TaskStatus.IN_PROGRESS, label: "In Progress", accent: "border-l-amber-500" },
+  { status: TaskStatus.IN_REVIEW, label: "In Review", accent: "border-l-purple-500" },
+  { status: TaskStatus.REVISION, label: "Revision", accent: "border-l-red-500" },
+  { status: TaskStatus.CLIENT_APPROVAL, label: "Client Approval", accent: "border-l-teal-500" },
+  { status: TaskStatus.CLIENT_REVISION, label: "Client Revision", accent: "border-l-orange-500" },
+  { status: TaskStatus.APPROVED, label: "Approved", accent: "border-l-green-500" },
+  { status: TaskStatus.DONE, label: "Done", accent: "border-l-green-700" },
+  { status: TaskStatus.BACKLOG, label: "Backlog", accent: "border-l-neutral-400" },
 ];
 
 const PRIORITY_CHIP: Record<string, string> = {
@@ -117,11 +117,12 @@ export function MyTasksList({
   const [projectFilter, setProjectFilter] = useState<string>("ALL");
   const [dueFilter, setDueFilter] = useState<"ALL" | "OVERDUE" | "TODAY" | "THIS_WEEK" | "NO_DATE">("ALL");
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<"priority" | "due_date" | "title" | "created">("priority");
+  const [sortBy, setSortBy] = useState<"priority" | "Due Date" | "title" | "created">("priority");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [groupView, setGroupView] = useState<"STATUS" | "TIMELINE">("STATUS");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [activeDrawerTask, setActiveDrawerTask] = useState<TaskType | null>(null);
 
   // Sync action=new-task from other pages to open the modal instantly
   useEffect(() => {
@@ -172,7 +173,7 @@ export function MyTasksList({
             }}
             className="text-xs font-mono uppercase bg-on-surface text-surface px-3 py-1.5 hover:opacity-80 transition-opacity"
           >
-            VIEW_TASK
+            View Task
           </button>
         </div>
       ),
@@ -203,6 +204,13 @@ export function MyTasksList({
   const hasAnyFilter = !!(searchQuery || priorityFilter !== "ALL" || statusFilter !== "ALL" || assigneeFilter !== "ALL" || projectFilter !== "ALL" || dueFilter !== "ALL" || activeFilter);
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
+
+  // Sync selected task to active drawer task for exit transition tracking
+  useEffect(() => {
+    if (selectedTask) {
+      setActiveDrawerTask(selectedTask);
+    }
+  }, [selectedTask]);
 
   // ─── Apply all filters composably ─────────────────────────────────────────
   const REVIEW_STATUSES: TaskStatus[] = [TaskStatus.IN_REVIEW, TaskStatus.CLIENT_APPROVAL, TaskStatus.REVISION];
@@ -257,7 +265,7 @@ export function MyTasksList({
       case "priority":
         cmp = (PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER] ?? 2) - (PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER] ?? 2);
         break;
-      case "due_date": {
+      case "Due Date": {
         const da = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
         const db2 = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
         cmp = da - db2;
@@ -306,27 +314,27 @@ export function MyTasksList({
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in duration-300">
       {/* Page Header */}
       <div className="brutalist-border bg-card p-4 md:p-6 relative overflow-hidden">
         <div className="absolute inset-0 scanline opacity-10 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between">
+        <div className="relative z-10 flex items-center justify-between max-sm:flex-col max-sm:items-start gap-3">
           <div>
             <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase mb-1 text-card-text leading-none">
-              {userRole === "SUPER_ADMIN" ? "ALL_TASKS" : "MY_TASKS"}
+              {userRole === "SUPER_ADMIN" ? "All Tasks" : "My Tasks"}
             </h1>
             <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-on-surface/50">
-              {userRole === "SUPER_ADMIN" ? "MANAGE & ASSIGN" : userRole === "ADMIN" ? "MY_TEAM & ASSIGNMENTS" : "ACTIVE ASSIGNMENTS"} // {tasks.length} ITEMS
+              {userRole === "SUPER_ADMIN" ? "Manage & Assign" : userRole === "ADMIN" ? "My Team & Assignments" : "Active Assignments"} · {tasks.length} Items
             </p>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {canCreateTask && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="mono-clip bg-primary-container text-white px-3 sm:px-5 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase hover:brightness-110 transition-all flex items-center gap-1.5"
+                className="rounded-lg bg-primary-container text-white px-3 sm:px-5 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase hover:brightness-110 transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-sm">add</span>
-                <span className="hidden sm:inline">NEW_</span>TASK
+                Task
               </button>
             )}
             <Link
@@ -334,7 +342,7 @@ export function MyTasksList({
               className="brutalist-border text-outline hover:text-foreground hover:bg-card/10 px-3 sm:px-4 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase transition-all flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined text-sm">create_new_folder</span>
-              <span className="hidden sm:inline">NEW_</span>PROJECT
+              Project
             </Link>
           </div>
         </div>
@@ -351,18 +359,18 @@ export function MyTasksList({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="SEARCH TASKS, PROJECTS, BRANDS..."
+              placeholder="Search tasks, projects, brands..."
               className="w-full h-9 brutalist-border bg-transparent pl-9 pr-3 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none placeholder:text-on-surface/20"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface/30 hover:text-on-surface">
-                <span className="material-symbols-outlined text-xs">close</span>
+                <span className="material-symbols-outlined text-xs">Close</span>
               </button>
             )}
           </div>
 
-          {/* Filter toggle + result count */}
-          <div className="flex items-center gap-2">
+          {/* Filter toggle + Sort + View */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-1.5 px-3 py-2 brutalist-border text-[11px] font-headline uppercase tracking-widest transition-colors ${
@@ -370,16 +378,13 @@ export function MyTasksList({
               }`}
             >
               <span className="material-symbols-outlined text-sm">tune</span>
-              FILTERS
+              Filters
               {hasAnyFilter && (
                 <span className="bg-primary text-on-primary text-[10px] px-1.5 py-0.5 font-mono min-w-[18px] text-center">
                   {[searchQuery, priorityFilter !== "ALL", statusFilter !== "ALL", assigneeFilter !== "ALL", projectFilter !== "ALL", dueFilter !== "ALL", activeFilter].filter(Boolean).length}
                 </span>
               )}
             </button>
-            <span className="font-mono text-[11px] text-on-surface/40 uppercase tracking-widest hidden sm:inline">
-              {filteredTasks.length}/{tasks.length}
-            </span>
             {/* Sort Controls */}
             <div className="flex items-center gap-1 ml-auto">
               <select
@@ -387,10 +392,10 @@ export function MyTasksList({
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                 className="bg-transparent font-mono text-[11px] text-on-surface/60 uppercase tracking-wider border-none focus:outline-none cursor-pointer"
               >
-                <option value="priority">SORT: PRIORITY</option>
-                <option value="due_date">SORT: DUE DATE</option>
-                <option value="title">SORT: TITLE</option>
-                <option value="created">SORT: CREATED</option>
+                <option value="priority">Sort: Priority</option>
+                <option value="Due Date">Sort: Due Date</option>
+                <option value="title">Sort: Title</option>
+                <option value="created">Sort: Created</option>
               </select>
               <button
                 onClick={() => setSortDir((d) => d === "asc" ? "desc" : "asc")}
@@ -411,7 +416,7 @@ export function MyTasksList({
                 }`}
               >
                 <span className="material-symbols-outlined text-xs">view_list</span>
-                STATUS
+                Status
               </button>
               <button
                 onClick={() => setGroupView("TIMELINE")}
@@ -420,7 +425,7 @@ export function MyTasksList({
                 }`}
               >
                 <span className="material-symbols-outlined text-xs">schedule</span>
-                TIMELINE
+                Timeline
               </button>
             </div>
             {hasAnyFilter && (
@@ -429,7 +434,7 @@ export function MyTasksList({
                 className="flex items-center gap-1 px-2 py-1.5 text-[11px] font-headline uppercase tracking-widest text-error/60 hover:text-error transition-colors"
               >
                 <span className="material-symbols-outlined text-xs">delete_sweep</span>
-                CLEAR
+                Clear
               </button>
             )}
           </div>
@@ -478,7 +483,7 @@ export function MyTasksList({
                 className="w-full h-8 brutalist-border bg-transparent px-2 font-mono text-[10px] uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none cursor-pointer appearance-none"
               >
                 <option value="ALL">ALL</option>
-                <option value="MINE">MY_TASKS</option>
+                <option value="MINE">My Tasks</option>
                 <option value="UNASSIGNED">UNASSIGNED</option>
                 {uniqueAssignees.map(([id, name]) => (
                   <option key={id} value={id}>{name.toUpperCase()}</option>
@@ -511,9 +516,9 @@ export function MyTasksList({
               >
                 <option value="ALL">ALL</option>
                 <option value="OVERDUE">OVERDUE</option>
-                <option value="TODAY">DUE_TODAY</option>
-                <option value="THIS_WEEK">THIS_WEEK</option>
-                <option value="NO_DATE">NO_DUE_DATE</option>
+                <option value="TODAY">Due Today</option>
+                <option value="THIS_WEEK">This Week</option>
+                <option value="NO_DATE">No Due Date</option>
               </select>
             </div>
           </div>
@@ -526,43 +531,43 @@ export function MyTasksList({
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/15 text-amber-400 text-[10px] font-headline uppercase tracking-widest brutalist-border border-amber-500/30">
                 <span className="material-symbols-outlined text-[10px]">filter_alt</span>
                 {activeFilter === "review" ? "PENDING_REVIEW" : activeFilter === "due" ? "DUE_THIS_WEEK" : activeFilter.toUpperCase()}
-                <button onClick={clearFilter} className="ml-0.5 hover:text-amber-200"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                <button onClick={clearFilter} className="ml-0.5 hover:text-amber-200"><span className="material-symbols-outlined text-[10px]">Close</span></button>
               </span>
             )}
             {searchQuery && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 SEARCH: &quot;{searchQuery.toUpperCase()}&quot;
-                <button onClick={() => setSearchQuery("")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                <button onClick={() => setSearchQuery("")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">Close</span></button>
               </span>
             )}
             {priorityFilter !== "ALL" && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 PRIORITY: {priorityFilter}
-                <button onClick={() => setPriorityFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                <button onClick={() => setPriorityFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">Close</span></button>
               </span>
             )}
             {statusFilter !== "ALL" && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 STATUS: {statusFilter}
-                <button onClick={() => setStatusFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                <button onClick={() => setStatusFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">Close</span></button>
               </span>
             )}
             {assigneeFilter !== "ALL" && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 ASSIGNEE: {assigneeFilter === "MINE" ? "MY_TASKS" : assigneeFilter === "UNASSIGNED" ? "UNASSIGNED" : uniqueAssignees.find(([id]) => id === assigneeFilter)?.[1]?.toUpperCase() || assigneeFilter}
-                <button onClick={() => setAssigneeFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                <button onClick={() => setAssigneeFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">Close</span></button>
               </span>
             )}
             {projectFilter !== "ALL" && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 PROJECT: {uniqueProjects.find(([id]) => id === projectFilter)?.[1]?.toUpperCase() || projectFilter}
-                <button onClick={() => setProjectFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                <button onClick={() => setProjectFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">Close</span></button>
               </span>
             )}
             {dueFilter !== "ALL" && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-[10px] font-headline uppercase tracking-widest brutalist-border border-primary/20">
                 DUE: {dueFilter.replace("_", " ")}
-                <button onClick={() => setDueFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                <button onClick={() => setDueFilter("ALL")} className="ml-0.5 hover:text-primary/60"><span className="material-symbols-outlined text-[10px]">Close</span></button>
               </span>
             )}
           </div>
@@ -921,7 +926,7 @@ export function MyTasksList({
                           {reassigning && (
                             <div className="flex items-center gap-2 text-primary">
                               <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
-                              <span className="font-mono text-[11px] uppercase tracking-widest">REASSIGNING...</span>
+                              <span className="font-mono text-[11px] uppercase tracking-widest">Reassigning...</span>
                             </div>
                           )}
                         </div>
@@ -936,13 +941,14 @@ export function MyTasksList({
       )}
 
       {/* Task Detail Drawer */}
-      {selectedTask ? (
+      {activeDrawerTask ? (
         <TaskDetailDrawer
-          task={selectedTask}
+          task={activeDrawerTask}
           userId={userId}
           userRole={userRole}
           isOpen={!!selectedTaskId}
           onClose={() => setSelectedTaskId(null)}
+          onExited={() => setActiveDrawerTask(null)}
           teamMembers={teamMembers}
         />
       ) : null}

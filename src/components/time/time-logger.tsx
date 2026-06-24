@@ -155,7 +155,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
             <button
               onClick={handleStop}
               disabled={isSaving}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 mono-clip bg-red-600 text-white px-4 py-3 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase shadow-[3px_3px_0px_#991b1b] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#991b1b] transition-all disabled:opacity-50"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-lg bg-red-600 text-white px-4 py-3 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase shadow-[3px_3px_0px_#991b1b] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#991b1b] transition-all disabled:opacity-50"
             >
               <span className="material-symbols-outlined text-sm">stop</span>
               STOP
@@ -164,7 +164,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
             <button
               onClick={handleStart}
               disabled={isSaving}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 mono-clip bg-green-600 text-white px-4 py-3 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase shadow-[3px_3px_0px_#15803d] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#15803d] transition-all disabled:opacity-50"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-lg bg-green-600 text-white px-4 py-3 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase shadow-[3px_3px_0px_#15803d] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#15803d] transition-all disabled:opacity-50"
             >
               <span className="material-symbols-outlined text-sm">play_arrow</span>
               START
@@ -208,7 +208,7 @@ export function TimeLogger({ taskId, userId }: TimeLoggerProps) {
           <button
             onClick={handleManualSubmit}
             disabled={isSaving}
-            className="w-full mono-clip bg-[#180065] text-white px-4 py-3 font-headline text-xs uppercase shadow-[4px_4px_0px_#5847d2] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#5847d2] transition-all disabled:opacity-50"
+            className="w-full rounded-lg bg-[#180065] text-white px-4 py-3 font-headline text-xs uppercase shadow-lg hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#5847d2] transition-all disabled:opacity-50"
           >
             {isSaving ? "SAVING..." : "LOG_ENTRY"}
           </button>

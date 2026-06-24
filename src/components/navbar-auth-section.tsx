@@ -28,7 +28,7 @@ export function NavbarAuthSection({ className }: { className?: string }) {
     setHasSession(hasCookie);
   }, []);
 
-  const defaultClass = "flex-1 h-full bg-primary-container text-on-primary-container font-headline text-sm uppercase font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center mono-clip";
+  const defaultClass = "flex-1 h-full bg-primary-container text-on-primary-container font-headline text-sm uppercase font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center rounded-lg";
   const appliedClass = className || defaultClass;
 
   // Render a skeleton placeholder during SSR/hydration to prevent CLS

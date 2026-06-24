@@ -120,7 +120,7 @@ export default async function ProjectsPage() {
             {canCreateProject && (
               <Link
                 href="/projects/new"
-                className="mono-clip bg-primary-container text-white px-3 sm:px-5 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase hover:brightness-110 transition-all flex items-center gap-1.5"
+                className="rounded-lg bg-primary-container text-white px-3 sm:px-5 py-2 sm:py-2.5 font-headline text-[10px] sm:text-xs uppercase hover:brightness-110 transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-sm">create_new_folder</span>
                 <span className="hidden sm:inline">NEW_</span>PROJECT
@@ -151,7 +151,7 @@ export default async function ProjectsPage() {
           {canCreateProject && (
             <Link
               href="/projects/new"
-              className="inline-flex items-center gap-2 mono-clip bg-primary text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all"
             >
               <span className="material-symbols-outlined text-sm">add</span>
               INIT_PROJECT

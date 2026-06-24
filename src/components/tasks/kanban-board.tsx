@@ -80,6 +80,14 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask, user
 
   const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) : null;
 
+  // Sync selected task to active drawer task for exit transition tracking
+  const [activeDrawerTask, setActiveDrawerTask] = useState<any | null>(null);
+  useEffect(() => {
+    if (selectedTask) {
+      setActiveDrawerTask(selectedTask);
+    }
+  }, [selectedTask]);
+
   const handleCreateSuccess = (taskId: string) => {
     toast.success(
       (t) => (
@@ -119,17 +127,17 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask, user
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-primary text-xl">view_kanban</span>
-          <h2 className="font-headline text-lg uppercase tracking-tight">TASK_BOARD</h2>
+          <h2 className="font-headline text-lg uppercase tracking-tight">Task Board</h2>
           <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[11px] font-mono uppercase tracking-widest">{tasks.length} ITEMS</span>
         </div>
 
         {canCreateTask ? (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 mono-clip bg-[#5847d2] text-white px-4 py-2 font-headline text-[10px] uppercase shadow-[4px_4px_0px_#180065] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_#180065] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
+            className="flex items-center gap-2 rounded-lg bg-[#5847d2] text-white px-4 py-2 font-headline text-[10px] uppercase shadow-lg hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_#180065] active:translate-x-[4px] active:brightness-90 transition-all"
           >
             <span className="material-symbols-outlined text-sm">add</span>
-            CREATE_TASK
+            Create Task
           </button>
         ) : null}
       </div>
@@ -158,19 +166,20 @@ export function KanbanBoard({ tasks, projectId, teamMembers, canCreateTask, user
       )}
 
       {/* Task Detail Drawer — lazy loaded but prefetched */}
-      {selectedTask && userId && userRole && (
+      {activeDrawerTask && userId && userRole && (
         <TaskDetailDrawer
           task={{
-            ...selectedTask,
-            description: selectedTask.description ?? null,
-            projectId: selectedTask.projectId ?? projectId,
-            subtasks: selectedTask.subtasks ?? [],
-            files: selectedTask.files,
+            ...activeDrawerTask,
+            description: activeDrawerTask.description ?? null,
+            projectId: activeDrawerTask.projectId ?? projectId,
+            subtasks: activeDrawerTask.subtasks ?? [],
+            files: activeDrawerTask.files,
           }}
           userId={userId}
           userRole={userRole}
           isOpen={!!selectedTaskId}
           onClose={() => setSelectedTaskId(null)}
+          onExited={() => setActiveDrawerTask(null)}
           teamMembers={teamMembers}
         />
       )}

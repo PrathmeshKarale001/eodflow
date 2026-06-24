@@ -55,7 +55,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
         onClick={onClose}
       />
 
@@ -65,7 +65,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
         <div className="flex items-center justify-between p-5 border-b border-on-surface/10">
           <div>
             <h2 className="font-headline text-base uppercase tracking-tight text-on-surface">
-              EDIT_CLIENT
+              Edit Client
             </h2>
             <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/40 mt-0.5">
               {client.id.slice(-8)}
@@ -90,7 +90,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
           {/* Company Name */}
           <div>
             <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-              COMPANY_NAME *
+              Company Name *
             </label>
             <input
               type="text"
@@ -104,7 +104,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
           {/* Industry */}
           <div>
             <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-              INDUSTRY
+              Industry
             </label>
             <input
               type="text"
@@ -118,7 +118,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
           {/* Brand Color */}
           <div>
             <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-              BRAND_COLOR
+              Brand Color
             </label>
             <div className="flex items-center gap-3 flex-wrap">
               {PRESET_COLORS.map((color) => (
@@ -152,7 +152,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
           {/* Website */}
           <div>
             <label className="block font-headline text-[10px] uppercase tracking-[0.2em] text-on-surface/60 mb-2">
-              WEBSITE
+              Website
             </label>
             <input
               type="url"
@@ -168,17 +168,17 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
             <button
               type="submit"
               disabled={isPending}
-              className="mono-clip bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="rounded-lg bg-primary-container text-white px-6 py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isPending ? (
                 <>
                   <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
-                  SAVING...
+                   Saving...
                 </>
               ) : (
                 <>
                   <span className="material-symbols-outlined text-sm">save</span>
-                  SAVE_CHANGES
+                   Save Changes
                 </>
               )}
             </button>
@@ -187,7 +187,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
               onClick={onClose}
               className="brutalist-border px-5 py-3 font-headline text-xs uppercase text-on-surface/60 hover:text-on-surface hover:bg-surface-container-high transition-colors"
             >
-              CANCEL
+              Cancel
             </button>
           </div>
         </form>

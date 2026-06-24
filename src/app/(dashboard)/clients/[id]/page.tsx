@@ -55,9 +55,9 @@ export default async function ClientDetailsPage({
 
           {/* Actions */}
           <div className="flex flex-col items-end gap-2">
-            <div className="mono-clip bg-primary text-primary-foreground px-6 py-3 font-headline uppercase text-sm font-bold shadow-[4px_4px_0px_#180065] flex items-center gap-2">
+            <div className="rounded-lg bg-primary text-primary-foreground px-6 py-3 font-headline uppercase text-sm font-bold shadow-lg flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">folder_open</span>
-              WORKSPACE_ACTIVE
+              Workspace Active
             </div>
             <ClientActions
               client={{
@@ -94,7 +94,7 @@ export default async function ClientDetailsPage({
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <div className="brutalist-border bg-card-muted p-6 h-full border-l-8" style={{ borderLeftColor: client.brandColor || "#6C5CE7" }}>
              <h3 className="font-headline uppercase text-sm mb-4 tracking-widest text-card-text">
-               BRAND_IDENTITY
+               Brand Identity
              </h3>
              <ul className="space-y-4 font-mono text-xs uppercase text-muted-foreground">
                <li>

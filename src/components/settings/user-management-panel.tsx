@@ -178,14 +178,14 @@ export function UserManagementPanel({
 
       {/* ── Invite Success Modal ──────────────────────────────────────────── */}
       {inviteResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
           <div className="brutalist-border bg-background w-full max-w-md mx-4 p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300">
             {/* Header */}
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-2xl text-primary">send</span>
               <div>
                 <h2 className="font-headline text-sm uppercase tracking-widest text-foreground">
-                  INVITE_SENT
+                  Invite Sent
                 </h2>
                 <p className="font-label text-[11px] text-outline uppercase tracking-widest">
                   Email sent via Resend • Link valid for 48h
@@ -206,7 +206,7 @@ export function UserManagementPanel({
               </div>
               <div className="border-t border-white/10" />
               <div>
-                <span className="text-outline text-[10px] uppercase tracking-widest block mb-2">INVITE_LINK</span>
+                <span className="text-outline text-[10px] uppercase tracking-widest block mb-2">Invite Link</span>
                 <span className="text-primary text-[11px] break-all">{inviteResult.joinUrl}</span>
               </div>
             </div>
@@ -228,7 +228,7 @@ export function UserManagementPanel({
                 <span className="material-symbols-outlined text-sm">
                   {copied ? "check" : "content_copy"}
                 </span>
-                {copied ? "COPIED!" : "COPY_MESSAGE"}
+                {copied ? "Copied!" : "Copy Message"}
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(buildInviteShareMessage(inviteResult))}`}
@@ -237,7 +237,7 @@ export function UserManagementPanel({
                 className="flex items-center justify-center gap-2 bg-[#25D366]/20 text-[#25D366] brutalist-border px-4 py-2.5 font-headline text-xs uppercase hover:bg-[#25D366]/30 transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">send</span>
-                WHATSAPP
+                WhatsApp
               </a>
             </div>
 
@@ -248,7 +248,7 @@ export function UserManagementPanel({
               }}
               className="w-full brutalist-border py-2 font-label text-[10px] text-outline uppercase tracking-widest hover:bg-card/5 transition-colors"
             >
-              DONE — CLOSE
+              Done — Close
             </button>
           </div>
         </div>
@@ -256,13 +256,13 @@ export function UserManagementPanel({
 
       {/* ── Reactivate Credentials Modal ──────────────────────────────────── */}
       {credentials && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
           <div className="brutalist-border bg-background w-full max-w-md mx-4 p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-2xl text-primary">key</span>
               <div>
                 <h2 className="font-headline text-sm uppercase tracking-widest text-foreground">
-                  USER_REACTIVATED
+                  User Reactivated
                 </h2>
                 <p className="font-label text-[11px] text-outline uppercase tracking-widest">
                   Share these credentials with the user
@@ -303,7 +303,7 @@ export function UserManagementPanel({
                 <span className="material-symbols-outlined text-sm">
                   {credCopied ? "check" : "content_copy"}
                 </span>
-                {credCopied ? "COPIED!" : "COPY_MESSAGE"}
+                {credCopied ? "Copied!" : "Copy Message"}
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(buildCredShareMessage(credentials))}`}
@@ -312,7 +312,7 @@ export function UserManagementPanel({
                 className="flex items-center justify-center gap-2 bg-[#25D366]/20 text-[#25D366] brutalist-border px-4 py-2.5 font-headline text-xs uppercase hover:bg-[#25D366]/30 transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">send</span>
-                WHATSAPP
+                WhatsApp
               </a>
             </div>
 
@@ -320,7 +320,7 @@ export function UserManagementPanel({
               onClick={() => setCredentials(null)}
               className="w-full brutalist-border py-2 font-label text-[10px] text-outline uppercase tracking-widest hover:bg-card/5 transition-colors"
             >
-              DONE — CLOSE
+              Done — Close
             </button>
           </div>
         </div>
@@ -333,12 +333,12 @@ export function UserManagementPanel({
         </span>
         <button
           onClick={() => setShowInviteForm(!showInviteForm)}
-          className="mono-clip bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
+          className="rounded-lg bg-primary-container text-white px-5 py-2.5 font-headline text-xs uppercase hover:brightness-110 transition-all flex items-center gap-2"
         >
           <span className="material-symbols-outlined text-sm">
             {showInviteForm ? "close" : "person_add"}
           </span>
-          {showInviteForm ? "CANCEL" : "INVITE_USER"}
+          {showInviteForm ? "Cancel" : "Invite User"}
         </button>
       </div>
 
@@ -347,7 +347,7 @@ export function UserManagementPanel({
         <div className="brutalist-border bg-surface-container-lowest p-4 md:p-3 space-y-4 animate-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between">
             <h3 className="font-headline text-[10px] uppercase tracking-widest text-foreground">
-              INVITE_VIA_MAGIC_LINK
+              INVITE VIA MAGIC LINK
             </h3>
             <span className="font-label text-[10px] text-primary uppercase tracking-widest">
               📧 Email sent automatically
@@ -356,7 +356,7 @@ export function UserManagementPanel({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-1.5">
               <label className="font-label text-[11px] text-outline uppercase tracking-widest block">
-                FULL_NAME
+                Full Name
               </label>
               <input
                 type="text"
@@ -411,10 +411,10 @@ export function UserManagementPanel({
           <button
             onClick={handleInvite}
             disabled={isSubmitting || !inviteName.trim() || !inviteEmail.trim()}
-            className="w-full sm:w-auto mono-clip bg-primary-container text-white px-8 py-4 sm:py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto rounded-lg bg-primary-container text-white px-8 py-4 sm:py-3 font-headline text-xs uppercase hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-sm">send</span>
-            {isSubmitting ? "SENDING..." : "SEND_MAGIC_LINK"}
+            {isSubmitting ? "Sending..." : "Send Magic Link"}
           </button>
         </div>
       )}
@@ -431,7 +431,7 @@ export function UserManagementPanel({
                 <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">ROLE</th>
                 <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">DEPT</th>
                 <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">STATUS</th>
-                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">LAST_LOGIN</th>
+                <th className="px-4 py-3 text-left font-label text-[11px] uppercase tracking-widest text-outline">Last Login</th>
                 <th className="px-4 py-3 text-right font-label text-[11px] uppercase tracking-widest text-outline">ACTIONS</th>
               </tr>
             </thead>
@@ -584,7 +584,7 @@ export function UserManagementPanel({
               {user.id !== currentUserId && (
                 <div className="flex items-center justify-between pt-4 border-t border-on-surface/5">
                   <div className="flex flex-col">
-                    <span className="font-label text-[10px] text-outline uppercase tracking-widest">LAST_LOGIN</span>
+                    <span className="font-label text-[10px] text-outline uppercase tracking-widest">Last Login</span>
                     <span className="font-mono text-[11px] text-on-surface">
                       {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : "NEVER"}
                     </span>
@@ -662,7 +662,7 @@ export function UserManagementPanel({
             </div>
 
             <div className="text-[11px] font-label text-outline uppercase tracking-wider flex justify-between border-t border-white/5 pt-2 font-mono">
-              <span>LAST_LOGIN</span>
+              <span>Last Login</span>
               <span>
                 {user.lastLoginAt
                   ? new Date(user.lastLoginAt).toLocaleDateString("en-IN", {

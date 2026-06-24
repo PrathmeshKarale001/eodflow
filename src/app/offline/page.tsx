@@ -19,7 +19,7 @@ export default function OfflinePage() {
           onClick={() => window.location.reload()}
           className="px-6 py-2 bg-primary text-on-primary font-headline text-[10px] uppercase tracking-widest brutalist-border hover:bg-primary/80 transition-colors"
         >
-          RETRY_CONNECTION
+          Retry Connection
         </button>
       </div>
     </div>

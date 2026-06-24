@@ -59,30 +59,26 @@ export function DateRangePicker() {
   };
 
   return (
-    <div className="brutalist-border bg-card p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-t-4 border-t-primary shadow-[4px_4px_0px_#000000]">
+    <div className="brutalist-border bg-card p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-t-4 border-t-primary shadow-lg">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-xl text-on-surface/50">calendar_today</span>
           <span className="font-mono text-xs uppercase tracking-widest text-on-surface/70">Date Filter:</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex flex-col">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="brutalist-border bg-surface text-on-surface px-2 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <span className="font-mono text-xs text-on-surface/50">to</span>
-          <div className="flex flex-col">
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="brutalist-border bg-surface text-on-surface px-2 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="brutalist-border bg-surface text-on-surface px-2 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary min-w-0 flex-1 max-w-[140px]"
+          />
+          <span className="font-mono text-xs text-on-surface/50 flex-shrink-0">to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="brutalist-border bg-surface text-on-surface px-2 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary min-w-0 flex-1 max-w-[140px]"
+          />
         </div>
         <button
           onClick={() => handleApply()}

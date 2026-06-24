@@ -721,6 +721,46 @@ export async function getTeamMembers() {
 }
 
 // ---------------------------------------------------------------------------
+// Get all data needed for the Create Task modal (global)
+// ---------------------------------------------------------------------------
+
+export async function getCreateTaskData() {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const userRole = session.user.role as string;
+
+  const [teamMembers, projects, brands] = await Promise.all([
+    db.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, role: true, department: true, image: true },
+      orderBy: { name: "asc" },
+    }),
+    db.project.findMany({
+      where:
+        userRole === "ADMIN"
+          ? {
+              status: { not: "COMPLETED" },
+              OR: [
+                { assignedManagerId: session.user.id },
+                { createdById: session.user.id },
+              ],
+            }
+          : { status: { not: "COMPLETED" } },
+      select: { id: true, title: true, clientId: true },
+      orderBy: { title: "asc" },
+    }),
+    db.client.findMany({
+      where: { isActive: true },
+      select: { id: true, companyName: true },
+      orderBy: { companyName: "asc" },
+    }),
+  ]);
+
+  return { teamMembers, projects, brands };
+}
+
+// ---------------------------------------------------------------------------
 // Get Task Files (on-demand — used by task detail drawer)
 // ---------------------------------------------------------------------------
 

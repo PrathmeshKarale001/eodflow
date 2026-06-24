@@ -195,8 +195,8 @@ export default async function OverviewPage({
     };
 
     return (
-      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <DashboardHeader role="AGENCY_CONTROL" subtitle="FULL_AGENCY_OVERVIEW // KPI_DASHBOARD" />
+      <div className="space-y-6 animate-in fade-in duration-300">
+        <DashboardHeader role="Agency Control" subtitle="Full Agency Overview · KPI Dashboard" />
         <DateRangePicker />
         <SuperAdminDashboard
           activeProjects={activeProjects}
@@ -322,7 +322,7 @@ export default async function OverviewPage({
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <DashboardHeader role="MANAGER_VIEW" subtitle="TEAM_WORKLOAD // PROJECT_STATUS" />
+        <DashboardHeader role="Manager View" subtitle="Team Workload · Project Status" />
         <DateRangePicker />
         <ManagerDashboard
           managedProjects={managedProjects as any}
@@ -375,7 +375,7 @@ export default async function OverviewPage({
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <DashboardHeader role="MY_DASHBOARD" subtitle={`WELCOME_BACK // ${(session.user.name ?? "").toUpperCase().replace(" ", "_")}`} />
+      <DashboardHeader role="My Dashboard" subtitle={`Welcome Back · ${session.user.name ?? ""}`} />
       <DateRangePicker />
       <EmployeeDashboard
         myName={session.user.name ?? ""}
@@ -393,7 +393,7 @@ function DashboardHeader({ role, subtitle }: { role: string; subtitle: string })
   return (
     <div className="brutalist-border bg-[#180065] text-white p-4 md:p-6 relative overflow-hidden">
       <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
-      <div className="relative z-10 flex items-center justify-between gap-3">
+      <div className="relative z-10 flex items-center justify-between max-sm:flex-col max-sm:items-start gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl md:text-4xl font-headline tracking-tighter uppercase leading-none">{role}</h1>
           <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-neutral-400 mt-1.5">{subtitle}</p>
@@ -404,14 +404,14 @@ function DashboardHeader({ role, subtitle }: { role: string; subtitle: string })
             className="flex h-9 items-center gap-1.5 px-3 sm:px-4 bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] sm:text-xs font-headline font-bold uppercase transition-colors"
           >
             <span className="material-symbols-outlined text-sm">add</span>
-            <span className="hidden sm:inline">New </span>Task
+            Task
           </a>
           <a
             href="/projects/new"
             className="flex h-9 items-center gap-1.5 px-3 sm:px-4 border border-white/10 text-white/60 hover:text-white hover:border-white/30 text-[10px] sm:text-xs font-headline font-bold uppercase transition-colors"
           >
             <span className="material-symbols-outlined text-sm">create_new_folder</span>
-            <span className="hidden sm:inline">New </span>Project
+            Project
           </a>
         </div>
       </div>

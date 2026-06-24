@@ -130,18 +130,18 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative bg-card brutalist-border w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-card-text">upload_file</span>
-            <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">UPLOAD_FILES</h3>
+            <span className="material-symbols-outlined text-sm text-card-text">Upload File</span>
+            <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">Upload Files</h3>
           </div>
           <button onClick={onClose} className="text-on-surface/50 hover:text-on-surface transition-colors">
-            <span className="material-symbols-outlined text-lg">close</span>
+            <span className="material-symbols-outlined text-lg">Close</span>
           </button>
         </div>
 
@@ -150,7 +150,7 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-label text-[11px] uppercase tracking-widest text-on-surface/50 block mb-1">
-                CLIENT (OPTIONAL)
+                Client (Optional)
               </label>
               <AppSelect
                 options={clients.map((c) => ({ value: c.id, label: c.companyName }))}
@@ -159,19 +159,19 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
                   setSelectedClientId(val);
                   setSelectedProjectId("");
                 }}
-                placeholder="— NONE —"
+                placeholder="— None —"
                 className="h-9"
               />
             </div>
             <div>
               <label className="font-label text-[11px] uppercase tracking-widest text-on-surface/50 block mb-1">
-                PROJECT (OPTIONAL)
+                Project (Optional)
               </label>
               <AppSelect
                 options={filteredProjects.map((p) => ({ value: p.id, label: p.title }))}
                 value={selectedProjectId}
                 onChange={setSelectedProjectId}
-                placeholder="— NONE —"
+                placeholder="— None —"
                 className="h-9"
               />
             </div>
@@ -194,7 +194,7 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
             />
             <span className="material-symbols-outlined text-3xl mb-3 text-card-text">cloud_upload</span>
             <p className="font-headline text-sm uppercase tracking-widest text-card-text">
-              DROP FILES HERE
+              Drop files here
             </p>
             <p className="font-mono text-[10px] uppercase text-on-surface/50 mt-1">
               or click to browse // JPG, PNG, PDF, MP4, etc.
@@ -222,7 +222,7 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
                       </div>
                     </div>
                     <span className="font-mono text-[10px] uppercase text-on-surface/50">
-                      {uf.status === "done" ? "DONE" : uf.status === "error" ? "FAIL" : `${uf.progress}%`}
+                      {uf.status === "done" ? "Done" : uf.status === "error" ? "Failed" : `${uf.progress}%`}
                     </span>
                   </div>
                   {/* Show exact Supabase error for debugging */}
@@ -238,9 +238,9 @@ export function FileUploadModal({ isOpen, onClose, clients, projects, uploaderNa
           {allDone && (
             <button
               onClick={() => { setUploadingFiles([]); onClose(); }}
-              className="w-full mono-clip bg-primary text-on-primary py-3 font-headline text-xs uppercase tracking-widest hover:bg-primary/80 transition-colors"
+              className="w-full rounded-lg bg-primary text-on-primary py-3 font-headline text-xs uppercase tracking-widest hover:bg-primary/80 transition-colors"
             >
-              CLOSE
+              Close
             </button>
           )}
         </div>

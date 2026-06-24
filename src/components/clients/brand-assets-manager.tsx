@@ -113,7 +113,7 @@ export function BrandAssetsManager({
         />
         
         <span className="material-symbols-outlined text-4xl mb-4 text-card-text">
-          {isUploading ? "cloud_upload" : "upload_file"}
+          {isUploading ? "cloud_upload" : "Upload File"}
         </span>
         <h3 className="font-headline tracking-widest uppercase text-card-text text-lg">
           {isUploading ? "UPLOADING_ASSETS..." : "DROP_ASSETS_HERE"}
@@ -142,7 +142,7 @@ export function BrandAssetsManager({
                   href={file.fileUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="mono-clip bg-card-muted p-2 hover:bg-primary hover:text-white transition-colors flex"
+                  className="rounded-lg bg-card-muted p-2 hover:bg-primary hover:text-white transition-colors flex"
                 >
                   <span className="material-symbols-outlined text-lg">download</span>
                 </a>

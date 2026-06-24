@@ -38,7 +38,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
       <div className="brutalist-border bg-card">
         <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
           <span className="material-symbols-outlined text-base text-amber-600">warning</span>
-          <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">BOTTLENECK_ALERTS</h3>
+          <h3 className="font-headline text-xs uppercase tracking-[0.15em] text-card-text">Bottleneck Alerts</h3>
           <span className="ml-auto bg-amber-500/100 text-white px-2 py-0.5 text-[11px] font-mono">
             {bottleneckTasks.length}
           </span>
@@ -48,7 +48,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
           {bottleneckTasks.length === 0 ? (
             <div className="p-8 text-center">
               <span className="material-symbols-outlined text-3xl text-green-400 mb-2 block">check_circle</span>
-              <p className="font-mono text-xs uppercase tracking-widest text-green-500">ALL_CLEAR</p>
+              <p className="font-mono text-xs uppercase tracking-widest text-green-500">All Clear</p>
               <p className="font-mono text-[11px] text-on-surface/50 mt-1">No bottlenecks detected</p>
             </div>
           ) : (
@@ -86,7 +86,7 @@ export function BottleneckAlerts({ bottleneckTasks, activities }: BottleneckAler
       <div className="brutalist-border bg-card">
         <div className="px-5 py-3 brutalist-border border-t-0 border-x-0 bg-card-muted flex items-center gap-2">
           <span className="material-symbols-outlined text-base text-card-text">history</span>
-          <h3 className="font-headline text-xs uppercase tracking-[0.2em] text-card-text">ACTIVITY_FEED</h3>
+          <h3 className="font-headline text-xs uppercase tracking-[0.15em] text-card-text">Activity Feed</h3>
         </div>
 
         <div className="divide-y divide-outline-variant/20 max-h-[400px] overflow-y-auto" style={{ contentVisibility: "auto" }}>

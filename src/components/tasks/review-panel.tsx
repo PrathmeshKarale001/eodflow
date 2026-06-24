@@ -112,11 +112,11 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
 
       {/* Deliverables Preview */}
       <div className="p-4 border-b border-neutral-200">
-        <h4 className="font-headline text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
-          SUBMITTED_DELIVERABLES
+        <h4 className="font-headline text-[11px] uppercase tracking-widest text-on-surface/40 mb-3">
+          Submitted Deliverables
         </h4>
         {task.files.length === 0 ? (
-          <p className="font-mono text-[10px] text-muted-foreground uppercase">NO_FILES_ATTACHED</p>
+          <p className="font-mono text-[11px] text-on-surface/40 uppercase">No files attached</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {task.files.map((file) => (
@@ -144,7 +144,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
           <div className="flex items-center gap-3 p-3 bg-amber-500/10 brutalist-border border-amber-300">
             <span className="material-symbols-outlined text-amber-600">pending</span>
             <span className="font-mono text-xs uppercase tracking-widest text-amber-800">
-              {task.status === TaskStatus.REVISION ? "AWAITING_EMPLOYEE_REVISION" : "AWAITING_CLIENT_REVISION_FIX"}
+              {task.status === TaskStatus.REVISION ? "Awaiting employee revision" : "Awaiting client revision fix"}
             </span>
           </div>
         ) : null}
@@ -152,26 +152,26 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
         {/* Manager Gate Actions */}
         {canManagerReview ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-[10px] font-headline uppercase tracking-widest text-card-text mb-2">
-              <span className="w-2 h-2 bg-purple-500"></span>
-              GATE_1: MANAGER_REVIEW
+            <div className="flex items-center gap-2 text-[11px] font-headline uppercase tracking-widest text-card-text mb-2">
+              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+              Manager Review
             </div>
             <div className="flex gap-3">
               <button
                 onClick={handleApprove}
                 disabled={isProcessing}
-                className="flex-1 flex items-center justify-center gap-2 mono-clip bg-green-700 text-white px-4 py-3 font-headline text-xs uppercase shadow-[4px_4px_0px_#15803d] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#15803d] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-green-600 text-white px-4 py-3 font-headline text-xs uppercase hover:bg-green-500 transition-all disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-base">check_circle</span>
-                APPROVE
+                Approve
               </button>
               <button
                 onClick={handleRequestRevision}
                 disabled={isProcessing}
-                className="flex-1 flex items-center justify-center gap-2 brutalist-border border-red-600 text-red-600 px-4 py-3 font-headline text-xs uppercase hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg brutalist-border border-red-600 text-red-500 px-4 py-3 font-headline text-xs uppercase hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-base">undo</span>
-                REQUEST_REVISION
+                Request Revision
               </button>
             </div>
           </div>
@@ -180,26 +180,26 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
         {/* Client Gate Actions */}
         {canClientReview ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-[10px] font-headline uppercase tracking-widest text-card-text mb-2">
-              <span className="w-2 h-2 bg-indigo-500"></span>
-              GATE_2: CLIENT_APPROVAL
+            <div className="flex items-center gap-2 text-[11px] font-headline uppercase tracking-widest text-card-text mb-2">
+              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+              Client Approval
             </div>
             <div className="flex gap-3">
               <button
                 onClick={handleApprove}
                 disabled={isProcessing}
-                className="flex-1 flex items-center justify-center gap-2 mono-clip bg-green-700 text-white px-4 py-3 font-headline text-xs uppercase shadow-[4px_4px_0px_#15803d] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#15803d] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-green-600 text-white px-4 py-3 font-headline text-xs uppercase hover:bg-green-500 transition-all disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-base">verified</span>
-                CLIENT_APPROVE
+                Client Approve
               </button>
               <button
                 onClick={handleRequestRevision}
                 disabled={isProcessing}
-                className="flex-1 flex items-center justify-center gap-2 brutalist-border border-orange-600 text-orange-600 px-4 py-3 font-headline text-xs uppercase hover:bg-orange-600 hover:text-white transition-all disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg brutalist-border border-orange-500 text-orange-500 px-4 py-3 font-headline text-xs uppercase hover:bg-orange-600 hover:text-white transition-all disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-base">replay</span>
-                CLIENT_REVISION
+                Client Revision
               </button>
             </div>
           </div>
@@ -208,7 +208,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
         {/* Revision Notes Textarea */}
         {showNotesField ? (
           <div className="space-y-2 animate-in slide-in-from-bottom-2 duration-200">
-            <label className="font-label text-[10px] uppercase text-red-600 tracking-widest">REVISION_NOTES</label>
+            <label className="font-label text-[11px] uppercase text-red-500 tracking-widest">Revision Notes</label>
             <textarea
               value={revisionNotes}
               onChange={(e) => setRevisionNotes(e.target.value)}
@@ -221,7 +221,7 @@ export function ReviewPanel({ task, userRole, onAction }: ReviewPanelProps) {
               <button
                 onClick={handleRequestRevision}
                 disabled={isProcessing}
-                className="flex-1 mono-clip bg-red-600 text-white px-4 py-2 font-headline text-xs uppercase shadow-[3px_3px_0px_#991b1b] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#991b1b] transition-all disabled:opacity-50"
+                className="flex-1 rounded-lg bg-red-600 text-white px-4 py-2 font-headline text-xs uppercase shadow-[3px_3px_0px_#991b1b] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#991b1b] transition-all disabled:opacity-50"
               >
                 {isProcessing ? "SENDING..." : "CONFIRM_REVISION"}
               </button>

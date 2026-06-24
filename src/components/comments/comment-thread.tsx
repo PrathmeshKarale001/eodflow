@@ -255,7 +255,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
         {comments.length === 0 ? (
           <div className="p-8 text-center">
             <span className="material-symbols-outlined text-2xl text-on-surface/20 mb-2 block">chat_bubble_outline</span>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40">NO_COMMENTS_YET</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40">No comments yet</p>
           </div>
         ) : (
           comments.map((comment) => (
@@ -393,7 +393,7 @@ export function CommentThread({ taskId, currentUserId, initialComments }: Commen
           <button
             onClick={handleSubmit}
             disabled={isSending || isUploadingFile || (!newComment.trim() && attachedFiles.length === 0)}
-            className="mono-clip bg-primary text-on-primary px-4 py-2 h-10 font-headline text-[10px] uppercase shadow-[3px_3px_0px_var(--clr-shadow)] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_var(--clr-shadow)] transition-all disabled:opacity-50 flex items-center justify-center"
+            className="rounded-lg bg-primary text-on-primary px-4 py-2 h-10 font-headline text-[10px] uppercase shadow-[3px_3px_0px_var(--clr-shadow)] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_var(--clr-shadow)] transition-all disabled:opacity-50 flex items-center justify-center"
           >
             {isUploadingFile ? "UPLOADING..." : isSending ? "..." : "SEND"}
           </button>
