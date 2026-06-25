@@ -112,7 +112,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden">
       <div className="brutalist-border bg-card w-full sm:max-w-lg sm:mx-4 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 sm:rounded-lg flex flex-col max-h-full sm:max-h-[85vh]">
         {/* Modal Header */}
         <div className="p-4 brutalist-border border-t-0 border-x-0 flex items-center justify-between bg-[#180065] text-white relative overflow-hidden flex-shrink-0">
