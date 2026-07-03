@@ -6,6 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createTask } from "@/app/actions/tasks";
+import { createProjectRecord } from "@/app/actions/create-project";
 import { Priority, Role } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -47,6 +48,15 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const assigneeRef = useRef<HTMLDivElement>(null);
+
+  // Quick Create Project state
+  const [showQuickProject, setShowQuickProject] = useState(false);
+  const [quickProjectTitle, setQuickProjectTitle] = useState("");
+  const [quickProjectPriority, setQuickProjectPriority] = useState<Priority>(Priority.MEDIUM);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [quickProjectError, setQuickProjectError] = useState("");
+  // Local copy of projects so we can append newly created ones without a full refetch
+  const [localProjects, setLocalProjects] = useState(projects);
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -90,11 +100,16 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
 
   const selectedAssigneeIds = watch("assigneeIds") || [];
 
+  // Keep localProjects in sync when parent prop changes (e.g. global modal re-fetch)
+  useEffect(() => {
+    setLocalProjects(projects);
+  }, [projects]);
+
   // Filter projects by selected brand
   const filteredProjects = useMemo(() => {
-    if (!selectedBrandId) return projects;
-    return projects.filter((p) => p.clientId === selectedBrandId);
-  }, [projects, selectedBrandId]);
+    if (!selectedBrandId) return localProjects;
+    return localProjects.filter((p) => p.clientId === selectedBrandId);
+  }, [localProjects, selectedBrandId]);
 
   const projectOptions = filteredProjects.map((p) => ({ value: p.id, label: p.title }));
   const brandOptions = brands.map((b) => ({ value: b.id, label: b.companyName }));
@@ -245,7 +260,106 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                   )}
                 />
                 {errors.selectedProjectId && <p className="text-red-500 text-[11px] font-mono uppercase">{(errors.selectedProjectId as any).message}</p>}
+                {/* + New Project button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedBrandId && brands.length > 0) {
+                      setBrandError("Select a brand first");
+                      return;
+                    }
+                    setShowQuickProject(true);
+                    setQuickProjectTitle("");
+                    setQuickProjectPriority(Priority.MEDIUM);
+                    setQuickProjectError("");
+                  }}
+                  className="mt-1 flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">add</span>
+                  <span className="font-label text-[10px] uppercase tracking-widest">New Project</span>
+                </button>
               </div>
+            </div>
+          )}
+
+          {/* Quick Create Project Panel */}
+          {showQuickProject && (
+            <div className="brutalist-border border-primary/30 bg-primary/5 p-3 space-y-2.5 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between">
+                <span className="font-headline text-[11px] uppercase tracking-widest text-primary">Quick Create Project</span>
+                <button
+                  type="button"
+                  onClick={() => setShowQuickProject(false)}
+                  className="text-outline hover:text-red-400 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-label text-[10px] uppercase text-on-surface/60 tracking-widest">Project Title <span className="text-red-500">*</span></label>
+                  <input
+                    value={quickProjectTitle}
+                    onChange={(e) => { setQuickProjectTitle(e.target.value); setQuickProjectError(""); }}
+                    className="w-full h-9 bg-transparent brutalist-border px-3 py-1.5 font-body text-sm focus:border-primary-container focus:outline-none transition-colors"
+                    placeholder="e.g. Instagram Campaign Q3"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-label text-[10px] uppercase text-on-surface/60 tracking-widest">Brand</label>
+                  <div className="h-9 brutalist-border px-3 flex items-center font-body text-sm text-on-surface/60 bg-card/5">
+                    {brands.find(b => b.id === selectedBrandId)?.companyName || "—"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="font-label text-[10px] uppercase text-on-surface/60 tracking-widest">Priority</label>
+                  <AppSelect
+                    options={PRIORITY_OPTIONS}
+                    value={quickProjectPriority}
+                    onChange={(val) => setQuickProjectPriority(val as Priority)}
+                    placeholder=""
+                    className="h-9"
+                  />
+                </div>
+              </div>
+              {quickProjectError && <p className="text-red-500 text-[10px] font-mono uppercase">{quickProjectError}</p>}
+              <button
+                type="button"
+                disabled={isCreatingProject}
+                onClick={async () => {
+                  if (!quickProjectTitle.trim()) {
+                    setQuickProjectError("Project title is required");
+                    return;
+                  }
+                  if (!selectedBrandId) {
+                    setQuickProjectError("Select a brand first");
+                    return;
+                  }
+                  setIsCreatingProject(true);
+                  try {
+                    const newProject = await createProjectRecord({
+                      title: quickProjectTitle.trim(),
+                      clientId: selectedBrandId,
+                      priority: quickProjectPriority,
+                    });
+                    // Add to local projects list and auto-select
+                    setLocalProjects((prev) => [...prev, { id: newProject.id, title: newProject.title, clientId: newProject.clientId }]);
+                    setValue("selectedProjectId", newProject.id);
+                    setShowQuickProject(false);
+                    setQuickProjectTitle("");
+                    const { toast } = await import("react-hot-toast");
+                    toast.success(`Project "${newProject.title}" created!`, { duration: 3000 });
+                  } catch (err: any) {
+                    setQuickProjectError(err?.message || "Failed to create project");
+                  } finally {
+                    setIsCreatingProject(false);
+                  }
+                }}
+                className="w-full rounded-lg bg-primary-container text-white py-2 font-headline text-[11px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">{isCreatingProject ? "progress_activity" : "add_circle"}</span>
+                {isCreatingProject ? "Creating..." : "Create Project"}
+              </button>
             </div>
           )}
 
