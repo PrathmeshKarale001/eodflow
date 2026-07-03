@@ -43,7 +43,16 @@ interface EditTaskModalProps {
 }
 
 const PRIORITY_OPTIONS = Object.values(Priority).map((p) => ({ value: p, label: p }));
-const STATUS_OPTIONS = Object.values(TaskStatus).map((s) => ({ value: s, label: s }));
+const ALL_STATUS_OPTIONS = Object.values(TaskStatus).map((s) => ({ value: s, label: s.replace(/_/g, " ") }));
+
+// Employees can only transition to these statuses — DONE/APPROVED are manager-only
+const EMPLOYEE_ALLOWED_STATUSES: Set<TaskStatus> = new Set([
+  TaskStatus.TODO,
+  TaskStatus.IN_PROGRESS,
+  TaskStatus.IN_REVIEW,
+  TaskStatus.BACKLOG,
+  TaskStatus.PENDING_APPROVAL,
+]);
 
 export function EditTaskModal({ task, projects = [], brands = [], teamMembers = [], userRole, isOpen, onClose }: EditTaskModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,6 +78,12 @@ export function EditTaskModal({ task, projects = [], brands = [], teamMembers = 
   }, [isOpen]);
 
   const isDirector = userRole === Role.SUPER_ADMIN;
+  const isEmployee = userRole === Role.EMPLOYEE;
+
+  // Employees see restricted status options
+  const statusOptions = isEmployee
+    ? ALL_STATUS_OPTIONS.filter((s) => EMPLOYEE_ALLOWED_STATUSES.has(s.value as TaskStatus))
+    : ALL_STATUS_OPTIONS;
 
   const { register, handleSubmit, control, formState: { errors }, reset, setValue } = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -268,7 +283,7 @@ export function EditTaskModal({ task, projects = [], brands = [], teamMembers = 
                 control={control}
                 render={({ field }) => (
                   <AppSelect
-                    options={STATUS_OPTIONS}
+                    options={statusOptions}
                     value={field.value}
                     onChange={(val) => field.onChange(val as TaskStatus)}
                     placeholder=""
