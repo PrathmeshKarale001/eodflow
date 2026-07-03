@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { fetchActivitiesAction } from "@/app/actions/reports";
+import { ROLE_LABELS } from "@/lib/permissions";
 
 interface TeamMember {
   id: string;
@@ -537,23 +538,11 @@ export function ReportsDashboard({
           }
         };
 
-        // Filter tasks for the selected person
-        const getFilteredTasks = (tasks: any[]) => {
-          if (!tasks) return [];
-          return tasks.filter((t: any) => {
-            if (personTaskFilter === "DONE") return t.status === "DONE" || t.status === "APPROVED";
-            if (personTaskFilter === "PENDING") return t.status !== "DONE" && t.status !== "APPROVED";
-            if (personTaskFilter === "REVISIONS") return t.revisionCount > 0;
-            if (personTaskFilter === "OVERDUE") return t.isOverdue;
-            return true;
-          });
-        };
 
         // Render the person detail panel
         const renderPersonPanel = (person: any, isManager = false) => {
           const tasks = person.tasks || [];
           const createdTasks = person.createdTasksList || [];
-          const allTasks = isManager ? [...tasks, ...createdTasks] : tasks;
 
           const totalAssigned = tasks.length;
           const doneCount = tasks.filter((t: any) => t.status === "DONE" || t.status === "APPROVED").length;
@@ -562,15 +551,65 @@ export function ReportsDashboard({
           const overdueCount = tasks.filter((t: any) => t.isOverdue).length;
           const createdCount = createdTasks.length;
 
-          const filteredTasks = getFilteredTasks(personTaskFilter === "ALL" && isManager ? allTasks : tasks);
+          // Manager-specific: stats for tasks they CREATED (assigned to others)
+          const createdDoneCount = createdTasks.filter((t: any) => t.status === "DONE" || t.status === "APPROVED").length;
+          const createdDoneProperlyCount = createdTasks.filter((t: any) =>
+            (t.status === "DONE" || t.status === "APPROVED") && t.revisionCount === 0
+          ).length;
+          const createdOnTimeCount = createdTasks.filter((t: any) => {
+            if (t.status !== "DONE" && t.status !== "APPROVED") return false;
+            if (!t.dueDate) return true; // no deadline = on time
+            return !t.isOverdue;
+          }).length;
+          const createdOverdueCount = createdTasks.filter((t: any) => t.isOverdue).length;
+          const createdPendingCount = createdTasks.filter((t: any) => t.status !== "DONE" && t.status !== "APPROVED").length;
+          const createdDoneProperlyRate = createdDoneCount > 0 ? Math.round((createdDoneProperlyCount / createdDoneCount) * 100) : 100;
+          const createdOnTimeRate = createdDoneCount > 0 ? Math.round((createdOnTimeCount / createdDoneCount) * 100) : 100;
 
-          const statChips = [
+          // Determine which tasks to show based on filter
+          const getFilteredTasksForPanel = () => {
+            if (personTaskFilter === "ALL") return isManager ? [...tasks, ...createdTasks] : tasks;
+            if (personTaskFilter === "DONE") {
+              const base = isManager ? [...tasks, ...createdTasks] : tasks;
+              return base.filter((t: any) => t.status === "DONE" || t.status === "APPROVED");
+            }
+            if (personTaskFilter === "PENDING") {
+              const base = isManager ? [...tasks, ...createdTasks] : tasks;
+              return base.filter((t: any) => t.status !== "DONE" && t.status !== "APPROVED");
+            }
+            if (personTaskFilter === "REVISIONS") {
+              const base = isManager ? [...tasks, ...createdTasks] : tasks;
+              return base.filter((t: any) => t.revisionCount > 0);
+            }
+            if (personTaskFilter === "OVERDUE") {
+              const base = isManager ? [...tasks, ...createdTasks] : tasks;
+              return base.filter((t: any) => t.isOverdue);
+            }
+            return tasks;
+          };
+          const filteredTasks = getFilteredTasksForPanel();
+
+          // Deduplicate tasks that appear in both assigned and created lists
+          const seen = new Set<string>();
+          const uniqueFilteredTasks = filteredTasks.filter((t: any) => {
+            if (seen.has(t.id)) return false;
+            seen.add(t.id);
+            return true;
+          });
+
+          const statChips = isManager ? [
             { label: "ASSIGNED", value: totalAssigned, color: "bg-blue-500/15 text-blue-400", icon: "assignment" },
             { label: "COMPLETED", value: doneCount, color: "bg-green-500/15 text-green-400", icon: "check_circle" },
             { label: "PENDING", value: pendingCount, color: "bg-amber-500/15 text-amber-400", icon: "pending" },
             { label: "REVISIONS", value: revisionCount, color: "bg-orange-500/15 text-orange-400", icon: "replay" },
             { label: "OVERDUE", value: overdueCount, color: overdueCount > 0 ? "bg-red-500/15 text-red-400" : "bg-green-500/15 text-green-400", icon: overdueCount > 0 ? "warning" : "check" },
-            ...(isManager ? [{ label: "CREATED_BY_THEM", value: createdCount, color: "bg-purple-500/15 text-purple-400", icon: "Add Task" }] : []),
+            { label: "CREATED BY THEM", value: createdCount, color: "bg-purple-500/15 text-purple-400", icon: "add_task" },
+          ] : [
+            { label: "ASSIGNED", value: totalAssigned, color: "bg-blue-500/15 text-blue-400", icon: "assignment" },
+            { label: "COMPLETED", value: doneCount, color: "bg-green-500/15 text-green-400", icon: "check_circle" },
+            { label: "PENDING", value: pendingCount, color: "bg-amber-500/15 text-amber-400", icon: "pending" },
+            { label: "REVISIONS", value: revisionCount, color: "bg-orange-500/15 text-orange-400", icon: "replay" },
+            { label: "OVERDUE", value: overdueCount, color: overdueCount > 0 ? "bg-red-500/15 text-red-400" : "bg-green-500/15 text-green-400", icon: overdueCount > 0 ? "warning" : "check" },
           ];
 
           return (
@@ -585,7 +624,7 @@ export function ReportsDashboard({
                     <div>
                       <span className="font-headline text-sm uppercase tracking-wider text-card-text block">{person.name}</span>
                       <span className="font-mono text-[10px] uppercase tracking-widest text-on-surface/40">
-                        {person.department || person.role?.replace("_", " ") || "—"}
+                        {person.department || (ROLE_LABELS as any)[person.role] || person.role?.replace("_", " ") || "—"}
                       </span>
                     </div>
                   </div>
@@ -602,21 +641,55 @@ export function ReportsDashboard({
                     <div key={chip.label} className={`${chip.color} px-3 py-2 text-center`}>
                       <span className="material-symbols-outlined text-sm block mb-0.5">{chip.icon}</span>
                       <span className="font-headline text-lg block">{chip.value}</span>
-                      <span className="font-mono text-[11px] uppercase tracking-widest block">{chip.label.replace(/_/g, " ")}</span>
+                      <span className="font-mono text-[9px] uppercase tracking-widest block">{chip.label}</span>
                     </div>
                   ))}
                 </div>
+
+                {/* Manager Created Tasks Quality Stats */}
+                {isManager && createdCount > 0 && (
+                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="brutalist-border bg-card p-2.5 text-center">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 block">CREATED DONE</span>
+                      <span className="font-headline text-lg text-green-400 block">{createdDoneCount}<span className="text-on-surface/30 text-xs">/{createdCount}</span></span>
+                    </div>
+                    <div className="brutalist-border bg-card p-2.5 text-center">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 block">DONE PROPERLY</span>
+                      <span className={`font-headline text-lg block ${createdDoneProperlyRate >= 80 ? "text-green-400" : createdDoneProperlyRate >= 50 ? "text-amber-400" : "text-red-400"}`}>{createdDoneProperlyRate}%</span>
+                      <span className="font-mono text-[9px] text-on-surface/30 block">{createdDoneProperlyCount} no revisions</span>
+                    </div>
+                    <div className="brutalist-border bg-card p-2.5 text-center">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 block">ON TIME RATE</span>
+                      <span className={`font-headline text-lg block ${createdOnTimeRate >= 80 ? "text-green-400" : createdOnTimeRate >= 50 ? "text-amber-400" : "text-red-400"}`}>{createdOnTimeRate}%</span>
+                      <span className="font-mono text-[9px] text-on-surface/30 block">{createdOnTimeCount} on time</span>
+                    </div>
+                    <div className="brutalist-border bg-card p-2.5 text-center">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface/40 block">CREATED OVERDUE</span>
+                      <span className={`font-headline text-lg block ${createdOverdueCount > 0 ? "text-red-400" : "text-green-400"}`}>{createdOverdueCount}</span>
+                      <span className="font-mono text-[9px] text-on-surface/30 block">{createdPendingCount} pending</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Filter Tabs */}
               <div className="flex flex-wrap gap-1 px-4 py-2 bg-surface-container-low border-y border-on-surface/5">
                 {(["ALL", "DONE", "PENDING", "REVISIONS", "OVERDUE"] as const).map((f) => {
+                  const allTasksDeduped = isManager ? (() => {
+                    const s = new Set<string>();
+                    return [...tasks, ...createdTasks].filter((t: any) => { if (s.has(t.id)) return false; s.add(t.id); return true; });
+                  })() : tasks;
+                  const countAll = allTasksDeduped.length;
+                  const countDone = allTasksDeduped.filter((t: any) => t.status === "DONE" || t.status === "APPROVED").length;
+                  const countPending = allTasksDeduped.filter((t: any) => t.status !== "DONE" && t.status !== "APPROVED").length;
+                  const countRevisions = allTasksDeduped.filter((t: any) => t.revisionCount > 0).length;
+                  const countOverdue = allTasksDeduped.filter((t: any) => t.isOverdue).length;
                   const counts: Record<string, number> = {
-                    ALL: isManager ? allTasks.length : tasks.length,
-                    DONE: doneCount,
-                    PENDING: pendingCount,
-                    REVISIONS: revisionCount,
-                    OVERDUE: overdueCount,
+                    ALL: countAll,
+                    DONE: countDone,
+                    PENDING: countPending,
+                    REVISIONS: countRevisions,
+                    OVERDUE: countOverdue,
                   };
                   return (
                     <button
@@ -635,7 +708,7 @@ export function ReportsDashboard({
               </div>
 
               {/* Task List */}
-              {filteredTasks.length === 0 ? (
+              {uniqueFilteredTasks.length === 0 ? (
                 <div className="px-4 py-8 text-center">
                   <span className="material-symbols-outlined text-2xl text-on-surface/20 block mb-2">search_off</span>
                   <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface/30">NO TASKS MATCH THIS FILTER</p>
@@ -644,7 +717,19 @@ export function ReportsDashboard({
                 <>
                   {/* Desktop Task Table */}
                   <div className="hidden md:block overflow-x-auto max-h-[500px] overflow-y-auto">
-                    <table className="w-full text-left font-mono text-[10px] border-collapse">
+                    <table className="w-full text-left font-mono text-[10px] border-collapse" style={{ tableLayout: "fixed" }}>
+                      <colgroup>
+                        <col style={{ width: "18%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "10%" }} />
+                        <col style={{ width: "8%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "8%" }} />
+                        <col style={{ width: "8%" }} />
+                        <col style={{ width: "8%" }} />
+                        <col style={{ width: "9%" }} />
+                        <col style={{ width: "5%" }} />
+                      </colgroup>
                       <thead className="sticky top-0 z-10">
                         <tr className="bg-surface-container-low border-b border-on-surface/10 uppercase text-on-surface/40 text-[10px]">
                           <th className="px-3 py-2 font-headline">Task</th>
@@ -660,7 +745,7 @@ export function ReportsDashboard({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-on-surface/5">
-                        {filteredTasks.map((t: any) => {
+                        {uniqueFilteredTasks.map((t: any) => {
                           const isDone = t.status === "DONE" || t.status === "APPROVED";
                           const isTaskSelected = selectedTaskId === t.id;
                           return (
@@ -919,7 +1004,7 @@ export function ReportsDashboard({
 
                   {/* Mobile Task Cards */}
                   <div className="md:hidden max-h-[500px] overflow-y-auto divide-y divide-on-surface/5">
-                    {filteredTasks.map((t: any) => {
+                    {uniqueFilteredTasks.map((t: any) => {
                       const isDone = t.status === "DONE" || t.status === "APPROVED";
                       const isTaskSelected = selectedTaskId === t.id;
                       return (
@@ -1003,9 +1088,9 @@ export function ReportsDashboard({
         <div className="space-y-6">
           {/* Team KPI Summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPICard label="TEAM_SIZE" value={String(employees.length)} sub="active employees" icon="groups" accent="text-blue-400" />
-            <KPICard label="QUALITY_SCORE" value={`${avgProperlyRate}%`} sub="avg done-properly rate" icon="verified" accent={avgProperlyRate >= 80 ? "text-green-400" : avgProperlyRate >= 60 ? "text-amber-400" : "text-red-500"} />
-            <KPICard label="OVERDUE_RATE" value={`${avgOverdueRate}%`} sub="avg across team" icon="event_busy" accent={avgOverdueRate < 15 ? "text-green-400" : avgOverdueRate < 30 ? "text-amber-400" : "text-red-500"} />
+            <KPICard label="TEAM SIZE" value={String(employees.length)} sub="active employees" icon="groups" accent="text-blue-400" />
+            <KPICard label="QUALITY SCORE" value={`${avgProperlyRate}%`} sub="avg done-properly rate" icon="verified" accent={avgProperlyRate >= 80 ? "text-green-400" : avgProperlyRate >= 60 ? "text-amber-400" : "text-red-500"} />
+            <KPICard label="OVERDUE RATE" value={`${avgOverdueRate}%`} sub="avg across team" icon="event_busy" accent={avgOverdueRate < 15 ? "text-green-400" : avgOverdueRate < 30 ? "text-amber-400" : "text-red-500"} />
             <KPICard label="THROUGHPUT" value={String(totalCompleted)} sub={`completed / ${totalOngoing} active`} icon="trending_up" accent="text-green-400" />
           </div>
 
@@ -1017,7 +1102,16 @@ export function ReportsDashboard({
             </div>
             {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left font-mono text-xs border-collapse">
+              <table className="w-full text-left font-mono text-xs border-collapse" style={{ tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "22%" }} />
+                  <col style={{ width: "14%" }} />
+                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "14%" }} />
+                  <col style={{ width: "16%" }} />
+                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "10%" }} />
+                </colgroup>
                 <thead>
                   <tr className="border-b brutalist-border uppercase text-on-surface/50 text-[10px]">
                     <th className="pb-3 font-headline">Employee Name</th>
@@ -1161,7 +1255,15 @@ export function ReportsDashboard({
             
             {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left font-mono text-xs border-collapse">
+              <table className="w-full text-left font-mono text-xs border-collapse" style={{ tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "25%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "15%" }} />
+                </colgroup>
                 <thead>
                   <tr className="border-b brutalist-border uppercase text-on-surface/50 text-[10px]">
                     <th className="pb-3 font-headline">Manager Name</th>
@@ -1177,6 +1279,7 @@ export function ReportsDashboard({
                     .filter((u: any) => u.type === "manager")
                     .map((mgr: any) => {
                       const isSelected = selectedPersonId === mgr.id;
+                      const roleLabel = (ROLE_LABELS as any)[mgr.role] || mgr.role?.replace("_", " ");
                       return (
                         <tr key={mgr.id} style={{ verticalAlign: "top" }}>
                           <td colSpan={6} className="p-0">
@@ -1188,8 +1291,8 @@ export function ReportsDashboard({
                             >
                               <div className="flex items-center gap-1.5 w-full">
                                 <span className={`material-symbols-outlined text-xs text-on-surface/30 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`}>chevron_right</span>
-                                <span className="font-bold text-card-text uppercase flex-1" style={{ minWidth: 0 }}>{mgr.name}</span>
-                                <span className="text-on-surface/60 text-[10px] uppercase font-bold w-24">{mgr.role.replace("_", " ")}</span>
+                                <span className="font-bold text-card-text uppercase flex-1 truncate" style={{ minWidth: 0 }}>{mgr.name}</span>
+                                <span className="text-on-surface/60 text-[10px] uppercase font-bold w-24 truncate">{roleLabel}</span>
                                 <span className="text-center w-28">{mgr.projectsManaged}</span>
                                 <span className="text-center w-24">{mgr.tasksCreated}</span>
                                 <span className="text-center text-amber-400 font-bold w-28">{mgr.reviewsPerformed}</span>
@@ -1227,7 +1330,7 @@ export function ReportsDashboard({
                                 {mgr.name}
                               </span>
                               <span className="text-[11px] text-on-surface/40 uppercase tracking-wider block">
-                                {mgr.role.replace("_", " ")}
+                                {(ROLE_LABELS as any)[mgr.role] || mgr.role?.replace("_", " ")}
                               </span>
                             </div>
                           </div>
@@ -1296,10 +1399,10 @@ export function ReportsDashboard({
         return (
           <div className="space-y-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <KPICard label="ON_TIME_DELIVERY" value={`${onTimeRate}%`} sub={`${onTimeCount}/${completedInReport.length} on time`} icon="verified" accent={onTimeRate >= 80 ? "text-green-400" : onTimeRate >= 50 ? "text-amber-400" : "text-red-500"} />
-              <KPICard label="AVG_START_DELAY" value={`${avgStartDelay}d`} sub="days to begin work" icon="play_circle" accent={Number(avgStartDelay) <= 1 ? "text-green-400" : Number(avgStartDelay) <= 3 ? "text-amber-400" : "text-red-400"} />
-              <KPICard label="OVERDUE_TASKS" value={String(overdueCount)} sub="missed deadlines" icon="event_busy" accent={overdueCount > 0 ? "text-red-500" : "text-green-400"} />
-              <KPICard label="AVG_DELAY" value={`${avgDelay}d`} sub="for late tasks" icon="hourglass_empty" accent={avgDelay > 0 ? "text-red-400" : "text-green-400"} />
+              <KPICard label="ON TIME DELIVERY" value={`${onTimeRate}%`} sub={`${onTimeCount}/${completedInReport.length} on time`} icon="verified" accent={onTimeRate >= 80 ? "text-green-400" : onTimeRate >= 50 ? "text-amber-400" : "text-red-500"} />
+              <KPICard label="AVG START DELAY" value={`${avgStartDelay}d`} sub="days to begin work" icon="play_circle" accent={Number(avgStartDelay) <= 1 ? "text-green-400" : Number(avgStartDelay) <= 3 ? "text-amber-400" : "text-red-400"} />
+              <KPICard label="OVERDUE TASKS" value={String(overdueCount)} sub="missed deadlines" icon="event_busy" accent={overdueCount > 0 ? "text-red-500" : "text-green-400"} />
+              <KPICard label="AVG DELAY" value={`${avgDelay}d`} sub="for late tasks" icon="hourglass_empty" accent={avgDelay > 0 ? "text-red-400" : "text-green-400"} />
             </div>
             <div className="flex flex-wrap gap-2 brutalist-border bg-card p-2">
               {(["ALL", "ONGOING", "OVERDUE", "REVISIONS"] as const).map((f) => {
