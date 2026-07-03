@@ -511,7 +511,7 @@ export function ReportsDashboard({
       {/* ── View 2: Executive Team Performance (Enhanced) ── */}
       {activeTab === "TEAM_AUDIT" && (() => {
         const employees = teamPerformanceReport.filter((u: any) => u.type === "employee");
-        const managers = teamPerformanceReport.filter((u: any) => u.type === "manager");
+        const managers = teamPerformanceReport.filter((u: any) => u.type === "manager" && u.role !== "SUPER_ADMIN");
         const avgProperlyRate = employees.length > 0 ? Math.round(employees.reduce((s: number, e: any) => s + e.doneProperlyRate, 0) / employees.length) : 100;
         const avgOverdueRate = employees.length > 0 ? Math.round(employees.reduce((s: number, e: any) => s + e.overdueRate, 0) / employees.length) : 0;
         const totalCompleted = employees.reduce((s: number, e: any) => s + e.completedCount, 0);
@@ -1276,7 +1276,7 @@ export function ReportsDashboard({
                 </thead>
                 <tbody className="divide-y divide-on-surface/5">
                   {teamPerformanceReport
-                    .filter((u: any) => u.type === "manager")
+                    .filter((u: any) => u.type === "manager" && u.role !== "SUPER_ADMIN")
                     .map((mgr: any) => {
                       const isSelected = selectedPersonId === mgr.id;
                       const roleLabel = (ROLE_LABELS as any)[mgr.role] || mgr.role?.replace("_", " ");
@@ -1311,7 +1311,7 @@ export function ReportsDashboard({
             {/* Mobile View */}
             <div className="grid grid-cols-1 gap-3 md:hidden">
               {teamPerformanceReport
-                .filter((u: any) => u.type === "manager")
+                .filter((u: any) => u.type === "manager" && u.role !== "SUPER_ADMIN")
                 .map((mgr: any) => {
                   const isSelected = selectedPersonId === mgr.id;
                   return (
