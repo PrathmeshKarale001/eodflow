@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import { useState } from "react";
 import Link from "next/link";
 import { fetchActivitiesAction } from "@/app/actions/reports";
@@ -749,74 +751,79 @@ export function ReportsDashboard({
                           const isDone = t.status === "DONE" || t.status === "APPROVED";
                           const isTaskSelected = selectedTaskId === t.id;
                           return (
-                            <tr key={t.id} className="group" style={{ verticalAlign: "top" }}>
-                              <td colSpan={10} className="p-0">
-                                <div
-                                  onClick={() => setSelectedTaskId(isTaskSelected ? null : t.id)}
-                                  className={`flex items-center cursor-pointer transition-all duration-150 px-0 py-2.5 ${
-                                    isTaskSelected
-                                      ? "bg-primary/5"
-                                      : `hover:bg-surface-container-lowest/50 ${isDone ? "opacity-60" : ""}`
-                                  }`}
-                                >
-                                  <span className={`material-symbols-outlined text-[10px] text-on-surface/25 ml-1 mr-1 transition-transform duration-200 ${isTaskSelected ? "rotate-90" : ""}`}>chevron_right</span>
-                                  <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate flex-1 min-w-0 px-1" style={{ maxWidth: 180 }}>{t.title}</span>
-                                  <span className="text-on-surface/50 uppercase truncate px-2" style={{ maxWidth: 110 }}>{t.projectTitle}</span>
-                                  <span className="px-2 text-center" style={{ minWidth: 80 }}>
-                                    <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
-                                      {t.status.replace(/_/g, " ")}
-                                    </span>
+                            <React.Fragment key={t.id}>
+                              <tr
+                                onClick={() => setSelectedTaskId(isTaskSelected ? null : t.id)}
+                                className={`group cursor-pointer transition-all duration-150 ${
+                                  isTaskSelected
+                                    ? "bg-primary/5"
+                                    : `hover:bg-surface-container-lowest/50 ${isDone ? "opacity-60" : ""}`
+                                }`}
+                              >
+                                <td className="py-2.5 pr-1">
+                                  <div className="flex items-center gap-1">
+                                    <span className={`material-symbols-outlined text-[10px] text-on-surface/25 transition-transform duration-200 ${isTaskSelected ? "rotate-90" : ""}`}>chevron_right</span>
+                                    <span className="font-headline text-[10px] uppercase tracking-wider text-card-text truncate">{t.title}</span>
+                                  </div>
+                                </td>
+                                <td className="py-2.5 text-on-surface/50 uppercase truncate">{t.projectTitle}</td>
+                                <td className="py-2.5 text-center">
+                                  <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>
+                                    {t.status.replace(/_/g, " ")}
                                   </span>
-                                  <span className="px-2 text-center" style={{ minWidth: 60 }}>
-                                    <span className={`inline-block px-1.5 py-0.5 text-[11px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>
-                                      {t.priority}
-                                    </span>
+                                </td>
+                                <td className="py-2.5 text-center">
+                                  <span className={`inline-block px-1.5 py-0.5 text-[11px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>
+                                    {t.priority}
                                   </span>
-                                  <span className="px-2 text-on-surface/50 uppercase" style={{ minWidth: 85 }}>
-                                    {isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}
-                                  </span>
-                                  <span className="px-2 text-center text-on-surface/60" style={{ minWidth: 55 }}>{fmtDate(t.createdAt)}</span>
-                                  <span className="px-2 text-center" style={{ minWidth: 55 }}>
-                                    {t.startedAt ? <span className="text-blue-400">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
-                                  </span>
-                                  <span className="px-2 text-center" style={{ minWidth: 55 }}>
-                                    {t.dueDate
-                                      ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-on-surface/60"}>{fmtDate(t.dueDate)}</span>
-                                      : <span className="text-on-surface/20">—</span>
-                                    }
-                                  </span>
-                                  <span className="px-2 text-center" style={{ minWidth: 60 }}>
-                                    {isDone
-                                      ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-green-400 font-bold"}>{fmtDate(t.completedAt)}</span>
-                                      : <span className="text-on-surface/20">Pending</span>
-                                    }
-                                  </span>
-                                  <span className="px-2 text-center" style={{ minWidth: 35 }}>
-                                    {t.revisionCount > 0
-                                      ? <span className="text-amber-400 font-bold">{t.revisionCount}</span>
-                                      : <span className="text-green-400/50">0</span>
-                                    }
-                                  </span>
-                                </div>
-                                {/* Expanded Task Detail */}
-                                {isTaskSelected && (
-                                  <div className="animate-in slide-in-from-top-1 fade-in duration-200 bg-surface-container-lowest border-t border-primary/20 border-b border-b-primary/10">
-                                    <div className="p-4 space-y-3">
-                                      {/* Task Header */}
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1 min-w-0">
-                                          <h4 className="font-headline text-sm uppercase tracking-wider text-card-text">{t.title}</h4>
-                                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                            <span className={`px-2 py-0.5 text-[10px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
-                                            <span className={`px-1.5 py-0.5 text-[10px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
-                                            {t.revisionCount > 0 && <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-amber-500/20 text-amber-400">REV: {t.revisionCount}</span>}
-                                            {t.isOverdue && <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-red-500/20 text-red-400">OVERDUE</span>}
+                                </td>
+                                <td className="py-2.5 text-on-surface/50 uppercase truncate">
+                                  {isManager && t.assigneeName ? t.assigneeName : (t.assignerName || "—")}
+                                </td>
+                                <td className="py-2.5 text-center text-on-surface/60">{fmtDate(t.createdAt)}</td>
+                                <td className="py-2.5 text-center">
+                                  {t.startedAt ? <span className="text-blue-400">{fmtDate(t.startedAt)}</span> : <span className="text-on-surface/20">—</span>}
+                                </td>
+                                <td className="py-2.5 text-center">
+                                  {t.dueDate
+                                    ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-on-surface/60"}>{fmtDate(t.dueDate)}</span>
+                                    : <span className="text-on-surface/20">—</span>
+                                  }
+                                </td>
+                                <td className="py-2.5 text-center">
+                                  {isDone
+                                    ? <span className={t.isOverdue ? "text-red-400 font-bold" : "text-green-400 font-bold"}>{fmtDate(t.completedAt)}</span>
+                                    : <span className="text-on-surface/20">Pending</span>
+                                  }
+                                </td>
+                                <td className="py-2.5 text-center">
+                                  {t.revisionCount > 0
+                                    ? <span className="text-amber-400 font-bold">{t.revisionCount}</span>
+                                    : <span className="text-green-400/50">0</span>
+                                  }
+                                </td>
+                              </tr>
+                              {/* Expanded Task Detail */}
+                              {isTaskSelected && (
+                                <tr>
+                                  <td colSpan={10} className="p-0">
+                                    <div className="animate-in slide-in-from-top-1 fade-in duration-200 bg-surface-container-lowest border-t border-primary/20 border-b border-b-primary/10">
+                                      <div className="p-4 space-y-3">
+                                        {/* Task Header */}
+                                        <div className="flex items-start justify-between gap-3">
+                                          <div className="flex-1 min-w-0">
+                                            <h4 className="font-headline text-sm uppercase tracking-wider text-card-text">{t.title}</h4>
+                                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                              <span className={`px-2 py-0.5 text-[10px] uppercase tracking-widest text-white font-bold ${TASK_STATUS_COLORS[t.status] || "bg-neutral-500"}`}>{t.status.replace(/_/g, " ")}</span>
+                                              <span className={`px-1.5 py-0.5 text-[10px] uppercase font-bold ${PRIORITY_CHIP[t.priority] || "bg-neutral-400 text-white"}`}>{t.priority}</span>
+                                              {t.revisionCount > 0 && <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-amber-500/20 text-amber-400">REV: {t.revisionCount}</span>}
+                                              {t.isOverdue && <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-red-500/20 text-red-400">OVERDUE</span>}
+                                            </div>
                                           </div>
+                                          <button onClick={(e) => { e.stopPropagation(); setSelectedTaskId(null); }} className="p-1 hover:bg-surface-container-high transition-colors flex-shrink-0">
+                                            <span className="material-symbols-outlined text-sm text-on-surface/40">Close</span>
+                                          </button>
                                         </div>
-                                        <button onClick={(e) => { e.stopPropagation(); setSelectedTaskId(null); }} className="p-1 hover:bg-surface-container-high transition-colors flex-shrink-0">
-                                          <span className="material-symbols-outlined text-sm text-on-surface/40">Close</span>
-                                        </button>
-                                      </div>
 
                                       {/* Description */}
                                       {t.description ? (
@@ -993,9 +1000,10 @@ export function ReportsDashboard({
 
                                     </div>
                                   </div>
-                                )}
-                              </td>
-                            </tr>
+                                </td>
+                              </tr>
+                              )}
+                            </React.Fragment>
                           );
                         })}
                       </tbody>
@@ -1144,33 +1152,39 @@ export function ReportsDashboard({
                       const isSelected = selectedPersonId === emp.id;
 
                       return (
-                        <tr key={emp.id} className="group" style={{ verticalAlign: "top" }}>
-                          <td colSpan={7} className="p-0">
-                            <div
-                              onClick={() => togglePerson(emp.id)}
-                              className={`px-0 py-3 flex items-center cursor-pointer transition-colors ${
-                                isSelected ? "bg-primary/5" : "hover:bg-surface-container-low"
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5 w-full">
+                        <React.Fragment key={emp.id}>
+                          <tr
+                            onClick={() => togglePerson(emp.id)}
+                            className={`group cursor-pointer transition-colors ${
+                              isSelected ? "bg-primary/5" : "hover:bg-surface-container-low"
+                            }`}
+                          >
+                            <td className="py-3 pr-2">
+                              <div className="flex items-center gap-1.5">
                                 <span className={`material-symbols-outlined text-xs text-on-surface/30 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`}>chevron_right</span>
-                                <span className="font-bold text-card-text uppercase flex-1" style={{ minWidth: 0 }}>{emp.name}</span>
-                                <span className="uppercase text-on-surface/60 w-24 text-left">{emp.department || "—"}</span>
-                                <span className="text-center w-20">{emp.ongoingCount}</span>
-                                <span className="text-center w-24">{emp.completedCount}</span>
-                                <span className={`text-center w-28 ${properlyRateColor}`}>
-                                  {emp.doneProperlyRate}%
-                                  <span className="text-[11px] block text-on-surface/30 uppercase tracking-tighter">
-                                    {emp.totalRevisions} revisions
-                                  </span>
-                                </span>
-                                <span className={`text-center w-20 ${overdueColor}`}>{emp.overdueRate}%</span>
-                                <span className="text-right font-bold text-primary w-20">{emp.hoursLogged.toFixed(1)} hrs</span>
+                                <span className="font-bold text-card-text uppercase truncate">{emp.name}</span>
                               </div>
-                            </div>
-                            {isSelected && renderPersonPanel(emp, false)}
-                          </td>
-                        </tr>
+                            </td>
+                            <td className="py-3 uppercase text-on-surface/60">{emp.department || "—"}</td>
+                            <td className="py-3 text-center">{emp.ongoingCount}</td>
+                            <td className="py-3 text-center">{emp.completedCount}</td>
+                            <td className={`py-3 text-center ${properlyRateColor}`}>
+                              {emp.doneProperlyRate}%
+                              <span className="text-[11px] block text-on-surface/30 uppercase tracking-tighter">
+                                {emp.totalRevisions} revisions
+                              </span>
+                            </td>
+                            <td className={`py-3 text-center ${overdueColor}`}>{emp.overdueRate}%</td>
+                            <td className="py-3 text-right font-bold text-primary">{emp.hoursLogged.toFixed(1)} hrs</td>
+                          </tr>
+                          {isSelected && (
+                            <tr>
+                              <td colSpan={7} className="p-0">
+                                {renderPersonPanel(emp, false)}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })}
                 </tbody>
@@ -1281,27 +1295,33 @@ export function ReportsDashboard({
                       const isSelected = selectedPersonId === mgr.id;
                       const roleLabel = (ROLE_LABELS as any)[mgr.role] || mgr.role?.replace("_", " ");
                       return (
-                        <tr key={mgr.id} style={{ verticalAlign: "top" }}>
-                          <td colSpan={6} className="p-0">
-                            <div
-                              onClick={() => togglePerson(mgr.id)}
-                              className={`px-0 py-3 flex items-center cursor-pointer transition-colors ${
-                                isSelected ? "bg-primary/5" : "hover:bg-surface-container-low"
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5 w-full">
+                        <React.Fragment key={mgr.id}>
+                          <tr
+                            onClick={() => togglePerson(mgr.id)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected ? "bg-primary/5" : "hover:bg-surface-container-low"
+                            }`}
+                          >
+                            <td className="py-3 pr-2">
+                              <div className="flex items-center gap-1.5">
                                 <span className={`material-symbols-outlined text-xs text-on-surface/30 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`}>chevron_right</span>
-                                <span className="font-bold text-card-text uppercase flex-1 truncate" style={{ minWidth: 0 }}>{mgr.name}</span>
-                                <span className="text-on-surface/60 text-[10px] uppercase font-bold w-24 truncate">{roleLabel}</span>
-                                <span className="text-center w-28">{mgr.projectsManaged}</span>
-                                <span className="text-center w-24">{mgr.tasksCreated}</span>
-                                <span className="text-center text-amber-400 font-bold w-28">{mgr.reviewsPerformed}</span>
-                                <span className="text-right font-bold text-primary w-20">{mgr.hoursLogged.toFixed(1)} hrs</span>
+                                <span className="font-bold text-card-text uppercase truncate">{mgr.name}</span>
                               </div>
-                            </div>
-                            {isSelected && renderPersonPanel(mgr, true)}
-                          </td>
-                        </tr>
+                            </td>
+                            <td className="py-3 text-on-surface/60 text-[10px] uppercase font-bold">{roleLabel}</td>
+                            <td className="py-3 text-center">{mgr.projectsManaged}</td>
+                            <td className="py-3 text-center">{mgr.tasksCreated}</td>
+                            <td className="py-3 text-center text-amber-400 font-bold">{mgr.reviewsPerformed}</td>
+                            <td className="py-3 text-right font-bold text-primary">{mgr.hoursLogged.toFixed(1)} hrs</td>
+                          </tr>
+                          {isSelected && (
+                            <tr>
+                              <td colSpan={6} className="p-0">
+                                {renderPersonPanel(mgr, true)}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })}
                 </tbody>
