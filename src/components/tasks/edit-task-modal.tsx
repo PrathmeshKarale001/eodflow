@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,7 @@ const taskSchema = z.object({
   assignedById: z.string().optional(),
   dueDate: z.string().optional(),
   status: z.nativeEnum(TaskStatus),
+  selectedProjectId: z.string().min(1, "Project is required"),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -33,6 +34,8 @@ interface EditTaskModalProps {
     status: TaskStatus;
     projectId: string | null;
   };
+  projects?: Array<{ id: string; title: string; clientId?: string | null }>;
+  brands?: Array<{ id: string; companyName: string }>;
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
   userRole?: Role;
   isOpen: boolean;
@@ -42,8 +45,20 @@ interface EditTaskModalProps {
 const PRIORITY_OPTIONS = Object.values(Priority).map((p) => ({ value: p, label: p }));
 const STATUS_OPTIONS = Object.values(TaskStatus).map((s) => ({ value: s, label: s }));
 
-export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClose }: EditTaskModalProps) {
+export function EditTaskModal({ task, projects = [], brands = [], teamMembers = [], userRole, isOpen, onClose }: EditTaskModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Derive initial brand from the task's current project
+  const initialBrandId = useMemo(() => {
+    if (task.projectId && projects.length > 0) {
+      const currentProject = projects.find((p) => p.id === task.projectId);
+      return currentProject?.clientId || "";
+    }
+    return "";
+  }, [task.projectId, projects]);
+
+  const [selectedBrandId, setSelectedBrandId] = useState(initialBrandId);
+  const [brandError, setBrandError] = useState("");
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -55,7 +70,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
 
   const isDirector = userRole === Role.SUPER_ADMIN;
 
-  const { register, handleSubmit, control, formState: { errors }, reset } = useForm<TaskFormValues>({
+  const { register, handleSubmit, control, formState: { errors }, reset, setValue } = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       title: task.title,
@@ -65,6 +80,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
       assignedById: task.assignedById || "",
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "",
       status: task.status,
+      selectedProjectId: task.projectId || "",
     },
   });
 
@@ -79,9 +95,27 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
         assignedById: task.assignedById || "",
         dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "",
         status: task.status,
+        selectedProjectId: task.projectId || "",
       });
+      // Re-derive brand from project
+      if (task.projectId && projects.length > 0) {
+        const currentProject = projects.find((p) => p.id === task.projectId);
+        setSelectedBrandId(currentProject?.clientId || "");
+      } else {
+        setSelectedBrandId("");
+      }
+      setBrandError("");
     }
-  }, [isOpen, task, reset]);
+  }, [isOpen, task, reset, projects]);
+
+  // Filter projects by selected brand
+  const filteredProjects = useMemo(() => {
+    if (!selectedBrandId) return projects;
+    return projects.filter((p) => p.clientId === selectedBrandId);
+  }, [projects, selectedBrandId]);
+
+  const projectOptions = filteredProjects.map((p) => ({ value: p.id, label: p.title }));
+  const brandOptions = brands.map((b) => ({ value: b.id, label: b.companyName }));
 
   if (!isOpen) return null;
 
@@ -91,6 +125,13 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
   }));
 
   const onSubmit = async (data: TaskFormValues) => {
+    // Validate brand is selected
+    if (brands.length > 0 && !selectedBrandId) {
+      setBrandError("Brand is required");
+      return;
+    }
+    setBrandError("");
+
     setIsSubmitting(true);
     try {
       await updateTask(task.id, {
@@ -101,6 +142,7 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
         assignedById: isDirector ? (data.assignedById || undefined) : undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         status: data.status,
+        projectId: data.selectedProjectId || undefined,
       });
       onClose();
     } catch (error: any) {
@@ -125,6 +167,47 @@ export function EditTaskModal({ task, teamMembers = [], userRole, isOpen, onClos
 
         {/* Modal Body */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-3.5 overflow-y-auto flex-1 pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
+
+          {/* Brand + Project Selectors */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Brand Selector */}
+            {brands.length > 0 && (
+              <div className="space-y-1">
+                <label className="font-label text-[11px] uppercase text-primary tracking-widest">Brand <span className="text-red-500">*</span></label>
+                <AppSelect
+                  options={brandOptions}
+                  value={selectedBrandId}
+                  onChange={(val) => {
+                    setSelectedBrandId(val);
+                    setBrandError("");
+                    // Reset project when brand changes
+                    setValue("selectedProjectId", "");
+                  }}
+                  placeholder="— Select Brand —"
+                />
+                {brandError && <p className="text-red-500 text-[11px] font-mono uppercase">{brandError}</p>}
+              </div>
+            )}
+
+            {/* Project Selector */}
+            <div className="space-y-1">
+              <label className="font-label text-[11px] uppercase text-primary tracking-widest">Project <span className="text-red-500">*</span></label>
+              <Controller
+                name="selectedProjectId"
+                control={control}
+                render={({ field }) => (
+                  <AppSelect
+                    options={projectOptions}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="— Select Project —"
+                  />
+                )}
+              />
+              {errors.selectedProjectId && <p className="text-red-500 text-[11px] font-mono uppercase">{errors.selectedProjectId.message}</p>}
+            </div>
+          </div>
+
           {/* Title */}
           <div className="space-y-1">
             <label className="font-label text-[11px] uppercase text-primary tracking-widest">Task Title</label>

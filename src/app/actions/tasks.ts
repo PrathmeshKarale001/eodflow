@@ -521,6 +521,7 @@ export async function updateTask(taskId: string, data: {
   assignedById?: string;
   dueDate?: Date;
   status?: TaskStatus;
+  projectId?: string;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("UNAUTHORIZED");

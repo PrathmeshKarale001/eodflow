@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { createPortal } from "react-dom";
-import { getTaskFiles, getTaskActivities } from "@/app/actions/tasks";
+import { getTaskFiles, getTaskActivities, getCreateTaskData } from "@/app/actions/tasks";
 import { TaskStatus, Priority } from "@prisma/client";
 import { createTaskFileRecord } from "@/app/actions/task-submissions";
 import { updateTaskStatus, deleteTask } from "@/app/actions/tasks";
@@ -129,6 +129,8 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onEx
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editModalData, setEditModalData] = useState<{ projects: any[]; brands: any[] } | null>(null);
+  const [isLoadingEditData, setIsLoadingEditData] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("details");
   const [files, setFiles] = useState<any[]>(task.files ?? []);
@@ -499,7 +501,21 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onEx
               <div className="flex items-center gap-1.5">
                 {canManage && (
                   <button
-                    onClick={() => setIsEditModalOpen(true)}
+                    onClick={async () => {
+                      setIsEditModalOpen(true);
+                      // Fetch projects/brands for the edit modal on-demand
+                      if (!editModalData && !isLoadingEditData) {
+                        setIsLoadingEditData(true);
+                        try {
+                          const result = await getCreateTaskData();
+                          setEditModalData({ projects: result.projects, brands: result.brands });
+                        } catch (err) {
+                          console.error("Failed to load edit data:", err);
+                        } finally {
+                          setIsLoadingEditData(false);
+                        }
+                      }
+                    }}
                     className="flex h-8 w-8 items-center justify-center brutalist-border text-outline hover:text-primary transition-colors"
                     title="Edit Task"
                   >
@@ -1062,6 +1078,8 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onEx
         {isEditModalOpen && (
           <EditTaskModal
             task={{ ...task, assignedToId: task.assignedTo?.id || null, assignedById: task.assignedBy?.id || null }}
+            projects={editModalData?.projects ?? []}
+            brands={editModalData?.brands ?? []}
             teamMembers={teamMembers}
             userRole={userRole}
             isOpen={isEditModalOpen}

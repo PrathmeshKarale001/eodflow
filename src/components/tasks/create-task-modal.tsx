@@ -60,11 +60,11 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
   const currentUserId = user?.id;
 
   const activeSchema = isEmployee ? taskSchemaEmployee : taskSchemaManager;
-  type ActiveFormValues = z.infer<typeof activeSchema> & { selectedProjectId?: string };
+  type ActiveFormValues = z.infer<typeof activeSchema> & { selectedProjectId: string };
 
-  const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<TaskFormValues & { selectedProjectId?: string }>({
+  const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<TaskFormValues & { selectedProjectId: string }>({
     resolver: zodResolver(activeSchema.extend({
-      selectedProjectId: z.string().optional(),
+      selectedProjectId: z.string().min(1, "Project is required"),
     })),
     defaultValues: {
       priority: Priority.MEDIUM,
@@ -73,6 +73,9 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
       assignedById: "",
     },
   });
+
+  // Manual brand validation (not in form schema since it's UI-only filter state)
+  const [brandError, setBrandError] = useState("");
 
   // Default: set current user as assigner for all roles
   useEffect(() => {
@@ -155,7 +158,14 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
     }
   };
 
-  const onSubmit = async (data: TaskFormValues & { selectedProjectId?: string }) => {
+  const onSubmit = async (data: TaskFormValues & { selectedProjectId: string }) => {
+    // Validate brand is selected (not in zod since it's UI-only state)
+    if (!projectId && brands.length > 0 && !selectedBrandId) {
+      setBrandError("Brand is required");
+      return;
+    }
+    setBrandError("");
+
     const targetProjectId = projectId || data.selectedProjectId || undefined;
 
     setIsSubmitting(true);
@@ -171,6 +181,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
       });
       reset();
       setSelectedBrandId("");
+      setBrandError("");
       onClose();
       onSuccess?.(task.id);
     } catch (error: any) {
@@ -202,23 +213,25 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
               {/* Brand Selector */}
               {brands.length > 0 && (
                 <div className="space-y-1">
-                  <label className="font-label text-[11px] uppercase text-primary tracking-widest">Brand <span className="text-on-surface/30">(Optional)</span></label>
+                  <label className="font-label text-[11px] uppercase text-primary tracking-widest">Brand <span className="text-red-500">*</span></label>
                   <AppSelect
                     options={brandOptions}
                     value={selectedBrandId}
                     onChange={(val) => {
                       setSelectedBrandId(val);
+                      setBrandError("");
                       // Reset project when brand changes
                       setValue("selectedProjectId", "");
                     }}
                     placeholder="— Select Brand —"
                   />
+                  {brandError && <p className="text-red-500 text-[11px] font-mono uppercase">{brandError}</p>}
                 </div>
               )}
 
               {/* Project Selector */}
               <div className="space-y-1">
-                <label className="font-label text-[11px] uppercase text-primary tracking-widest">Project <span className="text-on-surface/30">(Optional)</span></label>
+                <label className="font-label text-[11px] uppercase text-primary tracking-widest">Project <span className="text-red-500">*</span></label>
                 <Controller
                   name="selectedProjectId"
                   control={control}
@@ -231,6 +244,7 @@ export function CreateTaskModal({ projectId, projects = [], brands = [], teamMem
                     />
                   )}
                 />
+                {errors.selectedProjectId && <p className="text-red-500 text-[11px] font-mono uppercase">{(errors.selectedProjectId as any).message}</p>}
               </div>
             </div>
           )}
