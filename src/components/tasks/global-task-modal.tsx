@@ -40,19 +40,17 @@ export function GlobalTaskModalProvider({ children }: { children: React.ReactNod
 
   const openCreateTask = useCallback(async () => {
     setIsOpen(true);
-    // Fetch data on first open or when data is stale
-    if (!data && !loading) {
-      setLoading(true);
-      try {
-        const result = await getCreateTaskData();
-        setData(result as ModalData);
-      } catch (err) {
-        console.error("Failed to load task modal data:", err);
-      } finally {
-        setLoading(false);
-      }
+    // Always fetch fresh data when modal opens
+    setLoading(true);
+    try {
+      const result = await getCreateTaskData();
+      setData(result as ModalData);
+    } catch (err) {
+      console.error("Failed to load task modal data:", err);
+    } finally {
+      setLoading(false);
     }
-  }, [data, loading]);
+  }, []);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -75,16 +73,25 @@ export function GlobalTaskModalProvider({ children }: { children: React.ReactNod
   return (
     <GlobalTaskModalContext.Provider value={{ openCreateTask }}>
       {children}
-      {isOpen && (
+      {isOpen && !loading && data && (
         <CreateTaskModal
           isOpen={isOpen}
           onClose={handleClose}
           onSuccess={handleSuccess}
-          teamMembers={data?.teamMembers ?? []}
-          projects={data?.projects ?? []}
-          brands={data?.brands ?? []}
+          teamMembers={data.teamMembers}
+          projects={data.projects}
+          brands={data.brands}
         />
+      )}
+      {isOpen && loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="brutalist-border bg-card p-8 flex flex-col items-center gap-3">
+            <span className="material-symbols-outlined text-2xl text-primary animate-spin">progress_activity</span>
+            <span className="font-headline text-xs uppercase tracking-widest text-on-surface/60">Loading task data...</span>
+          </div>
+        </div>
       )}
     </GlobalTaskModalContext.Provider>
   );
 }
+
