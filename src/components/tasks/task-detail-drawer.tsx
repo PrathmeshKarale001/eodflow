@@ -293,6 +293,12 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onEx
   const isOwner = isAssignee || isCreator; // Can manage own task
   const isManager = userRole === Role.SUPER_ADMIN || userRole === Role.ADMIN;
 
+  // Self-task: the employee both assigned-by and assigned-to themselves
+  const isSelfTask = userRole === Role.EMPLOYEE && (
+    (task.assignedById === userId && isAssignee) ||
+    (task.assignedTo?.id && task.assignedBy?.id && task.assignedTo.id === task.assignedBy.id)
+  );
+
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -426,6 +432,8 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onEx
 
   // Compute available status actions for the current user + task state
   const availableActions = (STATUS_ACTIONS[task.status] || []).filter((action) => {
+    // Self-tasks: employees get all actions (they own the full lifecycle)
+    if (isSelfTask && isAssignee) return true;
     // Check role permission
     if (!action.roles.includes(userRole)) return false;
     // Employees can only transition their own tasks
@@ -1082,6 +1090,7 @@ export function TaskDetailDrawer({ task, userId, userRole, isOpen, onClose, onEx
             brands={editModalData?.brands ?? []}
             teamMembers={teamMembers}
             userRole={userRole}
+            userId={userId}
             isOpen={isEditModalOpen}
             onClose={() => {
               setIsEditModalOpen(false);

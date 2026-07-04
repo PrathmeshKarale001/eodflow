@@ -172,7 +172,7 @@ export async function updateTaskStatus(data: {
 
   const task = await db.task.findUnique({
     where: { id: data.taskId },
-    select: { id: true, status: true, projectId: true, assignedToId: true, revisionCount: true, startedAt: true },
+    select: { id: true, status: true, projectId: true, assignedToId: true, assignedById: true, revisionCount: true, startedAt: true },
   });
 
   if (!task) throw new Error("Task not found");
@@ -202,14 +202,17 @@ export async function updateTaskStatus(data: {
     });
   }
 
-  // Validate transition
-  if (!isValidTransition(task.status, data.status)) {
+  // Self-task: employee both created AND is assigned to this task
+  const isSelfTask = userRole === Role.EMPLOYEE && isAssignee && task.assignedById === session.user.id;
+
+  // Validate transition (self-tasks bypass — employee owns full lifecycle)
+  if (!isSelfTask && !isValidTransition(task.status, data.status)) {
     throw new Error(`INVALID_TRANSITION: Cannot move from ${task.status} to ${data.status}.`);
   }
 
-  // Validate role restrictions for target status
+  // Validate role restrictions for target status (self-tasks bypass)
   const roleRestriction = STATUS_ROLE_RESTRICTIONS[data.status];
-  if (roleRestriction && !roleRestriction.includes(userRole)) {
+  if (!isSelfTask && roleRestriction && !roleRestriction.includes(userRole)) {
     throw new Error(`FORBIDDEN: Only ${roleRestriction.join("/")} can move tasks to ${data.status}.`);
   }
 
@@ -528,7 +531,7 @@ export async function updateTask(taskId: string, data: {
 
   const task = await db.task.findUnique({
     where: { id: taskId },
-    select: { id: true, assignedToId: true, projectId: true, status: true, startedAt: true, completedAt: true },
+    select: { id: true, assignedToId: true, assignedById: true, projectId: true, status: true, startedAt: true, completedAt: true },
   });
 
   if (!task) throw new Error("Task not found");
@@ -635,14 +638,18 @@ export async function markTaskDone(taskId: string) {
     throw new Error("FORBIDDEN");
   }
 
+  // Self-task: employee both created AND is assigned to this task — full lifecycle control
+  const isSelfTask = userRole === Role.EMPLOYEE && isAssignee && task.assignedById === session.user.id;
+
   // Enforce status transition rules:
   // - ADMIN/SUPER_ADMIN can mark DONE from any non-final status (force-done)
-  // - EMPLOYEE can only mark DONE from APPROVED status (must go through review)
+  // - Self-task employees can mark DONE from any status (they own the lifecycle)
+  // - EMPLOYEE (manager-assigned) can only mark DONE from APPROVED status (must go through review)
   const finalStatuses = [TaskStatus.DONE, TaskStatus.APPROVED];
   if (task.status === TaskStatus.DONE) {
     throw new Error("Task is already DONE.");
   }
-  if (userRole === Role.EMPLOYEE && task.status !== TaskStatus.APPROVED) {
+  if (userRole === Role.EMPLOYEE && !isSelfTask && task.status !== TaskStatus.APPROVED) {
     throw new Error(`Cannot mark DONE from ${task.status}. Submit for review first.`);
   }
 

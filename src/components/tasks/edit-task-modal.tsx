@@ -38,6 +38,7 @@ interface EditTaskModalProps {
   brands?: Array<{ id: string; companyName: string }>;
   teamMembers?: Array<{ id: string; name: string; department: string | null }>;
   userRole?: Role;
+  userId?: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -54,7 +55,7 @@ const EMPLOYEE_ALLOWED_STATUSES: Set<TaskStatus> = new Set([
   TaskStatus.PENDING_APPROVAL,
 ]);
 
-export function EditTaskModal({ task, projects = [], brands = [], teamMembers = [], userRole, isOpen, onClose }: EditTaskModalProps) {
+export function EditTaskModal({ task, projects = [], brands = [], teamMembers = [], userRole, userId, isOpen, onClose }: EditTaskModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Derive initial brand from the task's current project
@@ -80,8 +81,15 @@ export function EditTaskModal({ task, projects = [], brands = [], teamMembers = 
   const isDirector = userRole === Role.SUPER_ADMIN;
   const isEmployee = userRole === Role.EMPLOYEE;
 
-  // Employees see restricted status options
-  const statusOptions = isEmployee
+  // Self-task: employee created/assigned the task to themselves
+  const isSelfTask = isEmployee && (
+    (task.assignedById && userId && task.assignedById === userId) ||
+    (task.assignedToId && task.assignedById && task.assignedToId === task.assignedById)
+  );
+
+  // Employees see restricted status options ONLY for manager-assigned tasks.
+  // Self-tasks get full status control (employee can mark DONE, etc.)
+  const statusOptions = isEmployee && !isSelfTask
     ? ALL_STATUS_OPTIONS.filter((s) => EMPLOYEE_ALLOWED_STATUSES.has(s.value as TaskStatus))
     : ALL_STATUS_OPTIONS;
 
@@ -275,7 +283,7 @@ export function EditTaskModal({ task, projects = [], brands = [], teamMembers = 
           </div>
 
           {/* Status + Assign To */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
+          <div className={`grid grid-cols-1 ${!isEmployee ? 'sm:grid-cols-2' : ''} gap-4 sm:gap-3`}>
             <div className="space-y-1.5">
               <label className="font-label text-[11px] uppercase text-primary tracking-widest">Status</label>
               <Controller
@@ -293,22 +301,25 @@ export function EditTaskModal({ task, projects = [], brands = [], teamMembers = 
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="font-label text-[11px] uppercase text-primary tracking-widest">Assign To</label>
-              <Controller
-                name="assignedToId"
-                control={control}
-                render={({ field }) => (
-                  <AppSelect
-                    options={memberOptions}
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    placeholder="— Unassigned —"
-                    className="h-11"
-                  />
-                )}
-              />
-            </div>
+            {/* Assign To — hidden for employees (they can't assign to managers) */}
+            {!isEmployee && (
+              <div className="space-y-1.5">
+                <label className="font-label text-[11px] uppercase text-primary tracking-widest">Assign To</label>
+                <Controller
+                  name="assignedToId"
+                  control={control}
+                  render={({ field }) => (
+                    <AppSelect
+                      options={memberOptions}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      placeholder="— Unassigned —"
+                      className="h-11"
+                    />
+                  )}
+                />
+              </div>
+            )}
           </div>
 
           {/* Assigned By — Director only */}
