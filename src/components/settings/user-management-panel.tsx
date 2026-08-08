@@ -3,7 +3,7 @@
 import { useState, startTransition, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createInviteLink } from "@/app/actions/invitations";
-import { deactivateUser, reactivateUser, deleteUser, changeUserDepartment } from "@/app/actions/users";
+import { deactivateUser, reactivateUser, deleteUser, changeUserDepartment, changeUserRole } from "@/app/actions/users";
 import type { Role, Department } from "@prisma/client";
 import { AppSelect } from "@/components/ui/app-select";
 
@@ -154,6 +154,18 @@ export function UserManagementPanel({
         setError(err.message || "Failed to delete user");
       }
     });
+  };
+
+  // ── Role Change (SUPER_ADMIN only) ──────────────────────────────────────
+  const handleRoleChange = async (userId: string, newRole: Role) => {
+    try {
+      await changeUserRole(userId, newRole);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      );
+    } catch (err: any) {
+      setError(err.message || "Failed to change role");
+    }
   };
 
   // ── Copy helpers ──────────────────────────────────────────────────────────
@@ -459,9 +471,20 @@ export function UserManagementPanel({
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
-                      {ROLE_LABELS[user.role]}
-                    </span>
+                    {currentUserRole === "SUPER_ADMIN" && user.id !== currentUserId && user.role !== "SUPER_ADMIN" ? (
+                      <select
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value as Role)}
+                        className="bg-transparent brutalist-border px-2 py-1 font-label text-[11px] text-foreground uppercase tracking-wide cursor-pointer focus:outline-none focus:border-primary"
+                      >
+                        <option value="ADMIN">MANAGEMENT</option>
+                        <option value="EMPLOYEE">EMPLOYEE</option>
+                      </select>
+                    ) : (
+                      <span className={`px-2 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+                        {ROLE_LABELS[user.role]}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {currentUserRole === "SUPER_ADMIN" && user.id !== currentUserId ? (
@@ -565,9 +588,20 @@ export function UserManagementPanel({
                     </p>
                     <p className="font-label text-[10px] text-outline lowercase mt-1">{user.email}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className={`px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
-                        {ROLE_LABELS[user.role]}
-                      </span>
+                      {currentUserRole === "SUPER_ADMIN" && user.id !== currentUserId && user.role !== "SUPER_ADMIN" ? (
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value as Role)}
+                          className="bg-transparent brutalist-border px-1.5 py-0.5 font-label text-[10px] text-foreground uppercase tracking-wide cursor-pointer focus:outline-none focus:border-primary"
+                        >
+                          <option value="ADMIN">MANAGEMENT</option>
+                          <option value="EMPLOYEE">EMPLOYEE</option>
+                        </select>
+                      ) : (
+                        <span className={`px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+                          {ROLE_LABELS[user.role]}
+                        </span>
+                      )}
                       <span className="font-label text-[10px] text-outline uppercase tracking-widest">
                         {user.department ?? "—"}
                       </span>
@@ -651,9 +685,20 @@ export function UserManagementPanel({
             </div>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              <span className={`px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
-                {ROLE_LABELS[user.role]}
-              </span>
+              {currentUserRole === "SUPER_ADMIN" && user.id !== currentUserId && user.role !== "SUPER_ADMIN" ? (
+                <select
+                  value={user.role}
+                  onChange={(e) => handleRoleChange(user.id, e.target.value as Role)}
+                  className="bg-transparent brutalist-border px-1.5 py-0.5 font-label text-[10px] text-foreground uppercase tracking-wide cursor-pointer focus:outline-none focus:border-primary"
+                >
+                  <option value="ADMIN">MANAGEMENT</option>
+                  <option value="EMPLOYEE">EMPLOYEE</option>
+                </select>
+              ) : (
+                <span className={`px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest ${ROLE_COLORS[user.role]}`}>
+                  {ROLE_LABELS[user.role]}
+                </span>
+              )}
               {user.department && (
                 <span className="px-1.5 py-0.5 text-[10px] font-label uppercase tracking-widest bg-surface-container-high text-foreground">
                   {user.department}

@@ -178,6 +178,53 @@ export async function deleteUser(userId: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Change User Role (SUPER_ADMIN / Director only)
+// Directors can set employees ↔ managers, but cannot promote to Director
+// ---------------------------------------------------------------------------
+
+export async function changeUserRole(userId: string, newRole: Role) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
+
+  const callerRole = session.user.role as Role;
+  if (callerRole !== "SUPER_ADMIN") throw new Error("FORBIDDEN: Only Directors can change roles.");
+  if (userId === session.user.id) throw new Error("CANNOT_CHANGE_OWN_ROLE");
+
+  // Safety: Directors can only assign ADMIN or EMPLOYEE — not SUPER_ADMIN
+  if (newRole === "SUPER_ADMIN") {
+    throw new Error("FORBIDDEN: Director promotion requires a database script.");
+  }
+
+  const target = await db.user.findUnique({ where: { id: userId } });
+  if (!target) throw new Error("USER_NOT_FOUND");
+
+  // Prevent modifying other SUPER_ADMINs
+  if (target.role === "SUPER_ADMIN") {
+    throw new Error("FORBIDDEN: Cannot change another Director's role.");
+  }
+
+  await db.user.update({
+    where: { id: userId },
+    data: { role: newRole },
+  });
+
+  await db.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "UPDATED",
+      metadata: {
+        changedUserId: userId,
+        changedUserEmail: target.email,
+        previousRole: target.role,
+        newRole: newRole,
+      },
+    },
+  });
+
+  revalidatePath("/settings");
+}
+
+// ---------------------------------------------------------------------------
 // Change User Department (SUPER_ADMIN — direct, no approval needed)
 // ---------------------------------------------------------------------------
 
